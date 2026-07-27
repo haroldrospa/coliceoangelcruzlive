@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coliseo Angel Cruz | Ultra-Pro Mobile</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Ant Design CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/5.12.0/reset.min.css">
+    
+    <!-- CONSOLE FILTER -->
+    <script>
+        (function() {
+            const originalError = console.error;
+            console.error = (...args) => {
+                if (args[0] && typeof args[0] === 'string' && args[0].includes('findDOMNode')) return;
+                originalError.apply(console, args);
+            };
+        })();
+    </script>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.10/dayjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/antd/5.12.0/antd.min.js"></script>
+    <script src="https://unpkg.com/@ant-design/icons/dist/index.umd.js"></script>
+    <script src="https://player.twitch.tv/js/embed/v1.js"></script>
+
+    <style>
+        :root {
+            --pure-black: #000000;
+            --luxury-gold: #D4AF37;
+            --dark-border: #141414;
+            --gray-text: #4a4a4a;
+            --glass-bg: rgba(7, 7, 7, 0.95);
+        }
+        
+        body { background-color: var(--pure-black); margin: 0; font-family: 'Inter', sans-serif; color: #fff; min-height: 100vh; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+
+        /* Loader */
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.5s; }
+        .lux-spinner { width: 30px; height: 30px; border: 1px solid var(--dark-border); border-top: 1px solid var(--luxury-gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* General UI */
+        .app-content { max-width: 1000px; margin: 0 auto; padding: 20px 16px 120px 16px; }
+
+        .media-container {
+            width: 100%; aspect-ratio: 16/9; background: #050505; border: 1px solid var(--dark-border); border-radius: 4px; overflow: hidden; position: relative; margin-bottom: 20px;
+        }
+
+        .luxury-card { border: 1px solid var(--dark-border) !important; background: #050505 !important; border-radius: 4px !important; box-shadow: none !important; }
+
+        .gold-btn { 
+            background: var(--luxury-gold) !important; border: none !important; color: #000 !important; 
+            height: 48px !important; font-weight: 900 !important; font-size: 10px !important;
+            border-radius: 2px !important; letter-spacing: 1px; text-transform: uppercase;
+        }
+
+        /* Responsive Nav Bars */
+        .ant-layout-header { 
+            background: var(--pure-black) !important; border-bottom: 1px solid var(--dark-border) !important; 
+            padding: 0 20px !important; height: 65px !important; display: flex; align-items: center; justify-content: space-between;
+        }
+        .logo-text { color: var(--luxury-gold); font-weight: 900; font-size: 16px; letter-spacing: 4px; }
+
+        /* Bottom Nav Fix */
+        .mobile-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 75px;
+            background: var(--glass-bg); backdrop-filter: blur(20px);
+            border-top: 1px solid var(--dark-border);
+            display: none; align-items: center; justify-content: space-around;
+            z-index: 1000; padding: 0 15px 10px 15px; /* Extra padding bottom for home indicator */
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 5px; color: var(--gray-text); text-decoration: none; transition: 0.3s; width: 25%; }
+        .nav-item.active { color: var(--luxury-gold); }
+        .nav-item .nav-icon { font-size: 18px; }
+        .nav-item .nav-label { font-size: 8px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; line-height: 1; text-align: center; width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+        @media (max-width: 768px) {
+            .desktop-nav { display: none; }
+            .mobile-nav { display: flex; }
+            .app-content { padding-top: 15px; }
+        }
+
+        /* Status Badge */
+        .status-pill {
+            position: absolute; top: 10px; left: 10px; z-index: 10;
+            background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.05);
+            padding: 4px 10px; border-radius: 100px; display: flex; align-items: center; gap: 6px;
+        }
+        .dot { width: 5px; height: 5px; border-radius: 50%; }
+
+        /* Betting Amount Terminal */
+        .bet-input-box {
+            background: #020202; border: 1px solid #111; padding: 15px; border-radius: 2px;
+            text-align: center; margin: 20px 0;
+        }
+        .bet-input-box input { 
+            width: 100%; border: none !important; background: transparent; color: var(--luxury-gold); 
+            font-size: 32px; font-weight: 900; text-align: center; outline: none;
+        }
+
+        /* Prestige Animation */
+        .prest-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background:#000; z-index:1000; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+        .prest-circle { width:60px; height:60px; border:2px solid var(--luxury-gold); border-radius:50%; display:flex; align-items:center; justify-content:center; animation: pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
+    </style>
+</head>
+<body>
+    <div id="loading-overlay"><div class="lux-spinner"></div></div>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { ConfigProvider, Layout, Menu, Typography, Row, Col, Button, Card, Space, Modal, InputNumber, Badge, Table, Tag, Input, notification, theme, Drawer } = antd;
+        const { Header, Content } = Layout;
+        const { Title, Text } = Typography;
+
+        const findIcons = () => window.AntDesignIcons || window.icons || (window.antd && window.antd.icons) || {};
+        const getIcon = (name) => {
+            const Icon = findIcons()[name];
+            return Icon ? <Icon /> : null;
+        };
+
+        const SmartPlayer = ({ channel, onStatus }) => {
+            const [isOnline, setIsOnline] = React.useState(false);
+            React.useEffect(() => {
+                if (!window.Twitch) return;
+                const p = new Twitch.Player("twitch-target", { width: "100%", height: "100%", channel, parent: ["localhost", "127.0.0.1"], autoplay: true, muted: true });
+                p.addEventListener(Twitch.Player.ONLINE, () => { setIsOnline(true); onStatus(true); });
+                p.addEventListener(Twitch.Player.OFFLINE, () => { setIsOnline(false); onStatus(false); });
+            }, [channel]);
+
+            return (
+                <div className="media-container">
+                    <div className="status-pill">
+                        <div className="dot" style={{ background: isOnline ? '#22c55e' : '#D4AF37', boxShadow: isOnline ? '0 0 10px #22c55e' : '0 0 10px #D4AF37' }}></div>
+                        <Text style={{ color: '#fff', fontSize: 7, fontWeight: 900, letterSpacing: 1.5 }}>{isOnline ? 'SIGNAL_LIVE' : 'SIMULATION_ACTIVE'}</Text>
+                    </div>
+                    <div id="twitch-target" style={{ width: '100%', height: '100%', display: isOnline ? 'block' : 'none' }}></div>
+                    {!isOnline && <video src="https://vjs.zencdn.net/v/oceans.mp4" autoPlay muted loop style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [user, setUser] = React.useState(null);
+            const [view, setView] = React.useState('live');
+            const [balance, setBalance] = React.useState(12450.50);
+            const [isLive, setIsLive] = React.useState(false);
+            const [betAmount, setBetAmount] = React.useState(100);
+            const [betDrawerVisible, setBetDrawerVisible] = React.useState(false);
+            const [selectedFight, setSelectedFight] = React.useState(null);
+            const [bettingProcessed, setBettingProcessed] = React.useState(false);
+
+            React.useEffect(() => {
+                const overlay = document.getElementById('loading-overlay');
+                if (overlay) setTimeout(() => { overlay.style.opacity = '0'; setTimeout(() => overlay.style.display = 'none', 500); }, 600);
+            }, []);
+
+            const placeBet = (gallo) => {
+                if (balance < betAmount) { notification.error({ message: 'SALDO INSUFICIENTE' }); return; }
+                setBettingProcessed(true);
+                setTimeout(() => {
+                    setBalance(p => p - betAmount); setBettingProcessed(false);
+                    setBetDrawerVisible(false); notification.success({ message: `APUESTA CONFIRMADA` });
+                }, 1800);
+            };
+
+            const NavItems = user?.role === 'admin' ? [
+                { key: 'admin_panel', label: 'GESTIÓN', icon: 'ControlFilled' },
+                { key: 'live', label: 'VISTA', icon: 'EyeFilled' },
+                { key: 'logout', label: 'SALIR', icon: 'LogoutOutlined' }
+            ] : [
+                { key: 'live', label: 'COMBATES', icon: 'PlayCircleOutlined' },
+                { key: 'wallet', label: 'BILLETERA', icon: 'WalletOutlined' },
+                { key: 'results', label: 'HISTORIAL', icon: 'HistoryOutlined' },
+                { key: 'logout', label: 'SALIR', icon: 'LogoutOutlined' }
+            ];
+
+            if (!user) return (
+                <div className="login-wrapper">
+                    <div className="login-card">
+                        <div style={{ color: 'var(--luxury-gold)', fontSize: 24, fontWeight: 900, letterSpacing: 8, marginBottom: 40 }}>COLISEO ANGEL CRUZ.</div>
+                        <Space direction="vertical" style={{ width: '100%' }} size={15}>
+                            <Button block className="gold-btn" onClick={() => {setUser({role: 'admin'}); setView('admin_panel');}}>ACCESO ADMINISTRADOR</Button>
+                            <Button block className="gold-btn" style={{ background: '#111', color: '#fff' }} onClick={() => {setUser({role: 'client'}); setView('live');}}>ACCESO CLIENTE</Button>
+                        </Space>
+                    </div>
+                </div>
+            );
+
+            return (
+                <ConfigProvider theme={{ algorithm: theme.darkAlgorithm, token: { colorPrimary: '#D4AF37', fontFamily: 'Inter' } }}>
+                    <Layout style={{ background: '#000' }}>
+                        <Header>
+                            <div className="logo-text">COLISEO ANGEL CRUZ.</div>
+                            <div className="desktop-nav">
+                                <Menu mode="horizontal" selectedKeys={[view]} onClick={e => e.key === 'logout' ? setUser(null) : setView(e.key)} items={NavItems.map(i => ({...i, icon: getIcon(i.icon)}))} />
+                            </div>
+                            <div style={{ width: 34, height: 34, border: '1px solid #141414', display: 'flex', alignItems: 'center', justifyCenter: 'center', borderRadius: 2 }}>
+                                <span style={{ color: '#D4AF37', fontSize: 14 }}>{getIcon('UserOutlined')}</span>
+                            </div>
+                        </Header>
+                        
+                        <Content className="app-content">
+                            {view === 'live' && (
+                                <>
+                                    <SmartPlayer channel="haroldrospa" onStatus={setIsLive} />
+                                    <Row justify="space-between" align="middle" style={{ marginBottom: 15 }}>
+                                        <Col><Text style={{ color: isLive ? '#22c55e' : '#D4AF37', fontSize: 9, fontWeight: 900, letterSpacing: 1 }}>{isLive ? 'EN VIVO AHORA' : 'MODO SIMULACIÓN'}</Text></Col>
+                                        <Col><Text style={{ color: 'var(--luxury-gold)', fontSize: 10, fontWeight: 900 }}>${balance.toLocaleString()}</Text></Col>
+                                    </Row>
+
+                                    <Card className="luxury-card" style={{ marginBottom: 25 }} bodyStyle={{ padding: '20px 15px' }}>
+                                        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+                                            <Row gutter={10} align="middle">
+                                                <Col span={10}><Text style={{ color: '#fff', fontSize: 11, fontWeight: 900, textTransform:'uppercase' }}>REINA REAL</Text></Col>
+                                                <Col span={4}><Text style={{ fontSize: 18, fontWeight: 900, color: '#111' }}>VS</Text></Col>
+                                                <Col span={10}><Text style={{ color: '#fff', fontSize: 11, fontWeight: 900, textTransform:'uppercase' }}>EL DIAMANTE</Text></Col>
+                                            </Row>
+                                        </div>
+                                        <Row gutter={8}>
+                                            <Col span={12}><Button block className="gold-btn" onClick={() => {setSelectedFight({a:'REINA REAL',b:'EL DIAMANTE'}); setBetDrawerVisible(true);}}>A: REINA REAL</Button></Col>
+                                            <Col span={12}><Button block className="gold-btn" onClick={() => {setSelectedFight({a:'REINA REAL',b:'EL DIAMANTE'}); setBetDrawerVisible(true);}}>B: EL DIAMANTE</Button></Col>
+                                        </Row>
+                                    </Card>
+
+                                    <Text style={{ color: '#fff', fontSize: 8, fontWeight: 900, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 15, display: 'block', borderLeft: '2px solid var(--luxury-gold)', paddingLeft: 10 }}>PELEAS PROGRAMADAS</Text>
+                                    {[1, 2].map(i => (
+                                        <Card key={i} className="luxury-card" style={{ marginBottom: 10 }} bodyStyle={{ padding: '12px 15px' }}>
+                                            <Row justify="space-between" align="middle">
+                                                <Col span={16}><Text style={{ color: '#fff', fontSize: 10, fontWeight: 800 }}>CAUDILLOS <span style={{color: '#222'}}>vs</span> SAN JORGE</Text></Col>
+                                                <Col span={8} style={{textAlign: 'right'}}><Button className="gold-btn" style={{height: 32, fontSize: 8}} onClick={() => {setSelectedFight({a:'CAUDILLOS',b:'SAN JORGE'}); setBetDrawerVisible(true);}}>APOSTAR</Button></Col>
+                                            </Row>
+                                        </Card>
+                                    ))}
+                                </>
+                            )}
+                            {view === 'wallet' && (
+                                <div style={{textAlign: 'center', padding: '40px 0'}}>
+                                    <Text style={{color: '#444', fontSize: 10, fontWeight: 900, letterSpacing: 2}}>SALDO DISPONIBLE</Text>
+                                    <Title level={1} style={{ color: '#fff', fontWeight: 900, fontSize: 48, margin: '10px 0' }}>${balance.toLocaleString()}</Title>
+                                    <Row gutter={10} style={{marginTop: 40}}><Col span={12}><Button block className="gold-btn">RECARGAR</Button></Col><Col span={12}><Button block className="gold-btn" style={{background: 'transparent', color: '#fff', border: '1px solid #111'}}>RETIRAR</Button></Col></Row>
+                                </div>
+                            )}
+                            {view === 'admin_panel' && (
+                                <div style={{padding: '20px 0'}}>
+                                    <Title level={4} style={{ color: '#fff', fontWeight: 900, letterSpacing: 2, marginBottom: 30 }}>TERMINAL DE CONTROL</Title>
+                                    <div className="luxury-card" style={{ padding: 25 }}>
+                                        <Text style={{ color: 'var(--luxury-gold)', fontSize: 9, fontWeight: 900, letterSpacing: 1 }}>CONFIG URB: haroldrospa</Text>
+                                        <Button block className="gold-btn" style={{marginTop: 20}}>SINCRONIZAR SEÑAL</Button>
+                                    </div>
+                                </div>
+                            )}
+                        </Content>
+
+                        <div className="mobile-nav">
+                            {NavItems.map(item => (
+                                <div key={item.key} className={`nav-item ${view === item.key ? 'active' : ''}`} onClick={() => item.key === 'logout' ? setUser(null) : setView(item.key)}>
+                                    <span className="nav-icon">{getIcon(item.icon)}</span>
+                                    <span className="nav-label">{item.label}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <Drawer title={<Text style={{fontSize: 10, fontWeight: 900, letterSpacing: 2}}>CONFIRMACIÓN DE APUESTA</Text>} placement="bottom" height={420} onClose={() => setBetDrawerVisible(false)} open={betDrawerVisible} styles={{ body: { background: '#000', padding: '20px' }, header: { background: '#000', borderBottom: '1px solid #111' } }}>
+                            {bettingProcessed ? (
+                                <div className="prest-overlay"><div className="prest-circle">{getIcon('CheckOutlined')}</div><Text style={{color: 'var(--luxury-gold)', fontSize: 10, fontWeight: 900, letterSpacing: 3, marginTop: 20}}>TRANSACCIÓN EXITOSA</Text></div>
+                            ) : selectedFight && (
+                                <div style={{ textAlign: 'center' }}>
+                                    <Text style={{ color: '#555', fontSize: 10, fontWeight: 900 }}>{selectedFight.a} VS {selectedFight.b}</Text>
+                                    <div className="bet-input-box">
+                                        <Text style={{ color: '#333', fontSize: 8, fontWeight: 900, display: 'block', marginBottom: 5 }}>MONTO APOSTADO (USD)</Text>
+                                        <input type="number" value={betAmount} onChange={e => setBetAmount(e.target.value)} autoFocus />
+                                    </div>
+                                    <Row gutter={10}><Col span={12}><Button block className="gold-btn" onClick={() => placeBet(selectedFight.a)}>Gallo A</Button></Col><Col span={12}><Button block className="gold-btn" onClick={() => placeBet(selectedFight.b)}>Gallo B</Button></Col></Row>
+                                </div>
+                            )}
+                        </Drawer>
+                    </Layout>
+                </ConfigProvider>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
