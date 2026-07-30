@@ -11,9 +11,13 @@ import {
   SyncOutlined,
   CloseCircleOutlined,
   TrophyOutlined,
-  SmileOutlined
+  SmileOutlined,
+  ControlOutlined,
+  EditOutlined,
+  PictureOutlined,
+  CheckOutlined
 } from '@ant-design/icons';
-import { rawFetch } from '../lib/supabase';
+import { rawFetch, broadcastEventStatus, resolveBetsForEvent } from '../lib/supabase';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -359,33 +363,6 @@ export default function RelojView() {
           const ev = activeEv[0];
           const num = parseInt(ev.post_number) || 1;
 
-          // If neither betting nor fight was actively running on this client,
-          // do NOT auto-load the fight details to prevent auto-loading previous stale fights.
-          // Clean up ALL stale events in status LIVE or CLOSED in Supabase to avoid spectator ghosts.
-          if (!bettingActive && !clockRunning) {
-            try {
-              const allStaleEvents = await rawFetch('events?select=*&status=in.(LIVE,CLOSED)');
-              if (allStaleEvents && allStaleEvents.length > 0) {
-                for (const staleEv of allStaleEvents) {
-                  await rawFetch('events', { method: 'DELETE', query: `id=eq.${staleEv.id}` });
-                }
-              }
-            } catch (err) {
-              console.error("Cleanup of stale events failed:", err);
-            }
-            
-            setFightNumber(num);
-            setGallinoName('');
-            setBlancoName('');
-            setPesoAzul('');
-            setColorAzul('');
-            setMarcaAzul('');
-            setPesoBlanco('');
-            setColorBlanco('');
-            setMarcaBlanco('');
-            return;
-          }
-
           setFightNumber(num);
           if (ev.gallo_a_name) setGallinoName(ev.gallo_a_name);
           if (ev.gallo_b_name) setBlancoName(ev.gallo_b_name);
@@ -400,36 +377,11 @@ export default function RelojView() {
             setColorBlanco(f.color_b || '');
             setMarcaBlanco(f.marca_b || '');
           }
-          // If status is LIVE but no betting phase was active in localStorage, it's stale — clean up
-          if (ev.status === 'LIVE' && !bettingActive) {
-            await rawFetch('events', { method: 'DELETE', query: `id=eq.${ev.id}` });
-          }
-          // CLOSED means fight is/was in progress — clock state is already restored from localStorage above
         }
       } catch (_) {}
     };
     restoreActiveFight();
   }, []);
-
-  useEffect(() => {
-    // If the judge's panel has no active loaded fight (both gallo names are empty),
-    // we must ensure Supabase does not advertise any fight as LIVE or CLOSED to spectators.
-    if (!gallinoName && !blancoName) {
-      const cleanStaleEvents = async () => {
-        try {
-          const activeEvs = await rawFetch('events?select=*&status=in.(LIVE,CLOSED)');
-          if (activeEvs && activeEvs.length > 0) {
-            for (const ev of activeEvs) {
-              await rawFetch('events', { method: 'DELETE', query: `id=eq.${ev.id}` });
-            }
-          }
-        } catch (err) {
-          console.error("Stale events cleanup error:", err);
-        }
-      };
-      cleanStaleEvents();
-    }
-  }, [gallinoName, blancoName]);
   
   // Save local results helper
   const saveLocalResults = (newResults) => {
@@ -608,18 +560,23 @@ export default function RelojView() {
         winner_side: winnerSide
       };
 
+      let eventId = null;
       if (existing && existing[0]) {
+        eventId = existing[0].id;
         await rawFetch(`events`, {
           method: 'PATCH',
           body: payload,
           query: `id=eq.${existing[0].id}`
         });
       } else {
-        await rawFetch('events', {
+        const created = await rawFetch('events', {
           method: 'POST',
           body: payload
         });
+        if (created && created[0]) eventId = created[0].id;
       }
+
+      await broadcastEventStatus(fightNum, status, eventId);
     } catch (err) {
       console.error('Error upserting event:', err);
     }
@@ -743,7 +700,15 @@ export default function RelojView() {
 
     // Sync result to Supabase events table
     const winnerSideMap = { 'Azul': 'A', 'Blanco': 'B', 'Tablas': 'D' };
-    await upsertEvent(fightNumber, 'FINISHED', winnerSideMap[resultType] || 'D');
+    const winSide = winnerSideMap[resultType] || 'D';
+    await upsertEvent(fightNumber, 'FINISHED', winSide);
+
+    // Resolve pending bets and pay winners/refund draws immediately
+    try {
+      await resolveBetsForEvent(null, winSide, fightNumber);
+    } catch (bErr) {
+      console.error('Error resolving bets in handleSaveFightResult:', bErr);
+    }
 
     // Auto close celebration after 7 seconds
     setTimeout(() => {
@@ -1585,226 +1550,504 @@ export default function RelojView() {
         {/* CONSOLE & JUDGE CONTROLS PANEL */}
         {/* ======================================================== */}
         {!isFullscreen && (
-          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          <Row gutter={[16, 16]} style={{ marginBottom: 28 }}>
             
-            {/* Panel 1: Main Clock controls */}
-            <Col xs={24} md={8}>
+            {/* Panel 1: Main Fight Parameters & Clock Launcher */}
+            <Col xs={24} lg={8}>
               <Card 
-                title={<span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>PARÁMETROS DEL COMBATE</span>}
-                style={{ background: 'rgba(255, 255, 255, 0.02)', borderColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12 }}
+                title={
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <ControlOutlined style={{ color: '#10b981', fontSize: 16 }} />
+                    <span style={{ color: '#fff', fontSize: 13, fontWeight: 800, letterSpacing: '0.5px' }}>
+                      PARÁMETROS DEL COMBATE
+                    </span>
+                  </div>
+                }
+                style={{ 
+                  background: 'linear-gradient(145deg, rgba(18, 24, 38, 0.85) 0%, rgba(12, 16, 26, 0.95) 100%)',
+                  borderColor: 'rgba(255, 255, 255, 0.08)',
+                  borderRadius: 16,
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                  backdropFilter: 'blur(12px)'
+                }}
+                styles={{ body: { padding: '16px' } }}
               >
                 {carteleraFights.length > 0 && (
-                  <div style={{ marginBottom: 12 }}>
-                    <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, display: 'block', marginBottom: 4 }}>CARGAR PELEA DE CARTELERA</Text>
+                  <div style={{ marginBottom: 14 }}>
+                    <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      🎯 CARGAR PELEA DE CARTELERA
+                    </Text>
                     <Select 
-                      placeholder="Seleccionar..."
+                      placeholder="Seleccionar pelea programada..."
                       onChange={(val) => {
                         const fight = carteleraFights.find(f => f.numero_pelea === val);
                         if (fight) handleLoadFight(fight);
                       }}
                       style={{ width: '100%' }}
+                      size="middle"
                     >
                       {carteleraFights.map(f => (
                         <Option key={f.numero_pelea} value={f.numero_pelea}>
-                          Pelea #{f.numero_pelea} - {f.traba_a} vs {f.traba_b}
+                          Pelea #{f.numero_pelea} • {f.traba_a} vs {f.traba_b}
                         </Option>
                       ))}
                     </Select>
                   </div>
                 )}
 
-                <Row gutter={8} style={{ marginBottom: 12 }}>
+                <Row gutter={10} style={{ marginBottom: 14 }}>
                   <Col span={10}>
-                    <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>PELEA Nº</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      PELEA Nº
+                    </Text>
                     <InputNumber 
                       min={1} 
                       value={fightNumber} 
                       onChange={setFightNumber} 
-                      style={{ width: '100%', background: 'rgba(255,255,255,0.05)', color: '#fff', borderColor: 'rgba(255,255,255,0.1)' }} 
+                      style={{ 
+                        width: '100%', 
+                        background: 'rgba(255,255,255,0.04)', 
+                        color: '#fff', 
+                        borderColor: 'rgba(255,255,255,0.12)',
+                        borderRadius: 8,
+                        fontWeight: 800
+                      }} 
                     />
                   </Col>
                   <Col span={14}>
-                    <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>DURACIÓN</Text>
-                    <div>
-                      <Radio.Group 
-                        value={presetDuration} 
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setPresetDuration(val);
-                          setTimeLeft(val);
-                        }}
-                        size="small"
-                        buttonStyle="solid"
-                      >
-                        <Radio.Button value={600}>10m</Radio.Button>
-                        <Radio.Button value={720}>12m</Radio.Button>
-                        <Radio.Button value={900}>15m</Radio.Button>
-                      </Radio.Group>
-                    </div>
+                    <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      DURACIÓN (MIN)
+                    </Text>
+                    <Radio.Group 
+                      value={presetDuration} 
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setPresetDuration(val);
+                        setTimeLeft(val);
+                      }}
+                      size="middle"
+                      buttonStyle="solid"
+                      style={{ width: '100%', display: 'flex' }}
+                    >
+                      <Radio.Button value={600} style={{ flex: 1, textAlign: 'center', fontSize: 11, fontWeight: 700 }}>10m</Radio.Button>
+                      <Radio.Button value={720} style={{ flex: 1, textAlign: 'center', fontSize: 11, fontWeight: 700 }}>12m</Radio.Button>
+                      <Radio.Button value={900} style={{ flex: 1, textAlign: 'center', fontSize: 11, fontWeight: 700 }}>15m</Radio.Button>
+                    </Radio.Group>
                   </Col>
                 </Row>
 
                 {/* Warning when no fight is loaded */}
                 {!gallinoName && !blancoName && !bettingPhase && (
                   <div style={{
-                    background: 'rgba(239,68,68,0.08)',
-                    border: '1px solid rgba(239,68,68,0.3)',
-                    borderRadius: 8,
-                    padding: '8px 12px',
-                    marginBottom: 8,
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    borderRadius: 10,
+                    padding: '10px 14px',
+                    marginBottom: 12,
                     fontSize: 11,
-                    color: '#ef4444',
+                    color: '#fca5a5',
                     fontWeight: 700,
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6
                   }}>
-                    ⚠️ Carga una pelea de la cartelera primero
+                    <span>⚠️</span> Carga una pelea de la cartelera primero
                   </div>
                 )}
 
-                <div style={{ display: 'flex', gap: 8, marginTop: 16, flexDirection: 'column' }}>
+                <div style={{ marginTop: 8 }}>
                   {bettingPhase ? (
-                    <>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                       <div style={{ 
-                        background: 'rgba(16,185,129,0.1)', 
+                        background: 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(5,150,105,0.08) 100%)', 
                         border: '1px solid rgba(16,185,129,0.3)', 
-                        borderRadius: 8, 
-                        padding: '10px 14px',
+                        borderRadius: 12, 
+                        padding: '12px 14px',
                         textAlign: 'center'
                       }}>
-                        <div style={{ color: '#10b981', fontSize: 10, fontWeight: 700, marginBottom: 4 }}>🟢 APUESTAS ABIERTAS</div>
-                        <div style={{ color: '#fff', fontWeight: 900, fontSize: 28, fontFamily: 'Outfit', lineHeight: 1 }}>
+                        <div style={{ color: '#10b981', fontSize: 11, fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 2 }}>
+                          🟢 APUESTAS ABIERTAS
+                        </div>
+                        <div style={{ color: '#fff', fontWeight: 900, fontSize: 32, fontFamily: 'Outfit, sans-serif', lineHeight: 1 }}>
                           {`${Math.floor(bettingTimeLeft / 60).toString().padStart(2,'0')}:${(bettingTimeLeft % 60).toString().padStart(2,'0')}`}
                         </div>
-                        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, marginTop: 2 }}>tiempo restante para apostar</div>
+                        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 4 }}>Contador automático de apuestas</div>
                       </div>
                       <Button 
                         block 
                         type="primary" 
                         danger 
-                        style={{ fontWeight: 800, fontSize: 13, height: 42 }} 
+                        style={{ 
+                          fontWeight: 800, 
+                          fontSize: 12, 
+                          height: 42,
+                          borderRadius: 10,
+                          boxShadow: '0 4px 14px rgba(239, 68, 68, 0.3)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
+                        }} 
                         onClick={handleCloseBets}
                       >
                         ⚔️ CERRAR APUESTAS — INICIAR COMBATE
                       </Button>
-                    </>
+                    </div>
                   ) : (
                     <div style={{ display: 'flex', gap: 8 }}>
                       {isRunning ? (
-                        <Button block type="primary" danger icon={<PauseCircleOutlined />} onClick={handlePause}>
-                          Pausar
+                        <Button 
+                          block 
+                          type="primary" 
+                          danger 
+                          icon={<PauseCircleOutlined />} 
+                          onClick={handlePause}
+                          style={{ height: 42, borderRadius: 10, fontWeight: 800, fontSize: 13 }}
+                        >
+                          PAUSAR
                         </Button>
                       ) : (
                         <Button 
                           block 
                           type="primary" 
                           disabled={!gallinoName && !blancoName}
-                          style={{ background: (gallinoName || blancoName) ? '#10b981' : undefined, borderColor: (gallinoName || blancoName) ? '#10b981' : undefined }} 
+                          style={{ 
+                            height: 42, 
+                            borderRadius: 10, 
+                            fontWeight: 800, 
+                            fontSize: 13,
+                            background: (gallinoName || blancoName) ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : undefined, 
+                            borderColor: (gallinoName || blancoName) ? '#10b981' : undefined,
+                            boxShadow: (gallinoName || blancoName) ? '0 4px 14px rgba(16, 185, 129, 0.3)' : undefined
+                          }} 
                           icon={<PlayCircleOutlined />} 
                           onClick={handleStart}
                         >
-                          Iniciar
+                          INICIAR COMBATE
                         </Button>
                       )}
-                      <Button icon={<RedoOutlined />} onClick={handleReset} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' }} />
+                      <Tooltip title="Restablecer reloj">
+                        <Button 
+                          icon={<RedoOutlined />} 
+                          onClick={handleReset} 
+                          style={{ 
+                            height: 42,
+                            width: 42,
+                            borderRadius: 10,
+                            background: 'rgba(255,255,255,0.05)', 
+                            color: '#fff', 
+                            border: '1px solid rgba(255,255,255,0.12)' 
+                          }} 
+                        />
+                      </Tooltip>
                     </div>
                   )}
                 </div>
               </Card>
             </Col>
 
-            {/* Panel 2: Manual active cockfighters info */}
-            <Col xs={24} md={8}>
+            {/* Panel 2: Active Cockfighters Info & Photo Upload */}
+            <Col xs={24} lg={8}>
               <Card 
-                title={<span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>EDITAR GALLOS EN COMBATE</span>}
-                style={{ background: 'rgba(255, 255, 255, 0.02)', borderColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12 }}
-                styles={{ body: { padding: 12 } }}
+                title={
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <EditOutlined style={{ color: '#3b82f6', fontSize: 16 }} />
+                    <span style={{ color: '#fff', fontSize: 13, fontWeight: 800, letterSpacing: '0.5px' }}>
+                      EDITAR GALLOS EN COMBATE
+                    </span>
+                  </div>
+                }
+                style={{ 
+                  background: 'linear-gradient(145deg, rgba(18, 24, 38, 0.85) 0%, rgba(12, 16, 26, 0.95) 100%)',
+                  borderColor: 'rgba(255, 255, 255, 0.08)',
+                  borderRadius: 16,
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                  backdropFilter: 'blur(12px)'
+                }}
+                styles={{ body: { padding: '16px' } }}
               >
-                <div style={{ marginBottom: 10 }}>
-                  <Text style={{ color: '#60a5fa', fontSize: 10, fontWeight: 700 }}>LADO AZUL (IZQUIERDA)</Text>
-                  <Row gutter={4}>
+                {/* LADO AZUL */}
+                <div style={{ 
+                  background: 'rgba(59, 130, 246, 0.06)', 
+                  border: '1px solid rgba(59, 130, 246, 0.2)', 
+                  borderRadius: 10, 
+                  padding: '10px 12px',
+                  marginBottom: 10 
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#3b82f6' }} />
+                    <Text style={{ color: '#60a5fa', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      LADO AZUL (IZQUIERDA)
+                    </Text>
+                  </div>
+                  <Row gutter={6}>
                     <Col span={10}>
-                      <Input size="small" placeholder="Traba" value={gallinoName} onChange={(e) => setGallinoName(e.target.value)} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', borderColor: 'rgba(96,165,250,0.3)' }} />
+                      <Input 
+                        size="small" 
+                        placeholder="Traba Azul" 
+                        value={gallinoName} 
+                        onChange={(e) => setGallinoName(e.target.value)} 
+                        style={{ background: 'rgba(0,0,0,0.3)', color: '#fff', borderColor: 'rgba(59, 130, 246, 0.3)', borderRadius: 6, fontWeight: 700 }} 
+                      />
                     </Col>
                     <Col span={7}>
-                      <Input size="small" placeholder="Peso" value={pesoAzul} onChange={(e) => setPesoAzul(e.target.value)} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', borderColor: 'rgba(96,165,250,0.3)', fontSize: 11 }} />
+                      <Input 
+                        size="small" 
+                        placeholder="Peso" 
+                        value={pesoAzul} 
+                        onChange={(e) => setPesoAzul(e.target.value)} 
+                        style={{ background: 'rgba(0,0,0,0.3)', color: '#fff', borderColor: 'rgba(59, 130, 246, 0.3)', borderRadius: 6, fontSize: 11 }} 
+                      />
                     </Col>
                     <Col span={7}>
-                      <Input size="small" placeholder="Marca" value={marcaAzul} onChange={(e) => setMarcaAzul(e.target.value)} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', borderColor: 'rgba(96,165,250,0.3)', fontSize: 11 }} />
+                      <Input 
+                        size="small" 
+                        placeholder="Marca" 
+                        value={marcaAzul} 
+                        onChange={(e) => setMarcaAzul(e.target.value)} 
+                        style={{ background: 'rgba(0,0,0,0.3)', color: '#fff', borderColor: 'rgba(59, 130, 246, 0.3)', borderRadius: 6, fontSize: 11 }} 
+                      />
                     </Col>
                   </Row>
                 </div>
 
-                <div>
-                  <Text style={{ color: '#fff', fontSize: 10, fontWeight: 700 }}>LADO BLANCO (DERECHA)</Text>
-                  <Row gutter={4}>
+                {/* LADO BLANCO */}
+                <div style={{ 
+                  background: 'rgba(255, 255, 255, 0.04)', 
+                  border: '1px solid rgba(255, 255, 255, 0.12)', 
+                  borderRadius: 10, 
+                  padding: '10px 12px',
+                  marginBottom: 12 
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffffff' }} />
+                    <Text style={{ color: '#ffffff', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      LADO BLANCO (DERECHA)
+                    </Text>
+                  </div>
+                  <Row gutter={6}>
                     <Col span={10}>
-                      <Input size="small" placeholder="Traba" value={blancoName} onChange={(e) => setBlancoName(e.target.value)} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', borderColor: 'rgba(255,255,255,0.2)' }} />
+                      <Input 
+                        size="small" 
+                        placeholder="Traba Blanca" 
+                        value={blancoName} 
+                        onChange={(e) => setBlancoName(e.target.value)} 
+                        style={{ background: 'rgba(0,0,0,0.3)', color: '#fff', borderColor: 'rgba(255, 255, 255, 0.2)', borderRadius: 6, fontWeight: 700 }} 
+                      />
                     </Col>
                     <Col span={7}>
-                      <Input size="small" placeholder="Peso" value={pesoBlanco} onChange={(e) => setPesoBlanco(e.target.value)} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', borderColor: 'rgba(255,255,255,0.2)', fontSize: 11 }} />
+                      <Input 
+                        size="small" 
+                        placeholder="Peso" 
+                        value={pesoBlanco} 
+                        onChange={(e) => setPesoBlanco(e.target.value)} 
+                        style={{ background: 'rgba(0,0,0,0.3)', color: '#fff', borderColor: 'rgba(255, 255, 255, 0.2)', borderRadius: 6, fontSize: 11 }} 
+                      />
                     </Col>
                     <Col span={7}>
-                      <Input size="small" placeholder="Marca" value={marcaBlanco} onChange={(e) => setMarcaBlanco(e.target.value)} style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', borderColor: 'rgba(255,255,255,0.2)', fontSize: 11 }} />
+                      <Input 
+                        size="small" 
+                        placeholder="Marca" 
+                        value={marcaBlanco} 
+                        onChange={(e) => setMarcaBlanco(e.target.value)} 
+                        style={{ background: 'rgba(0,0,0,0.3)', color: '#fff', borderColor: 'rgba(255, 255, 255, 0.2)', borderRadius: 6, fontSize: 11 }} 
+                      />
                     </Col>
                   </Row>
                 </div>
 
-                <div style={{ marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10 }}>
-                  <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, display: 'block', marginBottom: 4, fontWeight: 700 }}>SUBIR FOTOS DE LOS GALLOS</Text>
+                {/* CUSTOM PHOTO UPLOAD BUTTONS */}
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 10 }}>
+                  <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, display: 'block', marginBottom: 6, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    📷 FOTOS EN VIVO (TRANSMISIÓN)
+                  </Text>
                   <Row gutter={8}>
                     <Col span={12}>
-                      <div style={{ fontSize: 9, color: '#60a5fa', marginBottom: 2 }}>Foto Gallo Azul</div>
-                      <input type="file" accept="image/*" onChange={handleFotoAzulChange} style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', width: '100%' }} />
+                      <label style={{ cursor: 'pointer', display: 'block' }}>
+                        <input type="file" accept="image/*" onChange={handleFotoAzulChange} style={{ display: 'none' }} />
+                        <div style={{ 
+                          background: fotoAzul ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.04)', 
+                          border: fotoAzul ? '1px solid #3b82f6' : '1px dashed rgba(59,130,246,0.4)', 
+                          borderRadius: 8, 
+                          padding: '6px 8px', 
+                          textAlign: 'center',
+                          transition: 'all 0.2s'
+                        }}>
+                          <div style={{ fontSize: 10, color: '#60a5fa', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                            {fotoAzul ? <CheckOutlined style={{ color: '#10b981' }} /> : <PictureOutlined />}
+                            <span>{fotoAzul ? 'Azul Subida' : 'Foto Gallo Azul'}</span>
+                          </div>
+                        </div>
+                      </label>
                     </Col>
                     <Col span={12}>
-                      <div style={{ fontSize: 9, color: '#ffffff', marginBottom: 2 }}>Foto Gallo Blanco</div>
-                      <input type="file" accept="image/*" onChange={handleFotoBlancoChange} style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', width: '100%' }} />
+                      <label style={{ cursor: 'pointer', display: 'block' }}>
+                        <input type="file" accept="image/*" onChange={handleFotoBlancoChange} style={{ display: 'none' }} />
+                        <div style={{ 
+                          background: fotoBlanco ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.04)', 
+                          border: fotoBlanco ? '1px solid #ffffff' : '1px dashed rgba(255,255,255,0.4)', 
+                          borderRadius: 8, 
+                          padding: '6px 8px', 
+                          textAlign: 'center',
+                          transition: 'all 0.2s'
+                        }}>
+                          <div style={{ fontSize: 10, color: '#ffffff', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                            {fotoBlanco ? <CheckOutlined style={{ color: '#10b981' }} /> : <PictureOutlined />}
+                            <span>{fotoBlanco ? 'Blanca Subida' : 'Foto Gallo Blanco'}</span>
+                          </div>
+                        </div>
+                      </label>
                     </Col>
                   </Row>
                 </div>
               </Card>
             </Col>
 
-            {/* Panel 3: Careo triggers and Results registration */}
-            <Col xs={24} md={8}>
+            {/* Panel 3: Careos & Fight Winner Resolution */}
+            <Col xs={24} lg={8}>
               <Card 
-                title={<span style={{ color: '#fff', fontSize: 13, fontWeight: 700 }}>CAREOS & RESOLUCIÓN</span>}
-                style={{ background: 'rgba(255, 255, 255, 0.02)', borderColor: 'rgba(255, 255, 255, 0.05)', borderRadius: 12 }}
-                styles={{ body: { padding: 12 } }}
+                title={
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <TrophyOutlined style={{ color: '#f59e0b', fontSize: 16 }} />
+                    <span style={{ color: '#fff', fontSize: 13, fontWeight: 800, letterSpacing: '0.5px' }}>
+                      CAREOS & RESOLUCIÓN
+                    </span>
+                  </div>
+                }
+                style={{ 
+                  background: 'linear-gradient(145deg, rgba(18, 24, 38, 0.85) 0%, rgba(12, 16, 26, 0.95) 100%)',
+                  borderColor: 'rgba(255, 255, 255, 0.08)',
+                  borderRadius: 16,
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                  backdropFilter: 'blur(12px)'
+                }}
+                styles={{ body: { padding: '16px' } }}
               >
-                <div style={{ marginBottom: 12 }}>
-                  <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, display: 'block', marginBottom: 4 }}>ACTIVAR CAREO / TIERRA (CRONÓMETRO ROJO)</Text>
-                  <Space size={4} style={{ width: '100%', display: 'flex' }}>
-                    <Button size="small" style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderColor: 'rgba(239,68,68,0.2)', fontSize: 11 }} onClick={() => handleStartSubTimer(60, 'CAREO')}>
-                      60s
+                <div style={{ marginBottom: 14 }}>
+                  <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    ⏱️ CRONÓMETROS SECUNDARIOS (CAREO / TIERRA)
+                  </Text>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <Button 
+                      size="middle" 
+                      style={{ 
+                        flex: 1, 
+                        background: 'rgba(239, 68, 68, 0.12)', 
+                        color: '#ef4444', 
+                        borderColor: 'rgba(239, 68, 68, 0.3)', 
+                        fontSize: 11, 
+                        fontWeight: 800,
+                        borderRadius: 8
+                      }} 
+                      onClick={() => handleStartSubTimer(60, 'CAREO')}
+                    >
+                      60s CAREO
                     </Button>
-                    <Button size="small" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b', borderColor: 'rgba(245,158,11,0.2)', fontSize: 11 }} onClick={() => handleStartSubTimer(30, 'TIERRA')}>
-                      30s
+                    <Button 
+                      size="middle" 
+                      style={{ 
+                        flex: 1, 
+                        background: 'rgba(245, 158, 11, 0.12)', 
+                        color: '#f59e0b', 
+                        borderColor: 'rgba(245, 158, 11, 0.3)', 
+                        fontSize: 11, 
+                        fontWeight: 800,
+                        borderRadius: 8
+                      }} 
+                      onClick={() => handleStartSubTimer(30, 'TIERRA')}
+                    >
+                      30s TIERRA
                     </Button>
-                    <Button size="small" style={{ background: 'rgba(245,158,11,0.1)', color: '#f59e0b', borderColor: 'rgba(245,158,11,0.2)', fontSize: 11 }} onClick={() => handleStartSubTimer(20, 'TIERRA')}>
-                      20s
+                    <Button 
+                      size="middle" 
+                      style={{ 
+                        flex: 1, 
+                        background: 'rgba(245, 158, 11, 0.12)', 
+                        color: '#f59e0b', 
+                        borderColor: 'rgba(245, 158, 11, 0.3)', 
+                        fontSize: 11, 
+                        fontWeight: 800,
+                        borderRadius: 8
+                      }} 
+                      onClick={() => handleStartSubTimer(20, 'TIERRA')}
+                    >
+                      20s TIERRA
                     </Button>
                     {subTimeLeft !== null && (
-                      <Button size="small" type="text" danger icon={<CloseCircleOutlined />} onClick={handleCancelSubTimer} />
+                      <Tooltip title="Cancelar cronómetro secundario">
+                        <Button 
+                          size="middle" 
+                          type="text" 
+                          danger 
+                          icon={<CloseCircleOutlined />} 
+                          onClick={handleCancelSubTimer} 
+                          style={{ borderRadius: 8 }}
+                        />
+                      </Tooltip>
                     )}
-                  </Space>
+                  </div>
                 </div>
 
-                <div>
-                  <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, display: 'block', marginBottom: 4 }}>REGISTRAR GANADOR DE LA PELEA</Text>
-                  <Row gutter={4}>
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12 }}>
+                  <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    🏆 REGISTRAR GANADOR DEL COMBATE
+                  </Text>
+                  <Row gutter={6}>
                     <Col span={8}>
-                      <Button block size="small" type="primary" onClick={() => handleSaveFightResult('Azul')} style={{ background: '#2563eb', borderColor: '#2563eb', fontSize: 10, fontWeight: 800 }}>
-                        AZUL (PLACA)
+                      <Button 
+                        block 
+                        size="middle" 
+                        type="primary" 
+                        onClick={() => handleSaveFightResult('Azul')} 
+                        style={{ 
+                          background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)', 
+                          borderColor: '#2563eb', 
+                          fontSize: 11, 
+                          fontWeight: 900,
+                          borderRadius: 8,
+                          boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+                          height: 38
+                        }}
+                      >
+                        AZUL
                       </Button>
                     </Col>
                     <Col span={8}>
-                      <Button block size="small" type="primary" onClick={() => handleSaveFightResult('Blanco')} style={{ background: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: 10, fontWeight: 800 }}>
+                      <Button 
+                        block 
+                        size="middle" 
+                        type="primary" 
+                        onClick={() => handleSaveFightResult('Blanco')} 
+                        style={{ 
+                          background: 'linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%)', 
+                          borderColor: '#ffffff', 
+                          color: '#0f172a', 
+                          fontSize: 11, 
+                          fontWeight: 900,
+                          borderRadius: 8,
+                          boxShadow: '0 4px 12px rgba(255, 255, 255, 0.2)',
+                          height: 38
+                        }}
+                      >
                         BLANCO
                       </Button>
                     </Col>
                     <Col span={8}>
-                      <Button block size="small" type="primary" onClick={() => handleSaveFightResult('Tablas')} style={{ background: '#d97706', borderColor: '#d97706', fontSize: 10, fontWeight: 800 }}>
+                      <Button 
+                        block 
+                        size="middle" 
+                        type="primary" 
+                        onClick={() => handleSaveFightResult('Tablas')} 
+                        style={{ 
+                          background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)', 
+                          borderColor: '#f59e0b', 
+                          fontSize: 11, 
+                          fontWeight: 900,
+                          borderRadius: 8,
+                          boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+                          height: 38
+                        }}
+                      >
                         TABLAS
                       </Button>
                     </Col>

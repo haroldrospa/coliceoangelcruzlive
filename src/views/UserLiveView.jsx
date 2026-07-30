@@ -80,7 +80,7 @@ const HLSVideoPlayer = ({ url }) => {
 };
 
 // Premium Dacast Iframe Player Wrapper & Standby Mode
-const DacastPlayer = ({ status, stream_url, streamMode, viewerCount }) => {
+const DacastPlayer = ({ status, stream_url, streamMode, viewerCount, hideBadge = false }) => {
     const [playerError, setPlayerError] = React.useState(false);
     const isHLS = stream_url?.toLowerCase().includes('.m3u8');
     const hasSignal = !!stream_url;
@@ -94,30 +94,29 @@ const DacastPlayer = ({ status, stream_url, streamMode, viewerCount }) => {
         return (
           <div key="dacast-standby" style={{ 
               position: 'relative', width: '100%', paddingBottom: '56.25%', 
-              background: 'radial-gradient(circle at center, #18202b 0%, #0d1117 100%)',
-              borderRadius: 24, border: '1px solid rgba(0, 229, 163, 0.15)',
+              background: 'linear-gradient(145deg, #121824 0%, #0a0d14 100%)',
+              borderRadius: 16, border: '1px solid rgba(255, 255, 255, 0.06)',
               overflow: 'hidden',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 16px 36px -8px rgba(0,0,0,0.35)'
+              boxShadow: '0 12px 32px rgba(0, 0, 0, 0.3)'
           }}>
-             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', width: '100%', zIndex: 11 }}>
-                <Title level={1} style={{ 
+             <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', width: '100%', zIndex: 11, padding: '0 16px' }}>
+                <Title level={2} style={{ 
                     color: '#fff', 
                     margin: 0, 
-                    fontWeight: 900, 
-                    letterSpacing: '8px', 
-                    fontFamily: 'Outfit',
-                    fontSize: 'clamp(20px, 4vw, 36px)',
-                    textTransform: 'uppercase',
-                    textShadow: '0 0 20px rgba(0, 229, 163, 0.4)'
+                    fontWeight: 800, 
+                    letterSpacing: '2px', 
+                    fontFamily: 'Outfit, sans-serif',
+                    fontSize: 'clamp(18px, 3.5vw, 30px)',
+                    textTransform: 'uppercase'
                 }}>
                     COLISEO ANGEL CRUZ
                 </Title>
-                <div style={{ width: 60, height: 3, background: '#00E5A3', margin: '15px auto', borderRadius: 9999, opacity: 0.8 }} />
-                <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 800, letterSpacing: '4px', textTransform: 'uppercase' }}>
-                    {playerError ? 'RECONECTANDO SEÑAL...' : status !== 'LIVE' && !hasSignal ? 'ESPERANDO SEÑAL...' : 'TRANSMISIÓN EN BREVE'}
+                <div style={{ width: 40, height: 2, background: '#10b981', margin: '12px auto', borderRadius: 2 }} />
+                <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>
+                    {playerError ? 'Reconectando señal...' : status !== 'LIVE' && !hasSignal ? 'Esperando señal de transmisión' : 'Transmisión en breve'}
                 </Text>
              </div>
           </div>
@@ -129,12 +128,14 @@ const DacastPlayer = ({ status, stream_url, streamMode, viewerCount }) => {
     if (isHLS) {
         return (
             <div key="dacast-hls" style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', borderRadius: 8, overflow: 'hidden', background: '#000' }}>
-                <div style={{ position: 'absolute', top: 15, left: 15, zIndex: 10, display: 'flex', gap: 8 }}>
-                    <div style={{ background: '#dc2626', color: '#fff', padding: '4px 10px', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 6, animation: 'blink 1.5s infinite' }}>
-                        <div style={{ width: 6, height: 6, background: '#fff', borderRadius: '50%', animation: 'pulse-live 2s infinite' }} />
-                        <Text style={{ color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: '0.5px' }}>EN VIVO</Text>
+                {!hideBadge && (
+                    <div style={{ position: 'absolute', top: 15, left: 15, zIndex: 10, display: 'flex', gap: 8 }}>
+                        <div style={{ background: '#dc2626', color: '#fff', padding: '4px 10px', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 6, animation: 'blink 1.5s infinite' }}>
+                            <div style={{ width: 6, height: 6, background: '#fff', borderRadius: '50%', animation: 'pulse-live 2s infinite' }} />
+                            <Text style={{ color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: '0.5px' }}>EN VIVO</Text>
+                        </div>
                     </div>
-                </div>
+                )}
                 <HLSVideoPlayer url={stream_url} onError={() => setPlayerError(true)} />
             </div>
         );
@@ -142,12 +143,14 @@ const DacastPlayer = ({ status, stream_url, streamMode, viewerCount }) => {
 
     return (
         <div key="dacast-standard-container" style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)', background: '#0a0a0a' }}>
-            <div style={{ position: 'absolute', top: 15, left: 15, zIndex: 10, display: 'flex', gap: 8 }}>
-                <div style={{ background: '#dc2626', color: '#fff', padding: '4px 10px', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 6, animation: 'blink 1.5s infinite' }}>
-                    <div style={{ width: 6, height: 6, background: '#fff', borderRadius: '50%', animation: 'pulse-live 2s infinite' }} />
-                    <Text style={{ color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: '0.5px' }}>EN VIVO</Text>
+            {!hideBadge && (
+                <div style={{ position: 'absolute', top: 15, left: 15, zIndex: 10, display: 'flex', gap: 8 }}>
+                    <div style={{ background: '#dc2626', color: '#fff', padding: '4px 10px', borderRadius: 4, display: 'flex', alignItems: 'center', gap: 6, animation: 'blink 1.5s infinite' }}>
+                        <div style={{ width: 6, height: 6, background: '#fff', borderRadius: '50%', animation: 'pulse-live 2s infinite' }} />
+                        <Text style={{ color: '#fff', fontSize: 10, fontWeight: 800, letterSpacing: '0.5px' }}>EN VIVO</Text>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {isDirectVideo ? (
                 <video 
@@ -235,8 +238,39 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
   const [overlaySize, setOverlaySize] = useState({ w: 340, h: 'auto' });
   const overlayRef = useRef(null);
   const dragState = useRef(null);    // { startX, startY, startPosX, startPosY }
-  const resizeState = useRef(null);  // { startX, startW }
   const [showEmojiBar, setShowEmojiBar] = useState(false);
+  const [isFbFullscreen, setIsFbFullscreen] = useState(false);
+  const [floatingReactions, setFloatingReactions] = useState([]);
+  const [fbChatInput, setFbChatInput] = useState('');
+  const fbChatContainerRef = useRef(null);
+
+  useEffect(() => {
+    if (fbChatContainerRef.current) {
+      fbChatContainerRef.current.scrollTo({
+        top: fbChatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, [chatMessages.length, isFbFullscreen]);
+
+  const triggerReaction = (emoji) => {
+    try { play('NOTIFY'); } catch(e){}
+    const id = Math.random().toString(36).substring(2, 9);
+    const randomLeft = Math.floor(Math.random() * 25) + 65; // 65% - 90%
+    setFloatingReactions(prev => [...prev, { id, emoji, left: randomLeft }]);
+
+    setTimeout(() => {
+      setFloatingReactions(prev => prev.filter(r => r.id !== id));
+    }, 2200);
+
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'live_reaction',
+        payload: { emoji, user_id: userId }
+      });
+    }
+  };
   const handleOverlayMouseDown = (e) => {
     // Only drag from the header bar (not from resize handle)
     if (e.target.closest('[data-resize]')) return;
@@ -365,7 +399,8 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
           setTodayProgram(events);
         }
 
-        const initialMsgs = await rawFetch(`messages?select=*&order=created_at.desc&limit=50`);
+        const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+        const initialMsgs = await rawFetch(`messages?select=*&created_at=gte.${oneHourAgo}&order=created_at.desc&limit=100`);
         if (initialMsgs && Array.isArray(initialMsgs)) {
             setChatMessages(initialMsgs.reverse());
         }
@@ -399,6 +434,16 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
     channelRef.current = channel;
 
     channel
+      .on('broadcast', { event: 'live_reaction' }, ({ payload }) => {
+          if (payload && payload.emoji) {
+              const id = Math.random().toString(36).substring(2, 9);
+              const randomLeft = Math.floor(Math.random() * 25) + 65;
+              setFloatingReactions(prev => [...prev, { id, emoji: payload.emoji, left: randomLeft }]);
+              setTimeout(() => {
+                  setFloatingReactions(prev => prev.filter(r => r.id !== id));
+              }, 2200);
+          }
+      })
       .on('broadcast', { event: 'chat_message' }, ({ payload }) => {
           setChatMessages(prev => {
               // Deduplicate by content and user in a short window
@@ -497,7 +542,58 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
           }
       });
 
-    // 4. Presence Engine: track active connections
+    // 4. Arena Realtime Broadcast Channel (Fight status & bet resolution)
+    const arenaChannel = supabase.channel('arena_realtime', {
+        config: { broadcast: { self: true } }
+    });
+
+    arenaChannel
+      .on('broadcast', { event: 'fight_status_change' }, ({ payload }) => {
+        if (!payload) return;
+        const { post_number, status, id } = payload;
+        
+        if (status === 'CLOSED' || status === 'FINISHED') {
+          setIsBetModalOpen(prev => {
+            if (prev) msg.warning(`⚔️ Apuestas cerradas para Pelea #${post_number}`);
+            return false;
+          });
+          setIsSelectionModalOpen(false);
+        }
+
+        setFightInfo(prev => {
+          if (parseInt(prev.post_number) === parseInt(post_number) || prev.id === id) {
+            return { ...prev, status };
+          }
+          return prev;
+        });
+
+        setTodayProgram(prev => prev.map(item => {
+          if (parseInt(item.post_number) === parseInt(post_number) || item.id === id) {
+            return { ...item, status };
+          }
+          return item;
+        }));
+      })
+      .on('broadcast', { event: 'bets_resolved' }, async ({ payload }) => {
+        if (userId) {
+          try {
+            const userRes = await rawFetch(`users?select=balance&id=eq.${userId}`);
+            if (userRes && userRes[0]) {
+              const newBal = parseFloat(userRes[0].balance);
+              setUserBalance(prev => {
+                if (newBal > prev) {
+                  play('WIN');
+                  msg.success('🎉 ¡Apuesta liquidada con éxito! Saldo acreditado.');
+                }
+                return newBal;
+              });
+            }
+          } catch(e){}
+        }
+      })
+      .subscribe();
+
+    // 5. Presence Engine: track active connections
     const presenceChannel = supabase.channel('online_viewers', {
         config: {
             presence: {
@@ -523,24 +619,36 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
 
     return () => {
         supabase.removeChannel(channel);
+        supabase.removeChannel(arenaChannel);
         supabase.removeChannel(presenceChannel);
     };
   }, [userId]);
 
-  // 3b. Fast-poll: active fight every 3s + cartelera every 3s to stay fully in sync
+  // 3b. Fast-poll: active fight & balance every 3s to stay 100% in sync
   useEffect(() => {
     const syncAll = async () => {
       try {
         // 1. Sync active fight
         const active = await rawFetch(`events?select=*&status=in.(LIVE,CLOSED)&order=updated_at.desc&limit=1`);
-        setFightInfo(prev => {
-          if (active && active[0]) {
-            return active[0];
-          } else if (prev.status === 'LIVE' || prev.status === 'CLOSED') {
-            return { id: null, status: 'PENDING', gallo_a_name: 'Gallo Azul', gallo_b_name: 'Gallo Blanco' };
-          }
-          return prev;
-        });
+        if (active && active[0]) {
+          const fresh = active[0];
+          setFightInfo(prev => {
+            if (prev.id === fresh.id && prev.status !== fresh.status) {
+              if (fresh.status === 'CLOSED' || fresh.status === 'FINISHED') {
+                setIsBetModalOpen(false);
+                setIsSelectionModalOpen(false);
+              }
+            }
+            return fresh;
+          });
+        } else {
+          setFightInfo(prev => {
+            if (prev.status === 'LIVE' || prev.status === 'CLOSED') {
+              return { id: null, status: 'PENDING', gallo_a_name: 'Gallo Azul', gallo_b_name: 'Gallo Blanco' };
+            }
+            return prev;
+          });
+        }
 
         // 2. Sync cartelera list statuses
         const events = await rawFetch('events?select=*&order=post_number.asc');
@@ -560,25 +668,48 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
             return item;
           }));
         }
+
+        // 3. Sync user balance
+        if (userId) {
+          const userRes = await rawFetch(`users?select=balance&id=eq.${userId}`);
+          if (userRes && userRes[0]) {
+            const freshBal = parseFloat(userRes[0].balance);
+            setUserBalance(prev => {
+              if (freshBal > prev) {
+                play('WIN');
+              }
+              return freshBal;
+            });
+          }
+        }
       } catch (_) {}
     };
     const interval = setInterval(syncAll, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [userId]);
 
   const [lastMessageCount, setLastMessageCount] = useState(0);
 
-  // 🕒 EPHEMERAL ENGINE: Strict 5-minute Autodestruct (Screen & DB Cleanup)
+  // 🕒 EPHEMERAL CHAT ENGINE: Strict 1-Hour Autodestruct (Screen & DB Cleanup)
   useEffect(() => {
-    const ticker = setInterval(async () => {
+    const cleanExpiredMessages = async () => {
       const now = Date.now();
-      const cutoff = now - 300000; // 5 Minutes
+      const cutoff = now - 3600000; // 1 Hour (3,600,000 ms)
+      const cutoffIso = new Date(cutoff).toISOString();
       
-      // SOLO limpieza visual inmediata (No toca la DB para ahorrar Disk IO)
+      // 1. Immediate screen memory cleanup
       setChatMessages(prev => prev.filter(msg => {
         return new Date(msg.created_at).getTime() > cutoff;
       }));
-    }, 120000); 
+
+      // 2. Database cleanup (delete messages older than 1 hour)
+      try {
+        await supabase.from('messages').delete().lt('created_at', cutoffIso);
+      } catch (_) {}
+    };
+
+    cleanExpiredMessages();
+    const ticker = setInterval(cleanExpiredMessages, 60000); // Check every 60 seconds
     return () => clearInterval(ticker);
   }, []);
 
@@ -597,13 +728,17 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
 
   const openBetSelectionModal = (fight) => {
     if (!currentUser) return setCurrentView('login');
+    if (fight && (fight.status === 'CLOSED' || fight.status === 'FINISHED')) {
+      return msg.warning(`Las apuestas para la Pelea #${fight.post_number} están CERRADAS`);
+    }
     setSelectionFight(fight);
     setIsSelectionModalOpen(true);
   };
 
-  const openBetModal = (side) => {
+  const openBetModal = (side, targetFight = fightInfo) => {
     if (!currentUser) return setCurrentView('login');
-    if (fightInfo.status !== 'LIVE') return msg.warning('APUESTAS CERRADAS');
+    const f = targetFight || fightInfo;
+    if (f && f.status !== 'LIVE') return msg.warning('APUESTAS CERRADAS');
     setBetSide(side);
     setIsBetModalOpen(true);
   };
@@ -663,22 +798,36 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
     }
   };
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = async (customText) => {
     if (!currentUser) return setCurrentView('login');
-    if (!chatInput.trim() || !userId) return;
-    const text = chatInput.trim();
-    setChatInput('');
+
+    const text = (typeof customText === 'string' ? customText : chatInput).trim();
+    if (!text) return;
+
+    if (typeof customText !== 'string') {
+      setChatInput('');
+    }
+
+    const senderId = userId || sessionUuid;
+    const senderEmail = userEmail ? userEmail.split('@')[0] : 'Usuario';
 
     const messagePayload = {
-        id: `br_${Date.now()}`, // Temporary broadcast ID
-        user_id: userId,
-        user_email: userEmail.split('@')[0],
+        id: `br_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        user_id: senderId,
+        user_email: senderEmail,
         text,
         type: 'USER',
         created_at: new Date().toISOString()
     };
 
-    // 1. BROADCAST: Send to everyone (including self) immediately
+    // Immediately update local chat state so user sees comment INSTANTLY!
+    setChatMessages(prev => {
+        const exists = prev.some(m => m.id === messagePayload.id || (m.text === messagePayload.text && m.user_id === messagePayload.user_id && Math.abs(Date.now() - new Date(m.created_at).getTime()) < 2000));
+        if (exists) return prev;
+        return [...prev, messagePayload];
+    });
+
+    // 1. BROADCAST: Send to everyone immediately
     if (channelRef.current) {
         channelRef.current.send({
             type: 'broadcast',
@@ -690,8 +839,8 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
     try {
         // 2. PERSIST: Save to DB in the background
         await supabase.from('messages').insert({
-            user_id: userId,
-            user_email: userEmail.split('@')[0],
+            user_id: senderId,
+            user_email: senderEmail,
             text,
             type: 'USER'
         });
@@ -762,11 +911,31 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
     return val;
   };
 
+  const sortedCartelera = React.useMemo(() => {
+    const list = [...todayProgram];
+    list.sort((a, b) => {
+      const aIsActive = fightInfo.id && a.id === fightInfo.id;
+      const bIsActive = fightInfo.id && b.id === fightInfo.id;
+      if (aIsActive && !bIsActive) return -1;
+      if (!aIsActive && bIsActive) return 1;
+
+      const aIsFinished = a.status === 'FINISHED';
+      const bIsFinished = b.status === 'FINISHED';
+      if (!aIsFinished && bIsFinished) return -1;
+      if (aIsFinished && !bIsFinished) return 1;
+
+      const numA = parseInt(String(a.post_number || '0').replace(/[^0-9]/g, ''), 10) || 0;
+      const numB = parseInt(String(b.post_number || '0').replace(/[^0-9]/g, ''), 10) || 0;
+      return numA - numB;
+    });
+    return list;
+  }, [todayProgram, fightInfo.id]);
+
   return (
     <div style={{ background: 'var(--obsidian)', minHeight: '100vh', padding: '16px', maxWidth: 1200, margin: '0 auto', paddingBottom: 100 }}>
-      {/* PRIMARY BATTLE ZONE: Video & Chat Aligned */}
-      <Row gutter={[16, 16]} align="stretch" style={{ minHeight: 400 }}>
-        <Col xs={24} lg={16} className="player-container" style={{ position: 'relative' }}>
+      {/* PRIMARY BATTLE ZONE: Video Stream Player */}
+      <Row gutter={[16, 16]}>
+        <Col span={24} className="player-container" style={{ position: 'relative' }}>
            <DacastPlayer 
                 status={fightInfo.status} 
                 stream_url={fightInfo.stream_url || globalStream} 
@@ -774,21 +943,35 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                 viewerCount={viewerCount}
            />
 
-           {/* Toggle overlay button */}
-           {fightInfo.id && (
-             <button
-               onClick={() => setOverlayVisible(v => !v)}
-               style={{
-                 position: 'absolute', top: 8, right: 8, zIndex: 30,
-                 background: overlayVisible ? 'rgba(16,185,129,0.85)' : 'rgba(0,0,0,0.6)',
-                 border: 'none', borderRadius: 6, color: '#fff', fontWeight: 800,
-                 fontSize: 10, padding: '4px 10px', cursor: 'pointer',
-                 letterSpacing: 1, backdropFilter: 'blur(4px)'
-               }}
-             >
-               {overlayVisible ? '📊 OCULTAR' : '📊 TABLERO'}
-             </button>
-           )}
+            {/* Action Overlay Buttons */}
+            <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 30, display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => setIsFbFullscreen(true)}
+                style={{
+                  background: 'rgba(29, 78, 216, 0.85)',
+                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                  borderRadius: 6, color: '#fff', fontWeight: 800,
+                  fontSize: 10, padding: '4px 10px', cursor: 'pointer',
+                  letterSpacing: 1, backdropFilter: 'blur(4px)',
+                  display: 'flex', alignItems: 'center', gap: 4
+                }}
+              >
+                📺 FULLSCREEN LIVE
+              </button>
+              {fightInfo.id && (
+                <button
+                  onClick={() => setOverlayVisible(v => !v)}
+                  style={{
+                    background: overlayVisible ? 'rgba(16,185,129,0.85)' : 'rgba(0,0,0,0.6)',
+                    border: 'none', borderRadius: 6, color: '#fff', fontWeight: 800,
+                    fontSize: 10, padding: '4px 10px', cursor: 'pointer',
+                    letterSpacing: 1, backdropFilter: 'blur(4px)'
+                  }}
+                >
+                  {overlayVisible ? '📊 OCULTAR' : '📊 TABLERO'}
+                </button>
+              )}
+            </div>
 
            {/* DRAGGABLE & RESIZABLE SCOREBOARD OVERLAY */}
            {overlayVisible && fightInfo.id && (
@@ -905,160 +1088,6 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               </div>
             )}
          </Col>
-
-         <Col xs={24} lg={8} style={{ display: 'flex' }}>
-            <Card 
-              className={`glass-panel chat-card live-chat-card ${isChatMinimized ? 'minimized' : ''}`} 
-              styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column', height: isChatMinimized ? 'auto' : '100%', overflow: 'hidden' } }} 
-              style={{ 
-                width: '100%', 
-                border: '1px solid var(--glass-border)', 
-                boxShadow: 'var(--shadow-main)',
-                height: isChatMinimized ? 'auto' : undefined,
-                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-              }}
-            >
-                 <div 
-                   style={{ 
-                     padding: '8px 16px', 
-                     borderBottom: isChatMinimized ? 'none' : '1px solid var(--glass-border)', 
-                     display: 'flex', 
-                     justifyContent: 'space-between', 
-                     alignItems: 'center', 
-                     background: 'var(--glass)',
-                     cursor: 'pointer'
-                   }}
-                   onClick={() => setIsChatMinimized(!isChatMinimized)}
-                 >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                       <Title level={5} style={{ color: 'var(--text-main)', margin: 0, fontSize: 10, letterSpacing: '1.5px', fontWeight: 900 }}>CHAT EN VIVO</Title>
-                       <Badge status="processing" color="#00E5A3" text={<Text style={{ fontSize: 8, color: '#00E5A3', fontWeight: 800 }}>LIVE</Text>} />
-                    </div>
-                    
-                    <Button 
-                       type="text" 
-                       size="small" 
-                       icon={isChatMinimized ? <UpOutlined style={{ color: '#00E5A3', fontSize: 11 }} /> : <DownOutlined style={{ color: 'var(--text-dim)', fontSize: 11 }} />}
-                       onClick={(e) => { e.stopPropagation(); setIsChatMinimized(!isChatMinimized); }}
-                       style={{ 
-                         display: 'flex', 
-                         alignItems: 'center', 
-                         justifyContent: 'center',
-                         background: 'rgba(255,255,255,0.06)',
-                         borderRadius: '50%',
-                         width: 26,
-                         height: 26
-                       }}
-                    />
-                 </div>
-                 
-                 {!isChatMinimized && (
-                   <>
-                     <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }} className="chat-container" ref={chatContainerRef}>
-                        {chatMessages.map((msg) => {
-                           const isMe = msg.user_id === userId;
-                           return (
-                             <div key={msg.id} className="fade-message" style={{ alignSelf: isMe ? 'flex-end' : 'flex-start', maxWidth: '88%' }}>
-                                <Text style={{ fontSize: 10, color: '#00E5A3', fontWeight: 800, marginLeft: 8, letterSpacing: '0.3px' }}>{msg.user_email}</Text>
-                                <div style={{ 
-                                    background: isMe ? 'var(--brand-green)' : 'rgba(255, 255, 255, 0.08)', 
-                                    padding: '8px 14px', 
-                                    borderRadius: 14, 
-                                    color: isMe ? '#0b1117' : '#ffffff', 
-                                    fontSize: 14, 
-                                    lineHeight: '1.4',
-                                    fontWeight: 600, 
-                                    marginTop: 3,
-                                    border: isMe ? 'none' : '1px solid rgba(255, 255, 255, 0.12)',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-                                }}>{msg.text}</div>
-                             </div>
-                           )
-                        })}
-                     </div>
-                     
-                     <style>{`
-                         .chat-container { scroll-behavior: smooth; }
-                         .fade-message { animation: fadeIn 0.3s ease-out; }
-                         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-                     `}</style>
-
-                     <div style={{ padding: '10px 14px', borderTop: '1px solid var(--glass-border)', background: 'var(--charcoal)' }}>
-                        {/* QUICK EMOJI BAR (COLLAPSIBLE) */}
-                        {showEmojiBar && (
-                          <div style={{ display: 'flex', gap: 6, marginBottom: 8, overflowX: 'auto', paddingBottom: 2 }} className="hide-scrollbar">
-                             {['🐓', '🐔', '🥊', '🏆', '💰', '🔥', '⚡', '🔪', '🚩', '🤝'].map(emoji => (
-                                <div 
-                                   key={emoji}
-                                   onClick={() => setChatInput(prev => prev + emoji)}
-                                   style={{ 
-                                      cursor: 'pointer', 
-                                      fontSize: 16, 
-                                      background: 'var(--glass)', 
-                                      borderRadius: 6, 
-                                      width: 28, 
-                                      height: 28, 
-                                      display: 'flex', 
-                                      alignItems: 'center', 
-                                      justifyContent: 'center',
-                                      transition: 'all 0.2s',
-                                      border: '1px solid var(--glass-border)'
-                                   }}
-                                   className="emoji-btn"
-                                >
-                                   {emoji}
-                                </div>
-                             ))}
-                          </div>
-                        )}
-
-                        <style>{`
-                           .hide-scrollbar::-webkit-scrollbar { display: none; }
-                           .emoji-btn:hover { background: rgba(0,229,163,0.2) !important; transform: scale(1.1); border-color: #00E5A3 !important; }
-                        `}</style>
-
-                        <div style={{ position: 'relative' }}>
-                           {currentUser && (
-                             <SmileOutlined 
-                               onClick={() => setShowEmojiBar(!showEmojiBar)} 
-                               style={{ 
-                                  position: 'absolute', 
-                                  left: 12, 
-                                  top: '50%', 
-                                  transform: 'translateY(-50%)', 
-                                  color: showEmojiBar ? '#00E5A3' : 'var(--text-muted)', 
-                                  cursor: 'pointer',
-                                  fontSize: 14,
-                                  zIndex: 10
-                               }} 
-                             />
-                           )}
-                           <input 
-                             value={chatInput} 
-                             onChange={e => setChatInput(e.target.value)}
-                             onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
-                             placeholder={currentUser ? "Comenta la jugada..." : "Inicia sesión para chatear"}
-                             disabled={!currentUser}
-                             style={{ 
-                                width: '100%', 
-                                background: currentUser ? 'var(--obsidian)' : 'var(--glass)', 
-                                border: '1px solid var(--glass-border)', 
-                                borderRadius: 12, 
-                                padding: currentUser ? '8px 36px 8px 32px' : '8px 36px 8px 12px', 
-                                color: 'var(--text-main)', 
-                                fontSize: 12,
-                                height: 36,
-                                cursor: currentUser ? 'text' : 'pointer'
-                             }}
-                             onClick={() => !currentUser && setCurrentView('login')}
-                           />
-                           <SendOutlined onClick={handleSendMessage} style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: currentUser ? '#00E5A3' : 'var(--text-muted)', cursor: 'pointer', fontSize: 13 }} />
-                        </div>
-                     </div>
-                   </>
-                 )}
-            </Card>
-         </Col>
       </Row>
 
       {/* NEW PROMINENT PROGRAM SECTION UNDERNEATH */}
@@ -1073,420 +1102,239 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               </div>
     
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {(() => {
-                    // Show ALL fights in spectator view regardless of status
-                    const filtered = [...todayProgram];
-                    
-                    filtered.sort((a, b) => {
-                        // Priority: active fight (LIVE/CLOSED matching fightInfo) → PENDING/unstarted → FINISHED last
-                        const aIsActive = fightInfo.id && a.id === fightInfo.id;
-                        const bIsActive = fightInfo.id && b.id === fightInfo.id;
-                        if (aIsActive && !bIsActive) return -1;
-                        if (!aIsActive && bIsActive) return 1;
+                {sortedCartelera.length === 0 ? (
+                  <div style={{ padding: '40px', textAlign: 'center', background: 'var(--glass)', borderRadius: 12, border: '1px dashed var(--glass-border)' }}>
+                    <Text style={{ color: 'var(--text-muted)' }}>No hay combates en esta categoría de momento.</Text>
+                  </div>
+                ) : (
+                  sortedCartelera.map((event) => {
+                    let aData = { weight: event.gallo_a_weight || '0-0.0' };
+                    let bData = { weight: event.gallo_b_weight || '0-0.0' };
+                    try { 
+                      const pA = JSON.parse(event.gallo_a_weight); 
+                      if (pA && typeof pA === 'object') aData = pA;
+                    } catch(e){}
+                    try { 
+                      const pB = JSON.parse(event.gallo_b_weight); 
+                      if (pB && typeof pB === 'object') bData = pB;
+                    } catch(e){}
 
-                        const aIsFinished = a.status === 'FINISHED';
-                        const bIsFinished = b.status === 'FINISHED';
-                        if (!aIsFinished && bIsFinished) return -1;
-                        if (aIsFinished && !bIsFinished) return 1;
+                    const isActive = fightInfo.id && event.id === fightInfo.id;
+                    const activeStatus = isActive ? fightInfo.status : null;
+                    const isBettingOpen = isActive && activeStatus === 'LIVE';
 
-                        // Within same group, sort by fight number ascending
-                        const numA = parseInt((a.post_number || '0').replace(/\D/g, '')) || 0;
-                        const numB = parseInt((b.post_number || '0').replace(/\D/g, '')) || 0;
-                        return numA - numB;
-                    });
-    
-                    
-                    if (filtered.length === 0) return (
-                        <div style={{ padding: '40px', textAlign: 'center', background: 'var(--glass)', borderRadius: 12, border: '1px dashed var(--glass-border)' }}>
-                            <Text style={{ color: 'var(--text-muted)' }}>No hay combates en esta categoría de momento.</Text>
-                        </div>
-                    );
-    
-                    return filtered.map((event, index) => {
-                        let aData = { weight: event.gallo_a_weight || '0-0.0' };
-                        let bData = { weight: event.gallo_b_weight || '0-0.0' };
-                        try { 
-                           const pA = JSON.parse(event.gallo_a_weight); 
-                           if (pA && typeof pA === 'object') aData = pA;
-                        } catch(e){}
-                        try { 
-                           const pB = JSON.parse(event.gallo_b_weight); 
-                           if (pB && typeof pB === 'object') bData = pB;
-                        } catch(e){}
+                    let tagColor = 'default';
+                    let tagLabel = '⏳ PROGRAMADA';
+                    if (event.status === 'FINISHED') {
+                      tagColor = 'gold'; 
+                      tagLabel = '🏁 FINALIZADA';
+                    } else if (isActive && activeStatus === 'CLOSED') {
+                      tagColor = 'red'; 
+                      tagLabel = '⚔️ EN COMBATE';
+                    } else if (isActive && activeStatus === 'LIVE') {
+                      tagColor = 'green'; 
+                      tagLabel = '🟢 APUESTAS ABIERTAS';
+                    }
 
-                        const isActive = fightInfo.id && event.id === fightInfo.id;
-                        const activeStatus = isActive ? fightInfo.status : null;
-
-                        let tagColor = 'default';
-                        let tagLabel = '⏳ PROGRAMADA';
-                        if (event.status === 'FINISHED') {
-                          tagColor = 'gold'; 
-                          tagLabel = '🏁 FINALIZADA';
-                        } else if (isActive && activeStatus === 'CLOSED') {
-                          tagColor = 'red'; 
-                          tagLabel = '⚔️ EN COMBATE';
-                        } else if (isActive && activeStatus === 'LIVE') {
-                          tagColor = 'green'; 
-                          tagLabel = '🟢 APUESTAS ABIERTAS';
-                        }
-
-                        return (
-                          <div 
-                              key={event.id}
-                              onClick={() => {
-                                  if (event.status !== 'FINISHED') {
-                                      setFightInfo(event);
-                                      const player = document.querySelector('.player-container');
-                                      player?.scrollIntoView({ behavior: 'smooth' });
-                                  }
-                              }}
-                              className={`cart-card-premium ${isActive ? 'active-match' : ''}`}
-                              style={{
-                                cursor: event.status === 'FINISHED' ? 'default' : 'pointer'
-                              }}
+                    return (
+                      <div 
+                        key={event.id}
+                        onClick={() => {
+                          if (event.status !== 'FINISHED') {
+                            setFightInfo(event);
+                            const player = document.querySelector('.player-container');
+                            player?.scrollIntoView({ behavior: 'smooth' });
+                          }
+                        }}
+                        className={`cart-card-premium ${isActive ? 'active-match' : ''}`}
+                        style={{
+                          cursor: event.status === 'FINISHED' ? 'default' : 'pointer'
+                        }}
+                      >
+                        {/* Card Header */}
+                        <div className="cart-card-header">
+                          <span className="cart-fight-number">PELEA {event.post_number}</span>
+                          <Tag 
+                            color={tagColor} 
+                            onClick={(e) => {
+                              if (isBettingOpen) {
+                                e.stopPropagation();
+                                openBetSelectionModal(event);
+                              }
+                            }}
+                            style={{ 
+                              fontSize: 10, 
+                              borderRadius: 6, 
+                              margin: 0, 
+                              padding: '4px 10px', 
+                              fontWeight: 900,
+                              cursor: isBettingOpen ? 'pointer' : 'default',
+                              border: 'none',
+                              letterSpacing: '0.5px'
+                            }}
                           >
-                             <style>{`
-                                .cart-card-premium {
-                                  background: #181d27;
-                                  border: 1px solid rgba(255, 255, 255, 0.06);
-                                  border-radius: 20px;
-                                  padding: 16px 20px;
-                                  display: flex;
-                                  flex-direction: column;
-                                  gap: 12px;
-                                  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-                                  position: relative;
-                                  overflow: hidden;
-                                  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.25);
-                                }
-                                .cart-card-premium:hover {
-                                  transform: translateY(-2px);
-                                  border-color: rgba(0, 229, 163, 0.3);
-                                  box-shadow: 0 12px 28px -6px rgba(0, 229, 163, 0.12);
-                                }
-                                body.light-theme .cart-card-premium {
-                                  background: #ffffff;
-                                  border-color: rgba(0, 0, 0, 0.06);
-                                  box-shadow: 0 8px 24px -6px rgba(15, 23, 42, 0.06);
-                                }
-                                .cart-card-premium.active-match {
-                                  background: #181d27 !important;
-                                  border: 1.5px solid #00E5A3 !important;
-                                  box-shadow: 0 0 20px rgba(0, 229, 163, 0.2) !important;
-                                }
-                                .cart-card-header {
-                                  display: flex;
-                                  justify-content: space-between;
-                                  align-items: center;
-                                  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                                  padding-bottom: 8px;
-                                }
-                                body.light-theme .cart-card-header {
-                                  border-bottom-color: rgba(0, 0, 0, 0.05);
-                                }
-                                .cart-fight-number {
-                                  color: var(--text-main);
-                                  font-size: 13px;
-                                  font-weight: 800;
-                                  letter-spacing: 1px;
-                                  text-transform: uppercase;
-                                  font-family: 'Outfit', sans-serif;
-                                }
-                                .cart-card-content {
-                                  display: flex;
-                                  align-items: center;
-                                  justify-content: space-between;
-                                  gap: 16px;
-                                }
-                                .cart-fighter-column {
-                                  flex: 1;
-                                  display: flex;
-                                  flex-direction: column;
-                                  gap: 4px;
-                                }
-                                .cart-fighter-column.left {
-                                  align-items: flex-end;
-                                  text-align: right;
-                                }
-                                .cart-fighter-column.right {
-                                  align-items: flex-start;
-                                  text-align: left;
-                                }
-                                .fighter-title-row {
-                                  display: flex;
-                                  align-items: center;
-                                  gap: 8px;
-                                }
-                                .fighter-name {
-                                  color: var(--text-main);
-                                  font-weight: 800;
-                                  font-size: 15px;
-                                  letter-spacing: 0.3px;
-                                  font-family: 'Outfit', sans-serif;
-                                  text-transform: uppercase;
-                                }
-                                .fighter-meta-row {
-                                  display: flex;
-                                  align-items: center;
-                                  flex-wrap: wrap;
-                                  gap: 6px;
-                                }
-                                .cart-fighter-column.left .fighter-meta-row {
-                                  justify-content: flex-end;
-                                }
-                                .cart-fighter-column.right .fighter-meta-row {
-                                  justify-content: flex-start;
-                                }
-                                .meta-tag {
-                                  background: rgba(255, 255, 255, 0.06);
-                                  border: none;
-                                  color: var(--text-dim);
-                                  font-size: 10px;
-                                  font-weight: 600;
-                                  padding: 2px 8px;
-                                  border-radius: 9999px;
-                                }
-                                body.light-theme .meta-tag {
-                                  background: #e2e8f0;
-                                  color: #475569;
-                                }
-                                .weight-tag {
-                                  background: rgba(0, 229, 163, 0.12);
-                                  border: none;
-                                  color: #00E5A3;
-                                  font-size: 10px;
-                                  font-weight: 800;
-                                  padding: 2px 8px;
-                                  border-radius: 9999px;
-                                }
-                                .color-badge {
-                                  background: rgba(255, 255, 255, 0.08);
-                                  color: var(--text-main);
-                                  border-radius: 9999px;
-                                }
-                                .fighter-badge-p {
-                                  background: #f59e0b;
-                                  color: #000000;
-                                  font-size: 9px;
-                                  font-weight: 900;
-                                  padding: 1px 6px;
-                                  border-radius: 9999px;
-                                }
-                                .cart-vs-column {
-                                  display: flex;
-                                  align-items: center;
-                                  justify-content: center;
-                                  width: 28px;
-                                }
-                                .vs-circle {
-                                  font-size: 11px;
-                                  font-weight: 800;
-                                  color: var(--text-muted);
-                                  text-transform: uppercase;
-                                }
-                                .cart-winner-footer {
-                                  display: flex;
-                                  align-items: center;
-                                  justify-content: center;
-                                  gap: 8px;
-                                  background: rgba(0, 229, 163, 0.08);
-                                  border: 1px solid rgba(0, 229, 163, 0.2);
-                                  padding: 8px 16px;
-                                  border-radius: 9999px;
-                                  color: #00E5A3;
-                                  font-size: 12px;
-                                  font-weight: 800;
-                                  letter-spacing: 0.5px;
-                                  text-transform: uppercase;
-                                  margin-top: 2px;
-                                }
-                                .trophy-icon {
-                                  font-size: 13px;
-                                  color: #00E5A3;
-                                }
-                                .cart-live-glow-footer {
-                                  display: flex;
-                                  align-items: center;
-                                  justify-content: center;
-                                  gap: 6px;
-                                  background: rgba(239, 68, 68, 0.1);
-                                  border: 1px solid rgba(239, 68, 68, 0.25);
-                                  padding: 6px 14px;
-                                  border-radius: 9999px;
-                                  color: #ef4444;
-                                  font-size: 10px;
-                                  font-weight: 800;
-                                  letter-spacing: 1px;
-                                  text-transform: uppercase;
-                                }
-                                .live-dot {
-                                  width: 6px;
-                                  height: 6px;
-                                  background: #ef4444;
-                                  border-radius: 50%;
-                                }
-                                .cart-odds-row {
-                                  display: flex;
-                                  gap: 8px;
-                                  width: 100%;
-                                  margin-top: 4px;
-                                }
-                                .odds-btn-wrapper {
-                                  flex: 1;
-                                  background: rgba(0, 229, 163, 0.08);
-                                  border: 1px solid rgba(0, 229, 163, 0.2);
-                                  border-radius: 9999px;
-                                  padding: 6px 14px;
-                                  display: flex;
-                                  justify-content: space-between;
-                                  align-items: center;
-                                  cursor: pointer;
-                                  transition: all 0.2s ease;
-                                }
-                                .odds-btn-wrapper:hover {
-                                  background: rgba(0, 229, 163, 0.16);
-                                  border-color: #00E5A3;
-                                }
-                                .odds-label {
-                                  color: var(--text-dim);
-                                  font-size: 9px;
-                                  font-weight: 700;
-                                  text-transform: uppercase;
-                                }
-                                .odds-value {
-                                  color: #00E5A3;
-                                  font-size: 13px;
-                                  font-weight: 800;
-                                  font-family: 'Outfit', sans-serif;
-                                }
+                            {tagLabel}
+                          </Tag>
+                        </div>
 
-                                @media (max-width: 768px) {
-                                  .cart-card-premium {
-                                    padding: 12px 14px;
-                                    gap: 10px;
-                                    border-radius: 16px;
-                                  }
-                                  .fighter-name {
-                                    font-size: 13px;
-                                  }
-                                  .cart-winner-footer {
-                                    font-size: 10px;
-                                    padding: 6px 12px;
-                                  }
-                                }
-                             `}</style>
+                        {/* Card Content (Fighters) */}
+                        <div className="cart-card-content">
+                          {/* Left Fighter (A - Azul) */}
+                          <div className="cart-fighter-column left">
+                            <div className="fighter-title-row">
+                              {aData.clase === 'P' && <span className="fighter-badge-p">P</span>}
+                              <span className="fighter-name" style={{ color: '#60a5fa' }}>{event.gallo_a_name}</span>
+                            </div>
+                            <div className="fighter-meta-row">
+                              {aData.turno && <span className="meta-tag">T: {aData.turno}</span>}
+                              {aData.marca && <span className="meta-tag">M: {aData.marca}</span>}
+                              <span className="weight-tag">{aData.weight}</span>
+                            </div>
+                          </div>
 
-                             {/* Card Header */}
-                             <div className="cart-card-header">
-                                <span className="cart-fight-number">PELEA {event.post_number}</span>
-                                <Tag 
-                                  color={tagColor} 
+                          {/* VS Divider */}
+                          <div className="cart-vs-column">
+                            <div className="vs-circle">VS</div>
+                          </div>
+
+                          {/* Right Fighter (B - Blanco) */}
+                          <div className="cart-fighter-column right">
+                            <div className="fighter-title-row">
+                              <span className="fighter-name" style={{ color: '#ffffff' }}>{event.gallo_b_name}</span>
+                              {bData.clase === 'P' && <span className="fighter-badge-p">P</span>}
+                            </div>
+                            <div className="fighter-meta-row">
+                              <span className="weight-tag">{bData.weight}</span>
+                              {bData.color && <span className="meta-tag color-badge">{bData.color}</span>}
+                              {bData.marca && <span className="meta-tag">M: {bData.marca}</span>}
+                              {bData.turno && <span className="meta-tag">T: {bData.turno}</span>}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Live Betting Banner & Action Buttons (ONLY when fight is active & betting is OPEN) */}
+                        {isBettingOpen ? (
+                          <>
+                            <div style={{
+                              background: 'linear-gradient(135deg, rgba(16,185,129,0.18) 0%, rgba(5,150,105,0.1) 100%)',
+                              border: '1px solid rgba(16,185,129,0.4)',
+                              borderRadius: 10,
+                              padding: '8px 12px',
+                              textAlign: 'center',
+                              marginTop: 2
+                            }}>
+                              <div style={{ color: '#10b981', fontSize: 11, fontWeight: 900, letterSpacing: '1px', textTransform: 'uppercase' }}>
+                                🟢 APUESTAS ABIERTAS — ¡SELECCIONA TU GANADOR!
+                              </div>
+                            </div>
+
+                            <Row gutter={10} style={{ width: '100%', marginTop: 4 }}>
+                              <Col span={12}>
+                                <Button
+                                  block
+                                  size="large"
+                                  type="primary"
                                   onClick={(e) => {
-                                    if (isActive && activeStatus === 'LIVE') {
-                                      e.stopPropagation();
-                                      openBetSelectionModal(event);
-                                    }
+                                    e.stopPropagation();
+                                    openBetSelectionModal(event);
                                   }}
-                                  style={{ 
-                                    fontSize: 9, 
-                                    borderRadius: 6, 
-                                    margin: 0, 
-                                    padding: '3px 8px', 
-                                    fontWeight: 900,
-                                    cursor: (isActive && activeStatus === 'LIVE') ? 'pointer' : 'default',
-                                    border: 'none'
+                                  style={{
+                                    height: 48,
+                                    borderRadius: 12,
+                                    background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
+                                    borderColor: '#2563eb',
+                                    boxShadow: '0 6px 20px rgba(37, 99, 235, 0.4)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    lineHeight: 1.2,
+                                    padding: '4px 8px'
                                   }}
                                 >
-                                  {tagLabel}
-                                </Tag>
-                             </div>
-
-                             {/* Card Content (Fighters) */}
-                             <div className="cart-card-content">
-                                {/* Left Fighter (A) */}
-                                <div className="cart-fighter-column left">
-                                   <div className="fighter-title-row">
-                                      {aData.clase === 'P' && <span className="fighter-badge-p">P</span>}
-                                      <span className="fighter-name">{event.gallo_a_name}</span>
-                                   </div>
-                                   <div className="fighter-meta-row">
-                                      {aData.turno && <span className="meta-tag">T: {aData.turno}</span>}
-                                      {aData.marca && <span className="meta-tag">M: {aData.marca}</span>}
-                                      <span className="weight-tag">{aData.weight}</span>
-                                   </div>
-                                </div>
-
-                                {/* VS Divider */}
-                                <div className="cart-vs-column">
-                                   <div className="vs-circle">VS</div>
-                                </div>
-
-                                {/* Right Fighter (B) */}
-                                <div className="cart-fighter-column right">
-                                   <div className="fighter-title-row">
-                                      <span className="fighter-name">{event.gallo_b_name}</span>
-                                      {bData.clase === 'P' && <span className="fighter-badge-p">P</span>}
-                                   </div>
-                                   <div className="fighter-meta-row">
-                                      <span className="weight-tag">{bData.weight}</span>
-                                      {bData.color && <span className="meta-tag color-badge">{bData.color}</span>}
-                                      {bData.marca && <span className="meta-tag">M: {bData.marca}</span>}
-                                      {bData.turno && <span className="meta-tag">T: {bData.turno}</span>}
-                                   </div>
-                                </div>
-                             </div>
-
-                             {/* Odds Buttons Row (Only if not finished) */}
-                             {event.status !== 'FINISHED' && (
-                               <div className="cart-odds-row">
-                                 <div className="odds-btn-wrapper" onClick={(e) => {
-                                   if (event.status !== 'FINISHED') {
-                                     e.stopPropagation();
-                                     openBetSelectionModal(event);
-                                   }
-                                 }}>
-                                   <span className="odds-label">LADO A</span>
-                                   <span className="odds-value">{event.gallo_a_odds?.toFixed(2) || '1.90'}</span>
-                                 </div>
-                                 <div className="odds-btn-wrapper" onClick={(e) => {
-                                   if (event.status !== 'FINISHED') {
-                                     e.stopPropagation();
-                                     openBetSelectionModal(event);
-                                   }
-                                 }}>
-                                   <span className="odds-label">LADO B</span>
-                                   <span className="odds-value">{event.gallo_b_odds?.toFixed(2) || '1.90'}</span>
-                                 </div>
-                               </div>
-                             )}
-
-                             {/* Winner Footer */}
-                             {event.status === 'FINISHED' && (
-                                <div className="cart-winner-footer">
-                                   <TrophyOutlined className="trophy-icon" />
-                                   <span>
-                                      {(event.winner_side === 'D' || event.winner_side === 'DRAW') 
-                                        ? 'NULO / TABLAS (EMPATE)' 
-                                        : `GANADOR: ${event.winner_side === 'A' ? event.gallo_a_name : event.gallo_b_name}`}
-                                   </span>
-                                </div>
-                             )}
-
-                             {/* Live Glow Footer */}
-                             {isActive && event.status !== 'FINISHED' && (
-                                <div className="cart-live-glow-footer">
-                                   <span className="live-dot" /> EN VIVO 🔥
-                                </div>
-                             )}
+                                  <span style={{ fontSize: 10, fontWeight: 900, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                    AZUL ({event.gallo_a_name || 'LADO A'})
+                                  </span>
+                                  <span style={{ fontSize: 15, fontWeight: 900, color: '#ffffff', fontFamily: 'Outfit, sans-serif' }}>
+                                    APOSTAR x{event.gallo_a_odds?.toFixed(2) || '1.90'}
+                                  </span>
+                                </Button>
+                              </Col>
+                              <Col span={12}>
+                                <Button
+                                  block
+                                  size="large"
+                                  type="primary"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openBetSelectionModal(event);
+                                  }}
+                                  style={{
+                                    height: 48,
+                                    borderRadius: 12,
+                                    background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
+                                    borderColor: '#ffffff',
+                                    boxShadow: '0 6px 20px rgba(255, 255, 255, 0.3)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    lineHeight: 1.2,
+                                    padding: '4px 8px'
+                                  }}
+                                >
+                                  <span style={{ fontSize: 10, fontWeight: 900, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                    BLANCO ({event.gallo_b_name || 'LADO B'})
+                                  </span>
+                                  <span style={{ fontSize: 15, fontWeight: 900, color: '#0f172a', fontFamily: 'Outfit, sans-serif' }}>
+                                    APOSTAR x{event.gallo_b_odds?.toFixed(2) || '1.90'}
+                                  </span>
+                                </Button>
+                              </Col>
+                            </Row>
+                          </>
+                        ) : (isActive && activeStatus === 'CLOSED') ? (
+                          <div style={{
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            border: '1px solid rgba(239, 68, 68, 0.25)',
+                            borderRadius: 10,
+                            padding: '8px 12px',
+                            textAlign: 'center',
+                            marginTop: 4
+                          }}>
+                            <div style={{ color: '#ef4444', fontSize: 11, fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                              ⚔️ PELEA EN COMBATE — APUESTAS CERRADAS
+                            </div>
                           </div>
-                        );
-                    });
-                })()}
+                        ) : null}
+
+                        {/* Winner Footer */}
+                        {event.status === 'FINISHED' && (
+                          <div className="cart-winner-footer">
+                            <TrophyOutlined className="trophy-icon" />
+                            <span>
+                              {(event.winner_side === 'D' || event.winner_side === 'DRAW') 
+                                ? 'NULO / TABLAS (EMPATE)' 
+                                : `GANADOR: ${event.winner_side === 'A' ? event.gallo_a_name : event.gallo_b_name}`}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Live Glow Footer */}
+                        {isActive && event.status !== 'FINISHED' && (
+                          <div className="cart-live-glow-footer">
+                            <span className="live-dot" /> EN VIVO 🔥
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
               </div>
           </div>
       )}
 
-      <Modal open={isBetModalOpen} onCancel={() => !loading && setIsBetModalOpen(false)} footer={null} centered width={360} styles={{ body: { padding: 0 } }}>
+      <Modal zIndex={100001} open={isBetModalOpen} onCancel={() => !loading && setIsBetModalOpen(false)} footer={null} centered width={360} styles={{ body: { padding: 0 } }}>
         <div style={{ backgroundColor: 'var(--charcoal)', padding: '24px 20px', borderRadius: 12, border: '1px solid rgba(16,185,129,0.3)' }}>
           <div style={{ textAlign: 'center', marginBottom: 20 }}>
             <Title level={4} style={{ color: '#10b981', margin: 0, fontWeight: 700, textTransform: 'uppercase' }}>{betSide === 'A' ? fightInfo.gallo_a_name : fightInfo.gallo_b_name}</Title>
@@ -1536,6 +1384,7 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
 
       {/* MODAL DE SELECCIÓN DE GALLO INTERMEDIO */}
       <Modal 
+        zIndex={100001}
         open={isSelectionModalOpen} 
         onCancel={() => setIsSelectionModalOpen(false)} 
         footer={null} 
@@ -1559,8 +1408,10 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               <div 
                 onClick={() => {
                   setIsSelectionModalOpen(false);
-                  setFightInfo(selectionFight);
-                  openBetModal('B');
+                  if (selectionFight) {
+                    setFightInfo(selectionFight);
+                    openBetModal('B', selectionFight);
+                  }
                 }}
                 style={{
                   background: '#ffffff',
@@ -1591,8 +1442,10 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               <div 
                 onClick={() => {
                   setIsSelectionModalOpen(false);
-                  setFightInfo(selectionFight);
-                  openBetModal('A');
+                  if (selectionFight) {
+                    setFightInfo(selectionFight);
+                    openBetModal('A', selectionFight);
+                  }
                 }}
                 style={{
                   background: '#0f3dd1',
@@ -1726,6 +1579,389 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                 .premium-btn:hover { transform: translateY(-3px); filter: brightness(1.1); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
                 .premium-btn:active { transform: translateY(-1px); }
             `}</style>
+        </div>
+      )}
+
+      {/* FACEBOOK LIVE FULLSCREEN OVERLAY */}
+      {isFbFullscreen && (
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            width: '100vw',
+            height: '100vh',
+            zIndex: 99999,
+            background: '#070a11',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            fontFamily: 'Outfit, sans-serif'
+          }}
+        >
+          {/* 1. Top Facebook Live Navigation Header (Fixed) */}
+          <div style={{
+            padding: '12px 16px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            background: 'rgba(10, 14, 23, 0.95)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            zIndex: 100
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button
+                onClick={() => setIsFbFullscreen(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.15)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: 36, height: 36,
+                  color: '#fff', fontSize: 16, fontWeight: 900,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                ✕
+              </button>
+
+              <div style={{
+                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                color: '#fff', fontWeight: 900, fontSize: 11,
+                padding: '4px 12px', borderRadius: 20,
+                display: 'flex', alignItems: 'center', gap: 6,
+                textTransform: 'uppercase',
+                boxShadow: '0 0 14px rgba(239, 68, 68, 0.5)'
+              }}>
+                <span style={{ width: 6, height: 6, background: '#fff', borderRadius: '50%', animation: 'pulse-live 1.5s infinite' }} />
+                EN VIVO
+              </div>
+
+              <div style={{
+                background: 'rgba(255,255,255,0.12)',
+                color: '#fff', fontWeight: 800, fontSize: 11,
+                padding: '4px 12px', borderRadius: 20,
+                display: 'flex', alignItems: 'center', gap: 6
+              }}>
+                <EyeOutlined style={{ fontSize: 13, color: '#38bdf8' }} />
+                <span>{viewerCount}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setOverlayVisible(v => !v)}
+              style={{
+                background: overlayVisible ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.12)',
+                border: overlayVisible ? '1px solid rgba(16,185,129,0.5)' : '1px solid rgba(255,255,255,0.2)',
+                borderRadius: 20, color: overlayVisible ? '#10b981' : '#fff', fontWeight: 800,
+                fontSize: 11, padding: '5px 12px', cursor: 'pointer'
+              }}
+            >
+              <span>📊</span> TABLERO
+            </button>
+          </div>
+
+          {/* 2. Top Region: Video Stream Player (100% UNBLOCKED & CLEAR) */}
+          <div style={{ position: 'relative', width: '100%', background: '#000', flexShrink: 0 }}>
+            <DacastPlayer 
+              status={fightInfo.status} 
+              stream_url={fightInfo.stream_url || globalStream} 
+              streamMode={streamMode}
+              viewerCount={viewerCount}
+              hideBadge={true}
+            />
+
+            {/* Scoreboard OSD Overlay */}
+            {overlayVisible && fightInfo.id && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 10, left: 10,
+                  width: Math.min(300, window.innerWidth - 20),
+                  zIndex: 40,
+                  filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.85))'
+                }}
+              >
+                <div style={{
+                  background: 'linear-gradient(90deg, #0f1a10 0%, #111d12 100%)',
+                  borderRadius: '10px 10px 0 0', padding: '6px 12px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  border: '1px solid rgba(16,185,129,0.4)', borderBottom: 'none'
+                }}>
+                  <span style={{ color: '#10b981', fontSize: 10, fontWeight: 900, letterSpacing: 2, textTransform: 'uppercase' }}>
+                    ⠿ TABLERO — PELEA #{fightInfo.post_number || '?'}
+                  </span>
+                </div>
+
+                <div style={{
+                  background: 'rgba(8,12,9,0.92)', backdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(16,185,129,0.3)', borderTop: 'none',
+                  borderRadius: '0 0 10px 10px', padding: '10px'
+                }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ background: '#ffffff', borderRadius: 6, padding: '6px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#0f172a', fontWeight: 900, fontSize: 12, textTransform: 'uppercase' }}>
+                        {fightInfo.gallo_b_name || 'LADO BLANCO'}
+                      </span>
+                      <span style={{ color: '#1d4ed8', fontWeight: 900, fontSize: 11 }}>{fightInfo.gallo_b_odds?.toFixed(2) || '1.90'}</span>
+                    </div>
+                    <div style={{ textAlign: 'center', color: '#ef4444', fontWeight: 900, fontSize: 10 }}>VS</div>
+                    <div style={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)', borderRadius: 6, padding: '6px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: '#ffffff', fontWeight: 900, fontSize: 12, textTransform: 'uppercase' }}>
+                        {fightInfo.gallo_a_name || 'LADO AZUL'}
+                      </span>
+                      <span style={{ color: '#93c5fd', fontWeight: 900, fontSize: 11 }}>{fightInfo.gallo_a_odds?.toFixed(2) || '1.90'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Floating Flying Reactions Layer */}
+            {floatingReactions.map(item => (
+              <div
+                key={item.id}
+                style={{
+                  position: 'absolute',
+                  left: `${item.left}%`,
+                  bottom: 20,
+                  fontSize: 34,
+                  zIndex: 60,
+                  pointerEvents: 'none',
+                  animation: 'float-up-reaction 2.2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards'
+                }}
+              >
+                {item.emoji}
+              </div>
+            ))}
+          </div>
+
+          {/* Facebook Live Quick Betting Bar */}
+          {fightInfo.id && fightInfo.status === 'LIVE' ? (
+            <div style={{
+              padding: '10px 14px',
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 78, 59, 0.25) 100%)',
+              borderBottom: '1px solid rgba(16, 185, 129, 0.3)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              zIndex: 90
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ color: '#10b981', fontSize: 11, fontWeight: 900, letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 6, height: 6, background: '#10b981', borderRadius: '50%', animation: 'pulse-live 1.5s infinite' }} />
+                  🟢 APUESTAS ABIERTAS — PELEA #{fightInfo.post_number || '?'}
+                </span>
+                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10, fontWeight: 700 }}>
+                  Apostar a un lado:
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => openBetModal('A', fightInfo)}
+                  style={{
+                    flex: 1,
+                    height: 44,
+                    borderRadius: 10,
+                    background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
+                    border: '1px solid rgba(147, 197, 253, 0.4)',
+                    color: '#ffffff',
+                    fontWeight: 900,
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    boxShadow: '0 4px 12px rgba(29, 78, 216, 0.4)',
+                    textTransform: 'uppercase'
+                  }}
+                >
+                  <span>AZUL</span>
+                  <span style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: 4, fontSize: 11 }}>
+                    x{fightInfo.gallo_a_odds?.toFixed(2) || '1.90'}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => openBetModal('B', fightInfo)}
+                  style={{
+                    flex: 1,
+                    height: 44,
+                    borderRadius: 10,
+                    background: 'linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%)',
+                    border: '1px solid rgba(255, 255, 255, 0.8)',
+                    color: '#0f172a',
+                    fontWeight: 900,
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    boxShadow: '0 4px 12px rgba(255, 255, 255, 0.2)',
+                    textTransform: 'uppercase'
+                  }}
+                >
+                  <span>BLANCO</span>
+                  <span style={{ background: 'rgba(15, 23, 42, 0.1)', padding: '2px 6px', borderRadius: 4, fontSize: 11, color: '#0f172a' }}>
+                    x{fightInfo.gallo_b_odds?.toFixed(2) || '1.90'}
+                  </span>
+                </button>
+              </div>
+            </div>
+          ) : fightInfo.id && fightInfo.status === 'CLOSED' ? (
+            <div style={{
+              padding: '8px 14px',
+              background: 'rgba(239, 68, 68, 0.15)',
+              borderBottom: '1px solid rgba(239, 68, 68, 0.3)',
+              textAlign: 'center',
+              zIndex: 90
+            }}>
+              <span style={{ color: '#ef4444', fontSize: 11, fontWeight: 900, letterSpacing: '1px', textTransform: 'uppercase' }}>
+                ⚔️ PELEA EN COMBATE — APUESTAS CERRADAS
+              </span>
+            </div>
+          ) : null}
+
+          {/* 3. Bottom Region: Live Chat Comments List (Minimalist & Professional) */}
+          <div 
+            ref={fbChatContainerRef}
+            style={{
+              flex: 1,
+              background: '#070a11',
+              padding: '10px 14px',
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6
+            }}
+          >
+            {chatMessages.slice(-30).map((m, idx) => {
+              const isMe = m.user_id === userId;
+              const authorName = (m.user_email || 'Usuario').split('@')[0];
+              return (
+                <div 
+                  key={m.id || idx}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.07)',
+                    borderRadius: 14,
+                    padding: '6px 12px',
+                    maxWidth: '88%',
+                    alignSelf: 'flex-start'
+                  }}
+                >
+                  <div style={{
+                    width: 24, height: 24, borderRadius: '50%',
+                    background: isMe ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                    color: '#fff', fontSize: 11, fontWeight: 800, flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  }}>
+                    {authorName.charAt(0).toUpperCase()}
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ color: isMe ? '#10b981' : '#38bdf8', fontSize: 12, fontWeight: 700 }}>
+                      {authorName}
+                    </span>
+                    <span style={{ color: '#ffffff', fontSize: 13, fontWeight: 400, lineHeight: 1.3 }}>
+                      {m.text}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 4. Minimalist Fixed Bottom Comment & Reaction Bar */}
+          <div style={{
+            padding: '10px 14px',
+            background: '#090d14',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            zIndex: 100
+          }}>
+            <form 
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (fbChatInput.trim()) {
+                  handleSendMessage(fbChatInput.trim());
+                  setFbChatInput('');
+                }
+              }}
+              style={{ flex: 1, display: 'flex', alignItems: 'center', background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 9999, padding: '3px 10px', height: 40 }}
+            >
+              <input
+                type="text"
+                placeholder="Comentar..."
+                value={fbChatInput}
+                onChange={(e) => setFbChatInput(e.target.value)}
+                style={{
+                  flex: 1,
+                  background: 'transparent',
+                  border: 'none',
+                  outline: 'none',
+                  color: '#fff',
+                  fontSize: 13,
+                  fontWeight: 400
+                }}
+              />
+              <button
+                type="submit"
+                style={{ background: '#10b981', border: 'none', borderRadius: '50%', width: 28, height: 28, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
+                <SendOutlined style={{ fontSize: 12 }} />
+              </button>
+            </form>
+
+            {/* Glass Reaction Buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button
+                onClick={() => triggerReaction('👍')}
+                style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  background: 'rgba(59, 130, 246, 0.18)',
+                  border: '1px solid rgba(59, 130, 246, 0.35)',
+                  color: '#fff', fontSize: 16,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                👍
+              </button>
+              <button
+                onClick={() => triggerReaction('❤️')}
+                style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  background: 'rgba(239, 68, 68, 0.18)',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                  color: '#fff', fontSize: 16,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                ❤️
+              </button>
+              <button
+                onClick={() => triggerReaction('🔥')}
+                style={{
+                  width: 36, height: 36, borderRadius: '50%',
+                  background: 'rgba(245, 158, 11, 0.18)',
+                  border: '1px solid rgba(245, 158, 11, 0.35)',
+                  color: '#fff', fontSize: 16,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                🔥
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

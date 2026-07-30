@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Tag, Button, Modal, Form, Input, InputNumber, Space, Typography, Row, Col, Divider, App as AntApp, Tabs, Image, Select, Badge, Popconfirm } from 'antd';
 import { PlusOutlined, ThunderboltFilled, TrophyOutlined, SignalFilled, SettingOutlined, EyeOutlined, CheckCircleFilled, WalletOutlined, DollarOutlined, VideoCameraOutlined, InboxOutlined, DeleteOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import { supabase, rawFetch, supabaseAnonKey, supabaseUrl } from '../lib/supabase';
+import { supabase, rawFetch, supabaseAnonKey, supabaseUrl, resolveBetsForEvent, broadcastEventStatus } from '../lib/supabase';
 import { scanScoreboardWithGroq } from '../lib/groq';
 
 const { Title, Text } = Typography;
@@ -345,6 +345,8 @@ const AdminDashboard = () => {
   const updateStatus = async (id, status) => {
     try {
       await rawFetch(`events?id=eq.${id}`, { method: 'PATCH', body: { status } });
+      const ev = events.find(e => e.id === id);
+      if (ev) await broadcastEventStatus(ev.post_number, status, id);
       message.info(`ESTADO: ${status}`);
       fetchData();
     } catch (e) { message.error(e.message); }
@@ -426,64 +428,11 @@ const AdminDashboard = () => {
                 // 1. Finalize the Event
                 await rawFetch(`events?id=eq.${event.id}`, { method: 'PATCH', body: { status: 'FINISHED', winner_side: winnerSide } });
 
-                // 2. Resolve all Bets for this fight
-                const allBets = await rawFetch(`bets?select=*&event_id=eq.${event.id}&status=eq.PENDING`);
-                
-                if (allBets && allBets.length > 0) {
-                    const payoutsByUser = {};
+                // 2. Resolve all Bets for this fight using centralized system
+                await resolveBetsForEvent(event.id, winnerSide, event.post_number);
+                await broadcastEventStatus(event.post_number, 'FINISHED', event.id);
 
-                    for (const bet of allBets) {
-                        let isWinner = false;
-                        let payoutAmount = 0;
-
-                        if (winnerSide === 'D') {
-                           // Refund the original amount
-                           isWinner = true; 
-                           payoutAmount = parseFloat(bet.amount);
-                        } else if (bet.selected_side === winnerSide) {
-                           // Calculate win payout
-                           isWinner = true;
-                           payoutAmount = parseFloat(bet.amount) * parseFloat(bet.odds_at_bet);
-                        }
-
-                        if (isWinner) {
-                            if (!payoutsByUser[bet.user_id]) {
-                                payoutsByUser[bet.user_id] = { totalPayout: 0 };
-                            }
-                            payoutsByUser[bet.user_id].totalPayout += payoutAmount;
-                            
-                            // Mark bet as WON (or REFUNDED)
-                            await rawFetch(`bets?id=eq.${bet.id}`, { method: 'PATCH', body: { status: 'WON' } });
-
-                            // Log Transaction (Audit)
-                            await rawFetch('transactions', {
-                                method: 'POST',
-                                body: {
-                                    user_id: bet.user_id,
-                                    amount_change: payoutAmount.toFixed(2),
-                                    type: 'BET_PAYOUT',
-                                    description: winnerSide === 'DRAW' ? `Reembolso Tablas Pelea #${event.post_number}` : `Premio Pelea #${event.post_number} (Gallo ${winnerSide === 'A' ? 'AZUL' : 'BLANCO'})`
-                                }
-                            });
-                        } else {
-                            // Mark bet as LOST
-                            await rawFetch(`bets?id=eq.${bet.id}`, { method: 'PATCH', body: { status: 'LOST' } });
-                        }
-                    }
-
-                    // PROCESS BULK USER BALANCES
-                    for (const userId of Object.keys(payoutsByUser)) {
-                        const totalPayout = payoutsByUser[userId].totalPayout;
-                        const userArr = await rawFetch(`users?select=balance&id=eq.${userId}`);
-                        
-                        if (userArr && userArr[0]) {
-                            const newBalance = (parseFloat(userArr[0].balance) + totalPayout).toFixed(2);
-                            await rawFetch(`users?id=eq.${userId}`, { method: 'PATCH', body: { balance: newBalance } });
-                        }
-                    }
-                }
-
-                message.success(winnerSide === 'DRAW' ? 'PELEA DECLARADA COMO TABLAS' : `LIQUIDACIÓN COMPLETADA: GALLO ${winnerSide === 'A' ? 'AZUL' : 'BLANCO'}`);
+                message.success(winnerSide === 'D' ? 'PELEA DECLARADA COMO TABLAS' : `LIQUIDACIÓN COMPLETADA: GALLO ${winnerSide === 'A' ? 'AZUL' : 'BLANCO'}`);
                 fetchData();
             } catch (e) { 
                 message.error('Fallo en el motor de pagos: ' + e.message); 
@@ -589,66 +538,61 @@ const AdminDashboard = () => {
 
   return (
     <>
-
-    <div style={{ padding: '60px 24px', maxWidth: 1100, margin: '0 auto', background: 'var(--obsidian)', minHeight: '100vh' }}>
+    <div style={{ padding: '40px 24px', maxWidth: 1100, margin: '0 auto', background: 'var(--obsidian)', minHeight: '100vh' }}>
       
-      {/* 🚀 PREMIUM ACTION PANEL: JORNADA DE HOY */}
+      {/* 🚀 ADMIN CONTROL PANEL */}
       <div style={{ 
-          background: 'linear-gradient(135deg, rgba(30,30,30,0.5) 0%, rgba(10,10,10,0.8) 100%)', 
-          padding: 'clamp(20px, 4vw, 36px)', 
-          borderRadius: 24, 
-          marginBottom: 44, 
-          border: '1px solid rgba(212,175,55,0.15)',
-          boxShadow: '0 25px 50px rgba(0,0,0,0.7)',
+          background: 'linear-gradient(135deg, rgba(24,29,39,0.7) 0%, rgba(15,20,28,0.9) 100%)', 
+          padding: 'clamp(20px, 4vw, 32px)', 
+          borderRadius: 20, 
+          marginBottom: 36, 
+          border: '1px solid rgba(255,255,255,0.08)',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
           position: 'relative',
           overflow: 'hidden',
           backdropFilter: 'blur(20px)'
       }}>
-         {/* Subliminal Decor */}
-         <ThunderboltFilled style={{ position: 'absolute', right: -30, top: -30, fontSize: 180, color: '#d4af37', opacity: 0.03, transform: 'rotate(15deg)' }} />
-
-         <Row gutter={[32, 24]} align="middle">
-            <Col xs={24} lg={10}>
-               <Space direction="vertical" size={4}>
-                  <Title level={3} style={{ color: '#fff', margin: 0, letterSpacing: '1px', fontWeight: 800 }}>JORNADA ESTRATÉGICA</Title>
-                  <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13 }}>Control maestro de señal y despliegue táctico</Text>
+         <Row gutter={[24, 20]} align="middle">
+            <Col xs={24} lg={8}>
+               <Space direction="vertical" size={2}>
+                  <Title level={3} style={{ color: '#fff', margin: 0, letterSpacing: '0.5px', fontWeight: 800 }}>PANEL DE ADMINISTRACIÓN</Title>
+                  <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>Configuración de transmisión y cartelera en vivo</Text>
                </Space>
             </Col>
 
-            <Col xs={24} lg={14}>
-               <div style={{ background: 'rgba(0,0,0,0.3)', padding: 'clamp(16px, 3vw, 28px)', borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)', boxShadow: 'inset 0 0 20px rgba(0,0,0,0.4)' }}>
-                  <Row gutter={[24, 24]} align="bottom">
+            <Col xs={24} lg={16}>
+               <div style={{ background: 'rgba(0,0,0,0.25)', padding: '20px', borderRadius: 16, border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <Row gutter={[16, 16]} align="bottom">
                      <Col xs={24} md={12}>
-                        <Text style={{ color: 'var(--gold)', fontSize: 10, fontWeight: 900, letterSpacing: '3px', display: 'block', marginBottom: 10, textTransform: 'uppercase' }}>SEÑAL GLOBAL MASTER</Text>
+                        <Text style={{ color: '#10b981', fontSize: 10, fontWeight: 800, letterSpacing: '0.5px', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>URL TRANSMISIÓN (HLS / M3U8)</Text>
                         <Input 
-                           placeholder="DACAST / HLS / M3U8" 
+                           placeholder="https://..." 
                            value={globalStream} 
                            onChange={e => setGlobalStream(e.target.value)}
                            style={{ 
-                              background: '#050505', 
-                              border: '1px solid rgba(212,175,55,0.2)', 
+                              background: 'rgba(0,0,0,0.4)', 
+                              border: '1px solid rgba(16,185,129,0.3)', 
                               color: '#fff',
-                              height: 48,
-                              borderRadius: 12,
-                              fontSize: 14,
-                              fontWeight: 600,
-                              boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.5)'
+                              height: 42,
+                              borderRadius: 10,
+                              fontSize: 13,
+                              fontWeight: 600
                            }}
                            suffix={
                               <Button 
                                  type="text" 
                                  size="small" 
-                                 icon={<CheckCircleFilled style={{ color: isSavingStream ? '#fff' : 'var(--gold)', fontSize: 20 }} />} 
+                                 icon={<CheckCircleFilled style={{ color: isSavingStream ? '#fff' : '#10b981', fontSize: 18 }} />} 
                                  onClick={handleSaveGlobalStream}
                                  loading={isSavingStream}
-                                 style={{ background: isSavingStream ? 'transparent' : 'rgba(212,175,55,0.1)', width: 36, height: 36, borderRadius: 10, marginLeft: 8 }}
+                                 style={{ background: isSavingStream ? 'transparent' : 'rgba(16,185,129,0.1)', width: 34, height: 34, borderRadius: 8, marginLeft: 6 }}
                               />
                            }
                         />
                      </Col>
 
                      <Col xs={12} md={6}>
-                        <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 900, letterSpacing: '1px', display: 'block', marginBottom: 10, textTransform: 'uppercase' }}>SISTEMA LIVE</Text>
+                        <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 800, letterSpacing: '0.5px', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>ESTADO TRANSMISIÓN</Text>
                         <Select 
                            value={streamMode} 
                            onChange={handleToggleStreamMode}
@@ -656,22 +600,22 @@ const AdminDashboard = () => {
                            size="large"
                            style={{ width: '100%' }}
                            options={[
-                              { value: 'LIVE', label: <span style={{ color: '#10b981', fontWeight: 900, fontSize: 12 }}>🔵 TRANSMISIÓN</span> },
-                              { value: 'STANDBY', label: <span style={{ color: 'var(--gold)', fontWeight: 900, fontSize: 12 }}>🟠 STANDBY</span> }
+                               { value: 'LIVE', label: <span style={{ color: '#10b981', fontWeight: 800, fontSize: 12 }}>🔵 TRANSMISIÓN</span> },
+                               { value: 'STANDBY', label: <span style={{ color: '#f59e0b', fontWeight: 800, fontSize: 12 }}>🟠 STANDBY</span> }
                            ]}
                         />
                      </Col>
 
                      <Col xs={12} md={6}>
-                        <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 900, letterSpacing: '1px', display: 'block', marginBottom: 10, textTransform: 'uppercase' }}>CARTELERA</Text>
+                        <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 800, letterSpacing: '0.5px', display: 'block', marginBottom: 8, textTransform: 'uppercase' }}>CARTELERA CLIENTE</Text>
                         <Select 
                            value={showCartelera} 
                            onChange={handleToggleCartelera}
                            size="large"
                            style={{ width: '100%' }}
                            options={[
-                              { value: true, label: <span style={{ fontWeight: 900, fontSize: 12 }}>VISIBLE</span> },
-                              { value: false, label: <span style={{ fontWeight: 900, fontSize: 12, opacity: 0.5 }}>OCULTA</span> }
+                               { value: true, label: <span style={{ fontWeight: 800, fontSize: 12, color: '#10b981' }}>VISIBLE</span> },
+                               { value: false, label: <span style={{ fontWeight: 800, fontSize: 12, opacity: 0.5 }}>OCULTA</span> }
                            ]}
                         />
                      </Col>
@@ -680,73 +624,66 @@ const AdminDashboard = () => {
             </Col>
          </Row>
 
-         <Divider style={{ borderColor: 'rgba(255,255,255,0.05)', margin: '24px 0' }} />
+         <Divider style={{ borderColor: 'rgba(255,255,255,0.06)', margin: '20px 0' }} />
 
-         {/* Maintenance Actions Grouped at the Bottom */}
-         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-
-            <Popconfirm
-               title="¿VACIAR TODO EL CHAT?"
-               description="Limpiar historial de mensajes global."
-               onConfirm={handleClearChat}
-               okText="Sí, vaciar"
-               cancelText="No"
-               okButtonProps={{ danger: true }}
-            >
-               <Button 
-                  danger 
-                  type="text"
-                  icon={<DeleteOutlined />} 
-                  style={{ 
-                     background: 'rgba(255,77,79,0.05)', 
-                     height: 38,
-                     borderRadius: 10,
-                     fontSize: 11,
-                     fontWeight: 700,
-                     textTransform: 'uppercase'
-                  }}
-               >
-                  Limpiar Chat
-               </Button>
-            </Popconfirm>
-         </div>
-
-         <Divider style={{ borderColor: 'rgba(255,255,255,0.05)', margin: '24px 0' }} />
-
-         <Row gutter={[24, 24]} align="middle">
-             <Col xs={24} md={18}>
-                <Space direction="vertical" size={2} style={{ width: '100%' }}>
-                    <Text style={{ color: '#10b981', fontSize: 10, fontWeight: 900, letterSpacing: '2px' }}>CONFIGURACIÓN IA (GROQ API KEY)</Text>
+         {/* Chat Clean & AI Key Row */}
+         <Row gutter={[20, 16]} align="middle">
+             <Col xs={24} md={14}>
+                <Space direction="vertical" size={4} style={{ width: '100%' }}>
+                    <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 800, letterSpacing: '0.5px' }}>LECTOR DE RESULTADOS IA (GROQ KEY)</Text>
                     <Input.Password 
                         placeholder="gsk_..." 
                         value={groqKey} 
                         onChange={e => setGroqKey(e.target.value)}
-                        style={{ background: '#000', border: '1px solid rgba(16,185,129,0.2)', color: '#fff', borderRadius: 8, height: 40 }}
+                        style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: 8, height: 38 }}
                     />
                 </Space>
              </Col>
-             <Col xs={24} md={6}>
+             <Col xs={12} md={5}>
                  <Button 
                     type="primary" 
                     block 
                     onClick={handleSaveGroqKey} 
                     loading={isSavingGroq}
-                    style={{ background: '#10b981', borderRadius: 8, height: 40, fontWeight: 700, marginTop: 15 }}
+                    style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, height: 38, fontWeight: 700, marginTop: 18, color: '#fff' }}
                 >
-                    GUARDAR LLAVE
+                    Guardar Key
                 </Button>
+             </Col>
+             <Col xs={12} md={5}>
+                <Popconfirm
+                   title="¿Vaciar todo el chat en vivo?"
+                   description="Elimina los mensajes del chat general."
+                   onConfirm={handleClearChat}
+                   okText="Sí, vaciar"
+                   cancelText="Cancelar"
+                   okButtonProps={{ danger: true }}
+                >
+                   <Button 
+                      danger 
+                      type="text"
+                      block
+                      icon={<DeleteOutlined />} 
+                      style={{ 
+                         background: 'rgba(255,77,79,0.08)', 
+                         height: 38,
+                         borderRadius: 8,
+                         fontSize: 11,
+                         fontWeight: 700,
+                         marginTop: 18
+                      }}
+                   >
+                      Limpiar Chat
+                   </Button>
+                </Popconfirm>
              </Col>
           </Row>
       </div>
 
 
-      <div style={{ textAlign: 'center', margin: '48px 0 36px' }}>
-         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 20, marginBottom: 12 }}>
-            <div style={{ width: 60, height: 1, background: 'linear-gradient(90deg, transparent, var(--gold))' }} />
-            <Title level={2} style={{ color: '#fff', margin: 0, letterSpacing: '6px', fontSize: 28, fontWeight: 900, fontFamily: 'Outfit' }}>ESTRATEGIA CENTRAL</Title>
-            <div style={{ width: 60, height: 1, background: 'linear-gradient(90deg, var(--gold), transparent)' }} />
-         </div>
-         <Text style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11, fontWeight: 900, letterSpacing: '4px', display: 'block', textTransform: 'uppercase' }}>GESTIÓN OPERATIVA DE ALTO NIVEL</Text>
+      <div style={{ textAlign: 'center', margin: '36px 0 24px' }}>
+         <Title level={3} style={{ color: '#fff', margin: 0, letterSpacing: '2px', fontSize: 22, fontWeight: 800, fontFamily: 'Outfit, sans-serif' }}>PROGRAMA DE PELEAS</Title>
+         <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, display: 'block', marginTop: 4 }}>Administración de peleas, cuotas y resultados</Text>
       </div>
 
       <Tabs 

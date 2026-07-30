@@ -101,16 +101,19 @@ function MainContent({ currentUser, setCurrentUser, currentView, setCurrentView,
       <Header className="desktop-only" style={{ 
         position: 'sticky', top: 0, zIndex: 1001, width: '100%', 
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 40px', height: 74, background: 'var(--glass)',
-        backdropFilter: 'blur(20px)',
-        borderBottom: '1px solid var(--glass-border)'
+        padding: '0 36px', height: 68, 
+        background: theme === 'dark' ? 'rgba(11, 15, 23, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid rgba(0, 0, 0, 0.06)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={() => setCurrentView('live')}>
-           <img src={theme === 'dark' ? '/Logominiatura.png' : '/LogominiaturaBlanco.png'} style={{ height: 38 }} alt="Coliseo Logo" />
-            <Title level={5} style={{ color: 'var(--text-main)', margin: 0, fontWeight: 800, letterSpacing: '1px', fontFamily: 'Outfit', textTransform: 'uppercase', fontSize: 13 }}>COLISEO ANGEL CRUZ</Title>
+           <img src={theme === 'dark' ? '/Logominiatura.png' : '/LogominiaturaBlanco.png'} style={{ height: 36 }} alt="Coliseo Logo" />
+           <Title level={5} style={{ color: 'var(--text-main)', margin: 0, fontWeight: 800, letterSpacing: '0.5px', fontFamily: 'Outfit, sans-serif', textTransform: 'uppercase', fontSize: 13 }}>COLISEO ANGEL CRUZ</Title>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        {/* Minimalist Nav Links */}
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
           {itemsToShow.map(item => {
             const isActive = currentView === item.key;
             return (
@@ -122,73 +125,127 @@ function MainContent({ currentUser, setCurrentUser, currentView, setCurrentView,
                    display: 'flex', 
                    alignItems: 'center', 
                    gap: 8, 
-                   padding: '8px 20px',
-                   borderRadius: 9999,
-                   background: isActive ? 'rgba(0, 229, 163, 0.15)' : 'transparent',
-                   transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                   border: '1px solid',
-                   borderColor: isActive ? 'rgba(0, 229, 163, 0.3)' : 'transparent'
+                   padding: '8px 16px',
+                   borderRadius: '8px',
+                   background: isActive ? (theme === 'dark' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.1)') : 'transparent',
+                   transition: 'all 0.2s ease',
+                   border: 'none',
+                   position: 'relative'
                 }}
+                className="nav-tab-item"
               >
-                <span style={{ color: isActive ? '#00E5A3' : 'var(--text-dim)', fontSize: 16 }}>{getIcon(item.key, isActive)}</span>
-                <Text style={{ color: isActive ? '#00E5A3' : 'var(--text-dim)', fontSize: 11, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>{item.label}</Text>
+                <span style={{ color: isActive ? '#10b981' : 'var(--text-muted)', fontSize: 14, transition: 'color 0.2s' }}>
+                  {getIcon(item.key, isActive)}
+                </span>
+                <Text style={{ 
+                  color: isActive ? (theme === 'dark' ? '#ffffff' : '#0f172a') : 'var(--text-muted)', 
+                  fontSize: 11, 
+                  fontWeight: isActive ? 800 : 600, 
+                  letterSpacing: '0.5px', 
+                  textTransform: 'uppercase',
+                  transition: 'color 0.2s'
+                }}>
+                  {item.label}
+                </Text>
+                {isActive && (
+                  <div style={{
+                    position: 'absolute',
+                    bottom: -2,
+                    left: '20%',
+                    right: '20%',
+                    height: 2,
+                    background: '#10b981',
+                    borderRadius: 2
+                  }} />
+                )}
               </div>
             );
           })}
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {currentUser ? (
-              <Space size={12}>
+              <Space size={10}>
                  <Button 
                     type="text" 
-                    icon={theme === 'dark' ? <SunOutlined style={{ color: '#fbbf24' }} /> : <MoonOutlined style={{ color: '#4b5563' }} />} 
+                    icon={theme === 'dark' ? <SunOutlined style={{ color: '#fbbf24', fontSize: 15 }} /> : <MoonOutlined style={{ color: '#6b7280', fontSize: 15 }} />} 
                     onClick={toggleTheme} 
-                    style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '50%', width: 42, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                    style={{ 
+                      background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)', 
+                      border: theme === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)',
+                      borderRadius: 10, 
+                      width: 38, 
+                      height: 38, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center' 
+                    }} 
                  />
                  <Button 
                     type="text" 
-                    icon={<WalletOutlined style={{ color: '#00E5A3', fontSize: 16 }} />} 
+                    icon={<WalletOutlined style={{ color: '#10b981', fontSize: 15 }} />} 
                     onClick={() => setCurrentView('wallet')} 
                     style={{ 
-                       background: 'rgba(0,229,163,0.12)', 
-                       border: '1px solid rgba(0,229,163,0.25)',
-                       borderRadius: '9999px', 
-                       height: 42, 
-                       padding: '0 20px',
+                       background: 'rgba(16, 185, 129, 0.08)', 
+                       border: '1px solid rgba(16, 185, 129, 0.2)',
+                       borderRadius: 10, 
+                       height: 38, 
+                       padding: '0 16px',
                        display: 'flex',
                        alignItems: 'center',
                        gap: 8
                     }} 
                  >
-                   <span style={{ color: 'var(--text-main)', fontWeight: 800 }}>${parseFloat(balance || 0).toFixed(2)}</span>
+                   <span style={{ color: 'var(--text-main)', fontWeight: 800, fontSize: 13, fontFamily: 'Outfit, sans-serif' }}>
+                     ${parseFloat(balance || 0).toFixed(2)}
+                   </span>
                  </Button>
                  <Button 
                     type="text" 
-                    icon={<SettingOutlined style={{ color: 'var(--text-main)' }} />} 
+                    icon={<SettingOutlined style={{ color: 'var(--text-main)', fontSize: 15 }} />} 
                     onClick={() => setCurrentView('settings')} 
-                    style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '50%', width: 42, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                    style={{ 
+                      background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)', 
+                      border: theme === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)',
+                      borderRadius: 10, 
+                      width: 38, 
+                      height: 38, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center' 
+                    }} 
                  />
               </Space>
             ) : (
-              <Space size={12}>
+              <Space size={10}>
                  <Button 
                     type="text" 
-                    icon={theme === 'dark' ? <SunOutlined style={{ color: '#fbbf24' }} /> : <MoonOutlined style={{ color: '#4b5563' }} />} 
+                    icon={theme === 'dark' ? <SunOutlined style={{ color: '#fbbf24', fontSize: 15 }} /> : <MoonOutlined style={{ color: '#6b7280', fontSize: 15 }} />} 
                     onClick={toggleTheme} 
-                    style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '50%', width: 42, height: 42, display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                    style={{ 
+                      background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)', 
+                      border: theme === 'dark' ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.08)',
+                      borderRadius: 10, 
+                      width: 38, 
+                      height: 38, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center' 
+                    }} 
                  />
                  <Button 
                     type="primary" 
                     onClick={() => setCurrentView('login')}
                     style={{ 
-                       height: 42, 
-                       borderRadius: 9999, 
+                       height: 38, 
+                       borderRadius: 10, 
                        fontWeight: 800, 
-                       padding: '0 26px',
+                       padding: '0 20px',
                        textTransform: 'uppercase',
-                       letterSpacing: '1px',
-                       fontSize: 12
+                       letterSpacing: '0.5px',
+                       fontSize: 11,
+                       background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                       borderColor: '#10b981'
                     }}
                  >
                     INICIAR SESIÓN
@@ -199,61 +256,72 @@ function MainContent({ currentUser, setCurrentUser, currentView, setCurrentView,
       </Header>
 
       <Header className="mobile-only" style={{ 
-        background: 'var(--glass)', 
-        backdropFilter: 'blur(20px)',
+        background: theme === 'dark' ? 'rgba(11, 15, 23, 0.85)' : 'rgba(255, 255, 255, 0.85)', 
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
         padding: '0 16px', 
-        height: 64, 
+        height: 60, 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'space-between',
         position: 'sticky',
         top: 0,
         zIndex: 1002,
-        borderBottom: '1px solid var(--glass-border)'
+        borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid rgba(0, 0, 0, 0.06)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src={theme === 'dark' ? '/Logominiatura.png' : '/LogominiaturaBlanco.png'} style={{ height: 32 }} alt="Logo" />
-            <Title level={5} style={{ color: 'var(--text-main)', margin: 0, fontWeight: 900, fontSize: 12, fontFamily: 'Outfit', letterSpacing: '1px' }}>ANGEL CRUZ</Title>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => setCurrentView('live')}>
+            <img src={theme === 'dark' ? '/Logominiatura.png' : '/LogominiaturaBlanco.png'} style={{ height: 30 }} alt="Logo" />
+            <Title level={5} style={{ color: 'var(--text-main)', margin: 0, fontWeight: 800, fontSize: 12, fontFamily: 'Outfit, sans-serif', letterSpacing: '0.5px' }}>ANGEL CRUZ</Title>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {currentUser ? (
-              <Space size={8}>
+              <Space size={6}>
                  <Button 
                     type="text" 
-                    icon={theme === 'dark' ? <SunOutlined style={{ color: '#fbbf24', fontSize: 14 }} /> : <MoonOutlined style={{ color: '#4b5563', fontSize: 14 }} />} 
+                    icon={theme === 'dark' ? <SunOutlined style={{ color: '#fbbf24', fontSize: 14 }} /> : <MoonOutlined style={{ color: '#6b7280', fontSize: 14 }} />} 
                     onClick={toggleTheme} 
-                    style={{ background: 'rgba(255,255,255,0.06)', borderRadius: '50%', height: 36, width: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                    style={{ 
+                      background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)', 
+                      borderRadius: 8, 
+                      height: 34, 
+                      width: 34, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      border: 'none'
+                    }} 
                  />
                  <Button 
                     type="text" 
-                    icon={<WalletOutlined style={{ color: '#00E5A3', fontSize: 14 }} />} 
+                    icon={<WalletOutlined style={{ color: '#10b981', fontSize: 14 }} />} 
                     onClick={() => setCurrentView('wallet')} 
                     style={{ 
-                       background: 'rgba(0,229,163,0.12)', 
-                       border: '1px solid rgba(0,229,163,0.25)',
-                       borderRadius: '9999px', 
-                       height: 36, 
-                       padding: '0 12px',
+                       background: 'rgba(16, 185, 129, 0.08)', 
+                       border: 'none',
+                       borderRadius: 8, 
+                       height: 34, 
+                       padding: '0 10px',
                        display: 'flex',
                        alignItems: 'center',
                        gap: 4
                     }} 
                  >
-                   <span style={{ color: 'var(--text-main)', fontWeight: 800, fontSize: 11 }}>${parseFloat(balance || 0).toFixed(2)}</span>
+                   <span style={{ color: 'var(--text-main)', fontWeight: 800, fontSize: 12, fontFamily: 'Outfit, sans-serif' }}>${parseFloat(balance || 0).toFixed(2)}</span>
                  </Button>
                  <Button 
                    type="text" 
-                   icon={<SettingOutlined style={{ color: 'var(--text-main)', fontSize: 16 }} />} 
+                   icon={<SettingOutlined style={{ color: 'var(--text-main)', fontSize: 14 }} />} 
                    onClick={() => setCurrentView('settings')}
                    style={{ 
-                     background: 'rgba(255, 255, 255, 0.06)', 
-                     borderRadius: '50%',
-                     height: 36,
-                     width: 36,
+                     background: theme === 'dark' ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)', 
+                     borderRadius: 8,
+                     height: 34,
+                     width: 34,
                      display: 'flex',
                      alignItems: 'center',
-                     justifyContent: 'center'
+                     justifyContent: 'center',
+                     border: 'none'
                    }}
                  />
               </Space>
@@ -286,51 +354,53 @@ function MainContent({ currentUser, setCurrentUser, currentView, setCurrentView,
 
       <Content>{renderContent()}</Content>
 
-      <div className="mobile-nav mobile-only">
-        {/* Left Side Items */}
-        <div className="capsule-side">
-          {leftItems.map(item => {
-            const isActive = currentView === item.key;
-            return (
-              <div 
-                key={item.key} 
-                onClick={() => setCurrentView(item.key)} 
-                className={`capsule-item ${isActive ? 'active' : ''}`}
-              >
-                {getIcon(item.key, isActive)}
-                {isActive && <div className="active-indicator-dot" />}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Center Home Button (Larger & Floating) */}
-        {homeItem && (
-          <div 
-            onClick={() => setCurrentView('live')} 
-            className={`capsule-home-btn ${isHomeActive ? 'active' : ''}`}
-          >
-            {getIcon('live', isHomeActive)}
+      {currentView !== 'login' && (
+        <div className="mobile-nav mobile-only">
+          {/* Left Side Items */}
+          <div className="capsule-side">
+            {leftItems.map(item => {
+              const isActive = currentView === item.key;
+              return (
+                <div 
+                  key={item.key} 
+                  onClick={() => setCurrentView(item.key)} 
+                  className={`capsule-item ${isActive ? 'active' : ''}`}
+                >
+                  {getIcon(item.key, isActive)}
+                  {isActive && <div className="active-indicator-dot" />}
+                </div>
+              );
+            })}
           </div>
-        )}
 
-        {/* Right Side Items */}
-        <div className="capsule-side">
-          {rightItems.map(item => {
-            const isActive = currentView === item.key;
-            return (
-              <div 
-                key={item.key} 
-                onClick={() => setCurrentView(item.key)} 
-                className={`capsule-item ${isActive ? 'active' : ''}`}
-              >
-                {getIcon(item.key, isActive)}
-                {isActive && <div className="active-indicator-dot" />}
-              </div>
-            );
-          })}
+          {/* Center Home Button (Larger & Floating) */}
+          {homeItem && (
+            <div 
+              onClick={() => setCurrentView('live')} 
+              className={`capsule-home-btn ${isHomeActive ? 'active' : ''}`}
+            >
+              {getIcon('live', isHomeActive)}
+            </div>
+          )}
+
+          {/* Right Side Items */}
+          <div className="capsule-side">
+            {rightItems.map(item => {
+              const isActive = currentView === item.key;
+              return (
+                <div 
+                  key={item.key} 
+                  onClick={() => setCurrentView(item.key)} 
+                  className={`capsule-item ${isActive ? 'active' : ''}`}
+                >
+                  {getIcon(item.key, isActive)}
+                  {isActive && <div className="active-indicator-dot" />}
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </Layout>
   );
 }

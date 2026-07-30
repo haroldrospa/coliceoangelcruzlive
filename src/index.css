@@ -260,6 +260,29 @@ body.light-theme .step-circle-inactive {
   box-shadow: none !important;
 }
 
+/* Minimalist Nav Tab Items */
+.nav-tab-item:hover {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.nav-tab-item:hover span {
+  color: #10b981 !important;
+}
+
+.nav-tab-item:hover .ant-typography {
+  color: #ffffff !important;
+}
+
+body.light-theme .nav-tab-item:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-theme .nav-tab-item:hover .ant-typography {
+  color: #0f172a !important;
+}
+
 .ant-btn {
   border-radius: 9999px !important;
   font-weight: 700 !important;
@@ -424,23 +447,22 @@ input:-webkit-autofill:active {
 
   .mobile-nav {
     position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 92%;
-    max-width: 440px;
-    height: 64px;
-    background: #181d27 !important;
-    border-radius: 9999px !important;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 12px;
-    z-index: 10000;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5) !important;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 56px;
+    background: rgba(11, 15, 23, 0.92) !important;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 12px;
+    z-index: 10000;
+    border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-radius: 0 !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4) !important;
   }
 
   .capsule-side {
@@ -458,12 +480,12 @@ input:-webkit-autofill:active {
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    height: 44px;
-    width: 44px;
-    border-radius: 50%;
+    height: 40px;
+    width: 40px;
+    border-radius: 8px;
     position: relative;
     color: rgba(255, 255, 255, 0.45);
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .capsule-item:hover {
@@ -471,51 +493,42 @@ input:-webkit-autofill:active {
   }
 
   .capsule-item.active {
-    color: var(--brand-green) !important;
+    color: #10b981 !important;
   }
 
   .capsule-item.active .anticon {
-    color: var(--brand-green) !important;
-    transform: scale(1.15);
+    color: #10b981 !important;
   }
 
   .active-indicator-dot {
-    width: 5px;
-    height: 5px;
-    background: var(--brand-green);
+    width: 4px;
+    height: 4px;
+    background: #10b981;
     border-radius: 50%;
     position: absolute;
-    bottom: 4px;
-    box-shadow: 0 0 10px var(--brand-green);
+    bottom: 2px;
   }
 
   .capsule-home-btn {
-    width: 58px;
-    height: 58px;
-    border-radius: 50%;
-    background: #181d27;
-    border: 2px solid var(--brand-green);
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    margin-top: -20px;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    color: var(--brand-green);
-    font-size: 24px;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
-    z-index: 10001;
-  }
-
-  .capsule-home-btn:hover {
-    transform: scale(1.08) translateY(-2px);
+    transition: all 0.2s ease;
+    color: #10b981;
+    font-size: 20px;
   }
 
   .capsule-home-btn.active {
-    background: var(--green-gradient);
-    color: #0b1117;
-    border: none;
-    box-shadow: 0 12px 30px rgba(0, 229, 163, 0.45);
+    background: #10b981 !important;
+    color: #0b1117 !important;
+    border: none !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4) !important;
   }
 
   .capsule-home-btn.active .anticon {
@@ -585,6 +598,225 @@ body.light-theme .capsule-home-btn {
   overflow: hidden !important;
 }
 
+/* CARTELERA FIGHT CARDS STYLES */
+.cart-card-premium {
+  background: linear-gradient(145deg, rgba(20, 26, 38, 0.9) 0%, rgba(12, 16, 24, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.cart-card-premium:hover {
+  transform: translateY(-2px);
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 14px 32px rgba(16, 185, 129, 0.15);
+}
+
+body.light-theme .cart-card-premium {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+}
+
+.cart-card-premium.active-match {
+  background: linear-gradient(145deg, rgba(20, 26, 38, 0.95) 0%, rgba(12, 16, 24, 0.98) 100%) !important;
+  border: 1.5px solid #10b981 !important;
+  box-shadow: 0 0 28px rgba(16, 185, 129, 0.25) !important;
+}
+
+.cart-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 10px;
+}
+
+body.light-theme .cart-card-header {
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+.cart-fight-number {
+  color: var(--text-main);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  font-family: 'Outfit', sans-serif;
+}
+
+.cart-card-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.cart-fighter-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cart-fighter-column.left {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.cart-fighter-column.right {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.fighter-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fighter-name {
+  color: var(--text-main);
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0.3px;
+  font-family: 'Outfit', sans-serif;
+  text-transform: uppercase;
+}
+
+.fighter-meta-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cart-fighter-column.left .fighter-meta-row {
+  justify-content: flex-end;
+}
+
+.cart-fighter-column.right .fighter-meta-row {
+  justify-content: flex-start;
+}
+
+.meta-tag {
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  color: var(--text-dim);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+body.light-theme .meta-tag {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.weight-tag {
+  background: rgba(16, 185, 129, 0.12);
+  border: none;
+  color: #10b981;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.color-badge {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  border-radius: 9999px;
+}
+
+.fighter-badge-p {
+  background: #f59e0b;
+  color: #000000;
+  font-size: 9px;
+  font-weight: 900;
+  padding: 1px 6px;
+  border-radius: 9999px;
+}
+
+.cart-vs-column {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+}
+
+.vs-circle {
+  font-size: 11px;
+  font-weight: 900;
+  color: #ef4444;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.cart-winner-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 10px 16px;
+  border-radius: 12px;
+  color: #10b981;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.trophy-icon {
+  font-size: 14px;
+  color: #10b981;
+}
+
+.cart-live-glow-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  color: #ef4444;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  background: #ef4444;
+  border-radius: 50%;
+}
+
+@media (max-width: 768px) {
+  .cart-card-premium {
+    padding: 14px 14px;
+    gap: 10px;
+    border-radius: 16px;
+  }
+  .fighter-name {
+    font-size: 14px;
+  }
+}
+
 @media (max-width: 768px) {
   .live-chat-card {
     height: 240px;
@@ -594,5 +826,21 @@ body.light-theme .capsule-home-btn {
     height: 44px !important;
     max-height: 44px !important;
     min-height: 44px !important;
+  }
+}
+
+/* FLOATING REACTION ANIMATION FOR FACEBOOK LIVE MODE */
+@keyframes float-up-reaction {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(0.8);
+  }
+  50% {
+    opacity: 0.95;
+    transform: translateY(-130px) scale(1.3);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-280px) scale(1);
   }
 }
