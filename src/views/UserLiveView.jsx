@@ -1723,93 +1723,6 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               hideBadge={true}
             />
 
-            {/* Scoreboard OSD Overlay */}
-            {overlayVisible && fightInfo.id && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 10, left: 10,
-                  width: Math.min(300, window.innerWidth - 20),
-                  zIndex: 40,
-                  filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.85))'
-                }}
-              >
-                <div style={{
-                  background: 'linear-gradient(90deg, #0f1a10 0%, #111d12 100%)',
-                  borderRadius: '10px 10px 0 0', padding: '6px 12px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  border: '1px solid rgba(212,175,55,0.4)', borderBottom: 'none'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <img src="/official_logo.png" style={{ height: 16, borderRadius: '50%', border: '1px solid #d4af37' }} alt="Logo" />
-                    <span style={{ color: '#d4af37', fontSize: 10, fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>
-                      COLISEO ANGEL CRUZ
-                    </span>
-                  </div>
-                </div>
-
-                <div style={{
-                  background: 'rgba(8,12,9,0.95)', backdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(212,175,55,0.3)', borderTop: 'none',
-                  borderRadius: '0 0 10px 10px', padding: '8px'
-                }}>
-                  {/* Tri-Timer Grid */}
-                  <div style={{
-                    display: 'grid', gridTemplateColumns: '1fr 0.7fr 1fr',
-                    background: '#111111', padding: '6px 2px', borderRadius: 6,
-                    border: '1px solid #222222', marginBottom: 6, textAlign: 'center'
-                  }}>
-                    <div style={{ borderRight: '1px solid #222', padding: '2px' }}>
-                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 7, fontWeight: 800 }}>TRANSCURRIDO</div>
-                      <div style={{ color: '#10b981', fontSize: 16, fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
-                        {formatClockTime(clockElapsedTime)}
-                      </div>
-                    </div>
-                    <div style={{ borderRight: '1px solid #222', padding: '2px' }}>
-                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 7, fontWeight: 800 }}>CAREO/TIERRA</div>
-                      <div style={{ color: '#ef4444', fontSize: 16, fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
-                        {clockSubTimeLeft !== null ? clockSubTimeLeft.toString().padStart(2, '0') : '00'}
-                      </div>
-                    </div>
-                    <div style={{ padding: '2px' }}>
-                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 7, fontWeight: 800 }}>RESTANTE</div>
-                      <div style={{ color: '#f59e0b', fontSize: 16, fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
-                        {formatClockTime(clockTimeLeft)}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Active Combatant Stacked Banner */}
-                  <div style={{ display: 'flex', border: '1px solid #2d2d2d', borderRadius: 6, overflow: 'hidden', background: '#111' }}>
-                    <div style={{ width: '28%', background: '#181818', borderRight: '1px solid #2d2d2d', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4px' }}>
-                      <span style={{ color: '#ef4444', fontWeight: 900, fontSize: 8, letterSpacing: 1 }}>PELEA</span>
-                      <span style={{ color: '#ffffff', fontWeight: 900, fontSize: 18, lineHeight: 1 }}>{fightInfo.post_number || '1'}</span>
-                    </div>
-                    <div style={{ width: '72%', display: 'flex', flexDirection: 'column' }}>
-                      <div 
-                        onClick={() => fightInfo.status === 'LIVE' && openBetModal('B')}
-                        style={{
-                          background: '#ffffff', color: '#111111', padding: '4px 8px', fontWeight: 900, fontSize: 11, textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default', borderBottom: '1px solid #ddd'
-                        }}
-                      >
-                        <span>{fightInfo.gallo_b_name || 'LADO BLANCO'}</span>
-                        <span style={{ color: '#1d4ed8', fontSize: 10, fontWeight: 900 }}>x{fightInfo.gallo_b_odds?.toFixed(2) || '1.90'}</span>
-                      </div>
-                      <div 
-                        onClick={() => fightInfo.status === 'LIVE' && openBetModal('A')}
-                        style={{
-                          background: '#1d4ed8', color: '#ffffff', padding: '4px 8px', fontWeight: 900, fontSize: 11, textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default'
-                        }}
-                      >
-                        <span>{fightInfo.gallo_a_name || 'LADO AZUL'}</span>
-                        <span style={{ color: '#93c5fd', fontSize: 10, fontWeight: 900 }}>x{fightInfo.gallo_a_odds?.toFixed(2) || '1.90'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Floating Flying Reactions Layer */}
             {floatingReactions.map(item => (
               <div
@@ -1828,6 +1741,89 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               </div>
             ))}
           </div>
+
+          {/* OFFICIAL RELOJ CARD (POSITIONED DIRECTLY BELOW THE VIDEO TRANSMISSION FRAME!) */}
+          {overlayVisible && fightInfo.id && (
+            <div style={{
+              padding: '10px 14px',
+              background: '#090d14',
+              borderBottom: '1px solid rgba(212, 175, 55, 0.3)',
+              flexShrink: 0
+            }}>
+              <div style={{
+                background: 'linear-gradient(90deg, #0f1a10 0%, #111d12 100%)',
+                borderRadius: '10px 10px 0 0', padding: '6px 12px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                border: '1px solid rgba(212,175,55,0.4)', borderBottom: 'none'
+              }}>
+                <img src="/official_logo.png" style={{ height: 16, borderRadius: '50%', border: '1px solid #d4af37' }} alt="Logo" />
+                <span style={{ color: '#d4af37', fontSize: 11, fontWeight: 900, letterSpacing: 2, textTransform: 'uppercase' }}>
+                  COLISEO ANGEL CRUZ
+                </span>
+                <img src="/official_logo.png" style={{ height: 16, borderRadius: '50%', border: '1px solid #d4af37', transform: 'scaleX(-1)' }} alt="Logo" />
+              </div>
+
+              <div style={{
+                background: 'rgba(8,12,9,0.95)', backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(212,175,55,0.3)', borderTop: 'none',
+                borderRadius: '0 0 10px 10px', padding: '8px 10px'
+              }}>
+                {/* Tri-Timer Grid */}
+                <div style={{
+                  display: 'grid', gridTemplateColumns: '1fr 0.7fr 1fr',
+                  background: '#111111', padding: '6px 2px', borderRadius: 6,
+                  border: '1px solid #222222', marginBottom: 6, textAlign: 'center'
+                }}>
+                  <div style={{ borderRight: '1px solid #222', padding: '2px' }}>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 7, fontWeight: 800 }}>TRANSCURRIDO</div>
+                    <div style={{ color: '#10b981', fontSize: 18, fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
+                      {formatClockTime(clockElapsedTime)}
+                    </div>
+                  </div>
+                  <div style={{ borderRight: '1px solid #222', padding: '2px' }}>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 7, fontWeight: 800 }}>CAREO/TIERRA</div>
+                    <div style={{ color: '#ef4444', fontSize: 18, fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
+                      {clockSubTimeLeft !== null ? clockSubTimeLeft.toString().padStart(2, '0') : '00'}
+                    </div>
+                  </div>
+                  <div style={{ padding: '2px' }}>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 7, fontWeight: 800 }}>RESTANTE</div>
+                    <div style={{ color: '#f59e0b', fontSize: 18, fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
+                      {formatClockTime(clockTimeLeft)}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Active Combatant Stacked Banner */}
+                <div style={{ display: 'flex', border: '1px solid #2d2d2d', borderRadius: 6, overflow: 'hidden', background: '#111' }}>
+                  <div style={{ width: '25%', background: '#181818', borderRight: '1px solid #2d2d2d', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4px' }}>
+                    <span style={{ color: '#ef4444', fontWeight: 900, fontSize: 8, letterSpacing: 1 }}>PELEA</span>
+                    <span style={{ color: '#ffffff', fontWeight: 900, fontSize: 20, lineHeight: 1 }}>{fightInfo.post_number || '1'}</span>
+                  </div>
+                  <div style={{ width: '75%', display: 'flex', flexDirection: 'column' }}>
+                    <div 
+                      onClick={() => fightInfo.status === 'LIVE' && openBetModal('B')}
+                      style={{
+                        background: '#ffffff', color: '#111111', padding: '4px 8px', fontWeight: 900, fontSize: 12, textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default', borderBottom: '1px solid #ddd'
+                      }}
+                    >
+                      <span>{fightInfo.gallo_b_name || 'LADO BLANCO'}</span>
+                      <span style={{ color: '#1d4ed8', fontSize: 11, fontWeight: 900 }}>x{fightInfo.gallo_b_odds?.toFixed(2) || '1.90'}</span>
+                    </div>
+                    <div 
+                      onClick={() => fightInfo.status === 'LIVE' && openBetModal('A')}
+                      style={{
+                        background: '#1d4ed8', color: '#ffffff', padding: '4px 8px', fontWeight: 900, fontSize: 12, textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default'
+                      }}
+                    >
+                      <span>{fightInfo.gallo_a_name || 'LADO AZUL'}</span>
+                      <span style={{ color: '#93c5fd', fontSize: 11, fontWeight: 900 }}>x{fightInfo.gallo_a_odds?.toFixed(2) || '1.90'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Facebook Live Quick Betting Bar */}
           {fightInfo.id && fightInfo.status === 'LIVE' ? (
