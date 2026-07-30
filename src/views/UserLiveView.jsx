@@ -532,6 +532,18 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               return [...prev, payload];
           });
       })
+      .on('broadcast', { event: 'clock_sync' }, ({ payload }) => {
+          if (payload) {
+            if (payload.clock_running !== undefined) localStorage.setItem('clock_running', payload.clock_running ? 'true' : 'false');
+            if (payload.clock_started_at !== undefined) localStorage.setItem('clock_started_at', payload.clock_started_at.toString());
+            if (payload.clock_elapsed_paused !== undefined) localStorage.setItem('clock_elapsed_paused', payload.clock_elapsed_paused.toString());
+            if (payload.clock_total_duration !== undefined) localStorage.setItem('clock_total_duration', payload.clock_total_duration.toString());
+            if (payload.sub_timer_left !== undefined) {
+              if (payload.sub_timer_left !== null) localStorage.setItem('sub_timer_left', payload.sub_timer_left.toString());
+              else localStorage.removeItem('sub_timer_left');
+            }
+          }
+      })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
           if (payload.new) {
               setChatMessages(prev => {

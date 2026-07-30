@@ -582,6 +582,44 @@ export default function RelojView() {
     }
   };
 
+  const broadcastClockState = async (isRun, elapsed, total, subLeftVal) => {
+    const now = Date.now();
+    const payload = {
+      clock_running: isRun,
+      clock_started_at: isRun ? now : 0,
+      clock_elapsed_paused: elapsed,
+      clock_total_duration: total,
+      sub_timer_left: subLeftVal !== undefined ? subLeftVal : subTimeLeft,
+      updated_at: now
+    };
+
+    localStorage.setItem('clock_running', isRun ? 'true' : 'false');
+    localStorage.setItem('clock_started_at', isRun ? now.toString() : '0');
+    localStorage.setItem('clock_total_duration', total.toString());
+    localStorage.setItem('clock_elapsed_paused', elapsed.toString());
+    if (subLeftVal !== undefined) {
+      if (subLeftVal !== null) localStorage.setItem('sub_timer_left', subLeftVal.toString());
+      else localStorage.removeItem('sub_timer_left');
+    }
+
+    try {
+      const channel = supabase.channel('chat_live');
+      await channel.send({
+        type: 'broadcast',
+        event: 'clock_sync',
+        payload
+      });
+    } catch(e){}
+
+    try {
+      await rawFetch('settings', {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates' },
+        body: { id: 'clock_state', value: JSON.stringify(payload) }
+      });
+    } catch(e){}
+  };
+
   // Actions
   const handleStart = () => {
     if (!gallinoName && !blancoName) {
@@ -595,12 +633,9 @@ export default function RelojView() {
     playSynthesizedSound('bell');
     setIsRunning(true);
     
-    // Save to localStorage
+    // Save to localStorage & broadcast live to all viewers
     const now = new Date().getTime();
-    localStorage.setItem('clock_running', 'true');
-    localStorage.setItem('clock_started_at', now.toString());
-    localStorage.setItem('clock_total_duration', presetDuration.toString());
-    localStorage.setItem('clock_elapsed_paused', elapsedTime.toString());
+    broadcastClockState(true, elapsedTime, presetDuration);
 
     // Update status in Supabase
     upsertEvent(fightNumber, 'CLOSED');
@@ -609,9 +644,7 @@ export default function RelojView() {
   const handlePause = () => {
     setIsRunning(false);
     playSynthesizedSound('bell');
-    
-    localStorage.setItem('clock_running', 'false');
-    localStorage.setItem('clock_elapsed_paused', elapsedTime.toString());
+    broadcastClockState(false, elapsedTime, presetDuration);
   };
 
   const handleReset = () => {
@@ -620,9 +653,7 @@ export default function RelojView() {
     setTimeLeft(presetDuration);
     setElapsedTime(0);
     
-    localStorage.setItem('clock_running', 'false');
-    localStorage.setItem('clock_elapsed_paused', '0');
-    localStorage.setItem('clock_started_at', '');
+    broadcastClockState(false, 0, presetDuration, null);
     localStorage.setItem('sub_running', 'false');
     
     message.info('Relojes restablecidos');
@@ -639,17 +670,21 @@ export default function RelojView() {
     localStorage.setItem('sub_total_duration', seconds.toString());
     localStorage.setItem('sub_timer_label', label);
 
+    let mainRunning = isRunning;
     if (pauseMainOnSub && isRunning) {
       setIsRunning(false);
-      localStorage.setItem('clock_running', 'false');
-      localStorage.setItem('clock_elapsed_paused', elapsedTime.toString());
+      mainRunning = false;
     }
+
+    broadcastClockState(mainRunning, elapsedTime, presetDuration, seconds);
   };
 
   const handleCancelSubTimer = () => {
     setSubTimeLeft(null);
     localStorage.setItem('sub_running', 'false');
+    localStorage.removeItem('sub_timer_left');
     if (subTimerRef.current) clearInterval(subTimerRef.current);
+    broadcastClockState(isRunning, elapsedTime, presetDuration, null);
   };
 
   // Helper formatting mm:ss
