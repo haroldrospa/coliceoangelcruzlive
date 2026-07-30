@@ -1032,23 +1032,21 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               >
                 📺 FULLSCREEN LIVE
               </button>
-              {fightInfo.id && (
-                <button
-                  onClick={() => setOverlayVisible(v => !v)}
-                  style={{
-                    background: overlayVisible ? 'rgba(16,185,129,0.85)' : 'rgba(0,0,0,0.6)',
-                    border: 'none', borderRadius: 6, color: '#fff', fontWeight: 800,
-                    fontSize: 10, padding: '4px 10px', cursor: 'pointer',
-                    letterSpacing: 1, backdropFilter: 'blur(4px)'
-                  }}
-                >
-                  {overlayVisible ? '📊 OCULTAR TABLERO' : '📊 MOSTRAR TABLERO'}
-                </button>
-              )}
+              <button
+                onClick={() => setOverlayVisible(v => !v)}
+                style={{
+                  background: overlayVisible ? 'rgba(16,185,129,0.85)' : 'rgba(0,0,0,0.6)',
+                  border: 'none', borderRadius: 6, color: '#fff', fontWeight: 800,
+                  fontSize: 10, padding: '4px 10px', cursor: 'pointer',
+                  letterSpacing: 1, backdropFilter: 'blur(4px)'
+                }}
+              >
+                {overlayVisible ? '📊 OCULTAR TABLERO' : '📊 MOSTRAR TABLERO'}
+              </button>
             </div>
 
-            {/* OFFICIAL RELOJ / SCOREBOARD CARD (PLACED DIRECTLY BELOW TRANSMISSION PLAYER) */}
-            {fightInfo.id && overlayVisible && (
+            {/* OFFICIAL RELOJ / SCOREBOARD CARD (ALWAYS VISIBLE DIRECTLY BELOW TRANSMISSION PLAYER WHEN TABLERO IS ON) */}
+            {overlayVisible && (
               <div style={{
                 marginTop: 12,
                 background: '#090d14',
@@ -1743,7 +1741,7 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
           </div>
 
           {/* OFFICIAL RELOJ CARD (POSITIONED DIRECTLY BELOW THE VIDEO TRANSMISSION FRAME!) */}
-          {overlayVisible && fightInfo.id && (
+          {overlayVisible && (
             <div style={{
               padding: '10px 14px',
               background: '#090d14',
