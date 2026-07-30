@@ -1995,81 +1995,123 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
             fontFamily: 'Outfit, sans-serif'
           }}
         >
-          {/* 1. Top Facebook Live Navigation Header (Fixed) */}
+          {/* 1. Top Navigation Header (Sleek Glassmorphic Bar) */}
           <div style={{
-            padding: '12px 16px',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            background: 'rgba(10, 14, 23, 0.95)',
+            padding: '10px 16px',
+            display: 'flex', 
+            alignItems: 'center', 
+            justify: 'space-between',
+            background: 'rgba(10, 14, 23, 0.85)',
+            backdropFilter: 'blur(16px)',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             zIndex: 100
           }}>
+            {/* Left Control Group */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <button
                 onClick={() => setIsFbFullscreen(false)}
+                title="Cerrar pantalla completa"
                 style={{
-                  background: 'rgba(255,255,255,0.15)',
-                  border: 'none',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
                   borderRadius: '50%',
-                  width: 36, height: 36,
-                  color: '#fff', fontSize: 16, fontWeight: 900,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer'
+                  width: 32, 
+                  height: 32,
+                  color: '#ffffff', 
+                  fontSize: 14, 
+                  fontWeight: 900,
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
                 }}
               >
                 ✕
               </button>
 
+              {/* LIVE Pill */}
               <div style={{
                 background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                color: '#fff', fontWeight: 900, fontSize: 11,
-                padding: '4px 12px', borderRadius: 20,
-                display: 'flex', alignItems: 'center', gap: 6,
-                textTransform: 'uppercase',
-                boxShadow: '0 0 14px rgba(239, 68, 68, 0.5)'
+                color: '#ffffff', 
+                fontWeight: 900, 
+                fontSize: 10,
+                padding: '4px 10px', 
+                borderRadius: 16,
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 6,
+                letterSpacing: '0.8px',
+                boxShadow: '0 0 12px rgba(239, 68, 68, 0.45)'
               }}>
-                <span style={{ width: 6, height: 6, background: '#fff', borderRadius: '50%', animation: 'pulse-live 1.5s infinite' }} />
+                <span style={{ width: 6, height: 6, background: '#ffffff', borderRadius: '50%', animation: 'pulse-live 1.5s infinite' }} />
                 EN VIVO
               </div>
 
+              {/* Viewers Pill */}
               <div style={{
-                background: 'rgba(255,255,255,0.12)',
-                color: '#fff', fontWeight: 800, fontSize: 11,
-                padding: '4px 12px', borderRadius: 20,
-                display: 'flex', alignItems: 'center', gap: 6
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                color: '#e2e8f0', 
+                fontWeight: 800, 
+                fontSize: 11,
+                padding: '4px 10px', 
+                borderRadius: 16,
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 5
               }}>
-                <EyeOutlined style={{ fontSize: 13, color: '#38bdf8' }} />
+                <EyeOutlined style={{ fontSize: 12, color: '#38bdf8' }} />
                 <span>{viewerCount}</span>
               </div>
             </div>
 
+            {/* Right Control Group */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {/* WALLET BALANCE BADGE */}
+              {/* Wallet Balance Badge */}
               <div style={{
-                background: 'rgba(16, 185, 129, 0.15)',
-                border: '1px solid rgba(16, 185, 129, 0.4)',
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
                 color: '#10b981',
                 fontWeight: 900,
                 fontSize: 11,
                 padding: '5px 12px',
-                borderRadius: 20,
-                display: 'flex', alignItems: 'center', gap: 5,
-                backdropFilter: 'blur(16px)',
+                borderRadius: 16,
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 6,
+                backdropFilter: 'blur(12px)',
                 letterSpacing: '0.5px'
               }}>
-                <span style={{ fontSize: 12 }}>💰</span>
+                <span style={{ fontSize: 12 }}>💳</span>
                 <span>${(userBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
 
+              {/* Tablero / Cartelera Toggle Button */}
               <button
                 onClick={() => setFbActiveTab(tab => tab === 'cartelera' ? 'chat' : 'cartelera')}
                 style={{
-                  background: fbActiveTab === 'cartelera' ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.12)',
-                  border: fbActiveTab === 'cartelera' ? '1px solid rgba(16,185,129,0.5)' : '1px solid rgba(255,255,255,0.2)',
-                  borderRadius: 20, color: fbActiveTab === 'cartelera' ? '#10b981' : '#fff', fontWeight: 800,
-                  fontSize: 11, padding: '5px 12px', cursor: 'pointer'
+                  background: fbActiveTab === 'cartelera' 
+                    ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)' 
+                    : 'rgba(255, 255, 255, 0.08)',
+                  border: fbActiveTab === 'cartelera' 
+                    ? '1px solid rgba(16, 185, 129, 0.5)' 
+                    : '1px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: 16, 
+                  color: fbActiveTab === 'cartelera' ? '#10b981' : '#ffffff', 
+                  fontWeight: 900,
+                  fontSize: 11, 
+                  padding: '5px 12px', 
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  letterSpacing: '0.5px',
+                  transition: 'all 0.2s ease'
                 }}
               >
-                <span>📊</span> TABLERO
+                <span>{fbActiveTab === 'cartelera' ? '📋' : '⚡'}</span>
+                <span>{fbActiveTab === 'cartelera' ? 'Cartelera' : 'Tablero'}</span>
               </button>
             </div>
           </div>
