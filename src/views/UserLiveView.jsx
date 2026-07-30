@@ -232,6 +232,37 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
     status: 'PENDING'
   });
 
+  const [betTimerSeconds, setBetTimerSeconds] = useState(null);
+
+  // Live betting countdown calculator (3-minute window from status change)
+  useEffect(() => {
+    if (!fightInfo.id || fightInfo.status !== 'LIVE') {
+      setBetTimerSeconds(null);
+      return;
+    }
+
+    const updateBetTimer = () => {
+      const refTimeStr = fightInfo.updated_at || fightInfo.created_at;
+      const refTime = refTimeStr ? new Date(refTimeStr).getTime() : Date.now();
+      const now = Date.now();
+      const elapsedSec = Math.max(0, Math.floor((now - refTime) / 1000));
+      const BETTING_WINDOW_SEC = 180; // 3 minutes window
+      const rem = Math.max(0, BETTING_WINDOW_SEC - elapsedSec);
+      setBetTimerSeconds(rem);
+    };
+
+    updateBetTimer();
+    const interval = setInterval(updateBetTimer, 1000);
+    return () => clearInterval(interval);
+  }, [fightInfo.id, fightInfo.status, fightInfo.updated_at, fightInfo.created_at]);
+
+  const formatBetTimer = (totalSec) => {
+    if (totalSec === null || isNaN(totalSec)) return '00:00';
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   // Draggable / Resizable Scoreboard Overlay State
   const [overlayVisible, setOverlayVisible] = useState(true);
   const [overlayPos, setOverlayPos] = useState({ x: 12, y: 12 });
@@ -1027,7 +1058,7 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                        animation: fightInfo.status === 'CLOSED' ? 'pulse-live 2s infinite' : 'none',
                        cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default'
                      }}>
-                       {fightInfo.status === 'LIVE' ? '🟢 APUESTAS ABIERTAS' : '⚔️ EN COMBATE'}
+                       {fightInfo.status === 'LIVE' ? `🟢 APUESTAS ABIERTAS (${formatBetTimer(betTimerSeconds)})` : '⚔️ EN COMBATE'}
                      </span>
                    ) : (
                      <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, fontWeight: 700 }}>SIN PELEA ACTIVA</span>
@@ -1768,9 +1799,26 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                   <span style={{ width: 6, height: 6, background: '#10b981', borderRadius: '50%', animation: 'pulse-live 1.5s infinite' }} />
                   🟢 APUESTAS ABIERTAS — PELEA #{fightInfo.post_number || '?'}
                 </span>
-                <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10, fontWeight: 700 }}>
-                  Apostar a un lado:
-                </span>
+
+                {/* BETTING COUNTDOWN TIMER BADGE */}
+                {betTimerSeconds !== null && (
+                  <div style={{
+                    background: betTimerSeconds <= 30 ? 'rgba(239, 68, 68, 0.25)' : 'rgba(245, 158, 11, 0.2)',
+                    border: `1px solid ${betTimerSeconds <= 30 ? 'rgba(239, 68, 68, 0.6)' : 'rgba(245, 158, 11, 0.5)'}`,
+                    color: betTimerSeconds <= 30 ? '#ef4444' : '#f59e0b',
+                    padding: '3px 8px',
+                    borderRadius: 6,
+                    fontSize: 11,
+                    fontWeight: 900,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    boxShadow: betTimerSeconds <= 30 ? '0 0 10px rgba(239, 68, 68, 0.4)' : 'none'
+                  }}>
+                    <span>⏱️</span>
+                    <span>{formatBetTimer(betTimerSeconds)}</span>
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', gap: 8 }}>
