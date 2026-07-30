@@ -147,7 +147,7 @@ export default function RelojView() {
   const [subTimerLabel, setSubTimerLabel] = useState('');
   const [pauseMainOnSub, setPauseMainOnSub] = useState(false);
   const [showOutcomeModal, setShowOutcomeModal] = useState(false);
-  const [scoreboardStyle, setScoreboardStyle] = useState('modern'); // 'modern', 'arena', 'broadcast'
+  const [scoreboardStyle, setScoreboardStyle] = useState(() => localStorage.getItem('scoreboard_style') || 'modern'); // 'modern', 'arena', 'broadcast'
   
   // Rooster Photos state
   const [fotoAzul, setFotoAzul] = useState(null);
@@ -389,8 +389,14 @@ export default function RelojView() {
             setMarcaAzul(f.marca_a || '');
             setPesoBlanco(`${f.peso_libras_b}-${f.peso_onzas_b}.${f.peso_puntos_b}`);
             setColorBlanco(f.color_b || '');
-            setMarcaBlanco(f.marca_b || '');
           }
+        }
+
+        // 3. Restore scoreboard design style from Supabase settings
+        const styleSetting = await rawFetch('settings?id=eq.scoreboard_style');
+        if (styleSetting && styleSetting[0] && styleSetting[0].value) {
+          setScoreboardStyle(styleSetting[0].value);
+          localStorage.setItem('scoreboard_style', styleSetting[0].value);
         }
       } catch (_) {}
     };
