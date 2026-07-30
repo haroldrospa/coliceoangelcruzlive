@@ -280,6 +280,7 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
   const [clockElapsedTime, setClockElapsedTime] = useState(0);
   const [clockTimeLeft, setClockTimeLeft] = useState(600);
   const [clockSubTimeLeft, setClockSubTimeLeft] = useState(null);
+  const [scoreboardStyle, setScoreboardStyle] = useState(() => localStorage.getItem('scoreboard_style') || 'modern');
 
   useEffect(() => {
     const syncClock = () => {
@@ -484,9 +485,14 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
             const stream = settings.find(s => s.id === 'live_stream_url');
             const cartelera = settings.find(s => s.id === 'show_cartelera');
             const mode = settings.find(s => s.id === 'stream_logic_mode');
+            const styleSetting = settings.find(s => s.id === 'scoreboard_style');
             if (stream) setGlobalStream(stream.value);
             if (cartelera) setShowCartelera(cartelera.value === 'true');
             if (mode) setStreamMode(mode.value);
+            if (styleSetting && styleSetting.value) {
+              setScoreboardStyle(styleSetting.value);
+              localStorage.setItem('scoreboard_style', styleSetting.value);
+            }
         }
       } catch (err) {
         console.error('Core Sync Err:', err);
@@ -531,6 +537,12 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               if (payload.user_id !== userId) play('NOTIFY');
               return [...prev, payload];
           });
+      })
+      .on('broadcast', { event: 'scoreboard_style_sync' }, ({ payload }) => {
+          if (payload && payload.style) {
+              setScoreboardStyle(payload.style);
+              localStorage.setItem('scoreboard_style', payload.style);
+          }
       })
       .on('broadcast', { event: 'clock_sync' }, ({ payload }) => {
           if (payload) {
@@ -1060,82 +1072,227 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
           </div>
         </div>
 
-        {/* OFFICIAL RELOJ / SCOREBOARD CARD (CENTERED & PROPORTIONED DIRECTLY BELOW VIDEO STREAM) */}
+        {/* OFFICIAL RELOJ / SCOREBOARD CARD (DYNAMICALLY SYNCED WITH ADMIN SELECTED DESIGN STYLE) */}
         {overlayVisible && (
-          <div style={{
-            marginTop: 14,
-            width: '100%',
-            background: 'linear-gradient(180deg, #090d14 0%, #0c121d 100%)',
-            border: '1px solid rgba(212, 175, 55, 0.45)',
-            borderRadius: 14,
-            padding: '16px 20px',
-            boxShadow: '0 12px 36px rgba(0,0,0,0.85)',
-            fontFamily: 'Outfit, sans-serif'
-          }}>
-            {/* Header Title & Logos */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 12 }}>
-              <img src="/official_logo.png" style={{ height: 28, borderRadius: '50%', border: '1px solid #d4af37' }} alt="Logo" />
-              <span style={{ color: '#f3f4f6', fontSize: 16, fontWeight: 900, letterSpacing: '4px', textTransform: 'uppercase' }}>
-                COLISEO ANGEL CRUZ
-              </span>
-              <img src="/official_logo.png" style={{ height: 28, borderRadius: '50%', border: '1px solid #d4af37', transform: 'scaleX(-1)' }} alt="Logo" />
-            </div>
+          scoreboardStyle === 'broadcast' ? (
+            /* STYLE 3: OSD COMPACTO (TIRA) */
+            <div style={{
+              marginTop: 14,
+              width: '100%',
+              background: 'linear-gradient(135deg, #111111 0%, #070707 100%)', 
+              border: '2px solid #222222', 
+              borderRadius: 16, 
+              padding: 12, 
+              boxShadow: '0 20px 45px rgba(0,0,0,0.9)',
+              fontFamily: 'Outfit, sans-serif'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                {/* Combate # Badge */}
+                <div style={{ background: '#1d1d1d', borderLeft: '4px solid #ef4444', borderRadius: 6, padding: '8px 12px', textAlign: 'center' }}>
+                  <div style={{ color: '#ef4444', fontWeight: 900, fontSize: 9, letterSpacing: 0.5, lineHeight: 1 }}>COMBATE</div>
+                  <div style={{ color: '#ffffff', fontWeight: 900, fontSize: 22, lineHeight: 1.1 }}>#{fightInfo.post_number || '1'}</div>
+                </div>
 
-            {/* Tri-Timer Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 0.7fr 1fr', background: '#0a0a0a', padding: '12px 8px', borderRadius: 10, border: '1px solid #222222', marginBottom: 12, textAlign: 'center' }}>
-              <div style={{ borderRight: '1px solid #222222', padding: '4px 6px' }}>
-                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 800, letterSpacing: 1.5 }}>TIEMPO TRANSCURRIDO</div>
-                <div style={{ color: '#10b981', fontSize: 'clamp(24px, 4.5vw, 38px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
-                  {formatClockTime(clockElapsedTime)}
-                </div>
-              </div>
-              <div style={{ borderRight: '1px solid #222222', padding: '4px 6px' }}>
-                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 800, letterSpacing: 1.5 }}>CAREO / TIERRA</div>
-                <div style={{ color: '#ef4444', fontSize: 'clamp(24px, 4.5vw, 38px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
-                  {clockSubTimeLeft !== null ? clockSubTimeLeft.toString().padStart(2, '0') : '00'}
-                </div>
-              </div>
-              <div style={{ padding: '4px 6px' }}>
-                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 800, letterSpacing: 1.5 }}>TIEMPO RESTANTE</div>
-                <div style={{ color: '#f59e0b', fontSize: 'clamp(24px, 4.5vw, 38px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
-                  {formatClockTime(clockTimeLeft)}
-                </div>
-              </div>
-            </div>
-
-            {/* Active Combatant Stacked Banner */}
-            <div style={{ display: 'flex', border: '1px solid #2d2d2d', borderRadius: 10, overflow: 'hidden', background: '#111111' }}>
-              <div style={{ width: '22%', background: '#181818', borderRight: '1px solid #2d2d2d', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '8px' }}>
-                <span style={{ color: '#ef4444', fontWeight: 900, fontSize: 11, letterSpacing: 2 }}>PELEA</span>
-                <span style={{ color: '#ffffff', fontWeight: 900, fontSize: 32, lineHeight: 1 }}>{fightInfo.post_number || '1'}</span>
-              </div>
-              <div style={{ width: '78%', display: 'flex', flexDirection: 'column' }}>
-                <div 
-                  onClick={() => fightInfo.status === 'LIVE' && openBetModal('B')}
-                  style={{
-                    background: '#ffffff', color: '#111111', padding: '10px 16px', fontWeight: 900, fontSize: 16, textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default', borderBottom: '1px solid #e2e8f0'
-                  }}
-                >
-                  <span>{fightInfo.gallo_b_name || 'LADO BLANCO'}</span>
-                  <span style={{ color: '#1d4ed8', fontSize: 14, fontWeight: 900 }}>x{fightInfo.gallo_b_odds?.toFixed(2) || '1.90'}</span>
-                </div>
+                {/* Gallo Azul Pill */}
                 <div 
                   onClick={() => fightInfo.status === 'LIVE' && openBetModal('A')}
-                  style={{
-                    background: '#1d4ed8', color: '#ffffff', padding: '10px 16px', fontWeight: 900, fontSize: 16, textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default'
+                  style={{ 
+                    flex: 1,
+                    minWidth: 140,
+                    background: '#1d4ed8', 
+                    color: '#ffffff', 
+                    borderRadius: 8, 
+                    padding: '8px 12px',
+                    borderLeft: '5px solid #93c5fd',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.4)',
+                    cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default'
                   }}
                 >
-                  <span>{fightInfo.gallo_a_name || 'LADO AZUL'}</span>
-                  <span style={{ color: '#93c5fd', fontSize: 14, fontWeight: 900 }}>x{fightInfo.gallo_a_odds?.toFixed(2) || '1.90'}</span>
+                  <div style={{ fontSize: 9, color: '#93c5fd', fontWeight: 900, letterSpacing: 0.5 }}>LADO AZUL</div>
+                  <div style={{ fontWeight: 900, fontSize: 16, textTransform: 'uppercase', color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {fightInfo.gallo_a_name || 'LADO AZUL'}
+                  </div>
+                </div>
+
+                {/* Clocks Panel */}
+                <div style={{ 
+                  background: 'linear-gradient(180deg, #101010 0%, #050505 100%)', 
+                  borderRadius: 10, 
+                  border: '1px solid #333333', 
+                  padding: '6px 14px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 16
+                }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ color: '#10b981', fontSize: 24, fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1 }}>
+                      {formatClockTime(clockElapsedTime)}
+                    </div>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 8, fontWeight: 900, marginTop: 2 }}>ELAPSED</div>
+                  </div>
+
+                  <div style={{ textAlign: 'center', borderLeft: '1px solid #2d2d2d', borderRight: '1px solid #2d2d2d', padding: '0 12px' }}>
+                    <div style={{ color: '#ef4444', fontSize: 24, fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1 }}>
+                      {clockSubTimeLeft !== null ? clockSubTimeLeft.toString().padStart(2, '0') : '00'}
+                    </div>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 8, fontWeight: 900, marginTop: 2 }}>CAREO</div>
+                  </div>
+
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ color: '#f59e0b', fontSize: 30, fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1 }}>
+                      {formatClockTime(clockTimeLeft)}
+                    </div>
+                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 8, fontWeight: 900, marginTop: 2 }}>RESTANTE</div>
+                  </div>
+                </div>
+
+                {/* Gallo Blanco Pill */}
+                <div 
+                  onClick={() => fightInfo.status === 'LIVE' && openBetModal('B')}
+                  style={{ 
+                    flex: 1,
+                    minWidth: 140,
+                    background: '#ffffff', 
+                    color: '#111111', 
+                    borderRadius: 8, 
+                    padding: '8px 12px',
+                    borderRight: '5px solid #0f3dd1',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.4)',
+                    cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default'
+                  }}
+                >
+                  <div style={{ fontSize: 9, color: '#0f3dd1', fontWeight: 900, letterSpacing: 0.5 }}>LADO BLANCO</div>
+                  <div style={{ fontWeight: 900, fontSize: 16, textTransform: 'uppercase', color: '#111111', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {fightInfo.gallo_b_name || 'LADO BLANCO'}
+                  </div>
                 </div>
               </div>
             </div>
-
-            {/* Ticker footer */}
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 700, textAlign: 'center', marginTop: 10, letterSpacing: 1 }}>
-              ••• COLISEO ANGEL CRUZ [ MARCA: {fightInfo.post_number || '1'} • EN VIVO ] •••
+          ) : scoreboardStyle === 'arena' ? (
+            /* STYLE 2: VS ARENA (LADOS) */
+            <div style={{
+              marginTop: 14,
+              width: '100%',
+              background: '#161616', 
+              border: '1px solid #2a2a2a', 
+              borderRadius: 12, 
+              padding: 14, 
+              boxShadow: '0 20px 45px rgba(0,0,0,0.6)',
+              fontFamily: 'Outfit, sans-serif'
+            }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr 1fr', gap: 10, alignItems: 'center' }}>
+                {/* Left Azul */}
+                <div 
+                  onClick={() => fightInfo.status === 'LIVE' && openBetModal('A')}
+                  style={{ background: '#1d4ed8', color: '#ffffff', borderRadius: 8, padding: 12, textAlign: 'center', cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default' }}
+                >
+                  <div style={{ fontSize: 10, color: '#93c5fd', fontWeight: 900 }}>LADO AZUL</div>
+                  <div style={{ fontWeight: 900, fontSize: 18, textTransform: 'uppercase', margin: '4px 0' }}>
+                    {fightInfo.gallo_a_name || 'LADO AZUL'}
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 900, color: '#bfdbfe' }}>x{fightInfo.gallo_a_odds?.toFixed(2) || '1.90'}</div>
+                </div>
+                {/* Center Timers */}
+                <div style={{ background: '#111111', borderRadius: 8, padding: 10, textAlign: 'center', border: '1px solid #222' }}>
+                  <div style={{ color: '#ef4444', fontWeight: 900, fontSize: 12, letterSpacing: 1 }}>PELEA #{fightInfo.post_number || '1'}</div>
+                  <div style={{ color: '#f59e0b', fontSize: 32, fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1, margin: '4px 0' }}>
+                    {formatClockTime(clockTimeLeft)}
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-around', fontSize: 11, color: '#10b981', fontWeight: 800, borderTop: '1px solid #222', paddingTop: 4 }}>
+                    <span>T: {formatClockTime(clockElapsedTime)}</span>
+                    <span style={{ color: '#ef4444' }}>C: {clockSubTimeLeft !== null ? clockSubTimeLeft.toString().padStart(2, '0') : '00'}</span>
+                  </div>
+                </div>
+                {/* Right Blanco */}
+                <div 
+                  onClick={() => fightInfo.status === 'LIVE' && openBetModal('B')}
+                  style={{ background: '#ffffff', color: '#111111', borderRadius: 8, padding: 12, textAlign: 'center', cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default' }}
+                >
+                  <div style={{ fontSize: 10, color: '#0f3dd1', fontWeight: 900 }}>LADO BLANCO</div>
+                  <div style={{ fontWeight: 900, fontSize: 18, textTransform: 'uppercase', margin: '4px 0' }}>
+                    {fightInfo.gallo_b_name || 'LADO BLANCO'}
+                  </div>
+                  <div style={{ fontSize: 12, fontWeight: 900, color: '#1d4ed8' }}>x{fightInfo.gallo_b_odds?.toFixed(2) || '1.90'}</div>
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            /* STYLE 1: CLÁSICO */
+            <div style={{
+              marginTop: 14,
+              width: '100%',
+              background: 'linear-gradient(180deg, #090d14 0%, #0c121d 100%)',
+              border: '1px solid rgba(212, 175, 55, 0.45)',
+              borderRadius: 14,
+              padding: '16px 20px',
+              boxShadow: '0 12px 36px rgba(0,0,0,0.85)',
+              fontFamily: 'Outfit, sans-serif'
+            }}>
+              {/* Header Title & Logos */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 12 }}>
+                <img src="/official_logo.png" style={{ height: 28, borderRadius: '50%', border: '1px solid #d4af37' }} alt="Logo" />
+                <span style={{ color: '#f3f4f6', fontSize: 16, fontWeight: 900, letterSpacing: '4px', textTransform: 'uppercase' }}>
+                  COLISEO ANGEL CRUZ
+                </span>
+                <img src="/official_logo.png" style={{ height: 28, borderRadius: '50%', border: '1px solid #d4af37', transform: 'scaleX(-1)' }} alt="Logo" />
+              </div>
+
+              {/* Tri-Timer Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 0.7fr 1fr', background: '#0a0a0a', padding: '12px 8px', borderRadius: 10, border: '1px solid #222222', marginBottom: 12, textAlign: 'center' }}>
+                <div style={{ borderRight: '1px solid #222222', padding: '4px 6px' }}>
+                  <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 800, letterSpacing: 1.5 }}>TIEMPO TRANSCURRIDO</div>
+                  <div style={{ color: '#10b981', fontSize: 'clamp(24px, 4.5vw, 38px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
+                    {formatClockTime(clockElapsedTime)}
+                  </div>
+                </div>
+                <div style={{ borderRight: '1px solid #222222', padding: '4px 6px' }}>
+                  <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 800, letterSpacing: 1.5 }}>CAREO / TIERRA</div>
+                  <div style={{ color: '#ef4444', fontSize: 'clamp(24px, 4.5vw, 38px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
+                    {clockSubTimeLeft !== null ? clockSubTimeLeft.toString().padStart(2, '0') : '00'}
+                  </div>
+                </div>
+                <div style={{ padding: '4px 6px' }}>
+                  <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 800, letterSpacing: 1.5 }}>TIEMPO RESTANTE</div>
+                  <div style={{ color: '#f59e0b', fontSize: 'clamp(24px, 4.5vw, 38px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
+                    {formatClockTime(clockTimeLeft)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Active Combatant Stacked Banner */}
+              <div style={{ display: 'flex', border: '1px solid #2d2d2d', borderRadius: 10, overflow: 'hidden', background: '#111111' }}>
+                <div style={{ width: '22%', background: '#181818', borderRight: '1px solid #2d2d2d', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '8px' }}>
+                  <span style={{ color: '#ef4444', fontWeight: 900, fontSize: 11, letterSpacing: 2 }}>PELEA</span>
+                  <span style={{ color: '#ffffff', fontWeight: 900, fontSize: 32, lineHeight: 1 }}>{fightInfo.post_number || '1'}</span>
+                </div>
+                <div style={{ width: '78%', display: 'flex', flexDirection: 'column' }}>
+                  <div 
+                    onClick={() => fightInfo.status === 'LIVE' && openBetModal('B')}
+                    style={{
+                      background: '#ffffff', color: '#111111', padding: '10px 16px', fontWeight: 900, fontSize: 16, textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default', borderBottom: '1px solid #e2e8f0'
+                    }}
+                  >
+                    <span>{fightInfo.gallo_b_name || 'LADO BLANCO'}</span>
+                    <span style={{ color: '#1d4ed8', fontSize: 14, fontWeight: 900 }}>x{fightInfo.gallo_b_odds?.toFixed(2) || '1.90'}</span>
+                  </div>
+                  <div 
+                    onClick={() => fightInfo.status === 'LIVE' && openBetModal('A')}
+                    style={{
+                      background: '#1d4ed8', color: '#ffffff', padding: '10px 16px', fontWeight: 900, fontSize: 16, textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default'
+                    }}
+                  >
+                    <span>{fightInfo.gallo_a_name || 'LADO AZUL'}</span>
+                    <span style={{ color: '#93c5fd', fontSize: 14, fontWeight: 900 }}>x{fightInfo.gallo_a_odds?.toFixed(2) || '1.90'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ticker footer */}
+              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 700, textAlign: 'center', marginTop: 10, letterSpacing: 1 }}>
+                ••• COLISEO ANGEL CRUZ [ MARCA: {fightInfo.post_number || '1'} • EN VIVO ] •••
+              </div>
+            </div>
+          )
         )}
       </div>
 

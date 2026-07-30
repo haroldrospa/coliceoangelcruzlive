@@ -620,6 +620,28 @@ export default function RelojView() {
     } catch(e){}
   };
 
+  const handleScoreboardStyleChange = async (newStyle) => {
+    setScoreboardStyle(newStyle);
+    localStorage.setItem('scoreboard_style', newStyle);
+
+    try {
+      const channel = supabase.channel('chat_live');
+      await channel.send({
+        type: 'broadcast',
+        event: 'scoreboard_style_sync',
+        payload: { style: newStyle }
+      });
+    } catch(e){}
+
+    try {
+      await rawFetch('settings', {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates' },
+        body: { id: 'scoreboard_style', value: newStyle }
+      });
+    } catch(e){}
+  };
+
   // Actions
   const handleStart = () => {
     if (!gallinoName && !blancoName) {
@@ -1067,7 +1089,7 @@ export default function RelojView() {
           </span>
           <Radio.Group 
             value={scoreboardStyle} 
-            onChange={(e) => setScoreboardStyle(e.target.value)}
+            onChange={(e) => handleScoreboardStyleChange(e.target.value)}
             size="small"
             buttonStyle="solid"
           >
