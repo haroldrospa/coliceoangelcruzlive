@@ -1356,13 +1356,6 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                             </span>
                           </div>
                         )}
-
-                        {/* Live Glow Footer */}
-                        {isActive && event.status !== 'FINISHED' && (
-                          <div className="cart-live-glow-footer">
-                            <span className="live-dot" /> EN VIVO 🔥
-                          </div>
-                        )}
                       </div>
                     );
                   })

@@ -625,10 +625,25 @@ body.light-theme .cart-card-premium {
   box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
 }
 
+@keyframes pulse-active-fight {
+  0% {
+    border-color: rgba(16, 185, 129, 0.8);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    border-color: rgba(52, 211, 153, 1);
+    box-shadow: 0 0 35px rgba(16, 185, 129, 0.6);
+  }
+  100% {
+    border-color: rgba(16, 185, 129, 0.8);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  }
+}
+
 .cart-card-premium.active-match {
-  background: linear-gradient(145deg, rgba(20, 26, 38, 0.95) 0%, rgba(12, 16, 24, 0.98) 100%) !important;
-  border: 1.5px solid #10b981 !important;
-  box-shadow: 0 0 28px rgba(16, 185, 129, 0.25) !important;
+  background: linear-gradient(145deg, rgba(13, 21, 32, 0.95) 0%, rgba(8, 12, 20, 0.98) 100%) !important;
+  border: 2px solid #10b981 !important;
+  animation: pulse-active-fight 2.5s infinite ease-in-out !important;
 }
 
 .cart-card-header {
