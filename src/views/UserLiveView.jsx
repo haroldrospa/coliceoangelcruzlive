@@ -1645,17 +1645,36 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               </div>
             </div>
 
-            <button
-              onClick={() => setOverlayVisible(v => !v)}
-              style={{
-                background: overlayVisible ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.12)',
-                border: overlayVisible ? '1px solid rgba(16,185,129,0.5)' : '1px solid rgba(255,255,255,0.2)',
-                borderRadius: 20, color: overlayVisible ? '#10b981' : '#fff', fontWeight: 800,
-                fontSize: 11, padding: '5px 12px', cursor: 'pointer'
-              }}
-            >
-              <span>📊</span> TABLERO
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* WALLET BALANCE BADGE */}
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.15)',
+                border: '1px solid rgba(16, 185, 129, 0.4)',
+                color: '#10b981',
+                fontWeight: 900,
+                fontSize: 11,
+                padding: '5px 12px',
+                borderRadius: 20,
+                display: 'flex', alignItems: 'center', gap: 5,
+                backdropFilter: 'blur(16px)',
+                letterSpacing: '0.5px'
+              }}>
+                <span style={{ fontSize: 12 }}>💰</span>
+                <span>${(userBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+
+              <button
+                onClick={() => setOverlayVisible(v => !v)}
+                style={{
+                  background: overlayVisible ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.12)',
+                  border: overlayVisible ? '1px solid rgba(16,185,129,0.5)' : '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: 20, color: overlayVisible ? '#10b981' : '#fff', fontWeight: 800,
+                  fontSize: 11, padding: '5px 12px', cursor: 'pointer'
+                }}
+              >
+                <span>📊</span> TABLERO
+              </button>
+            </div>
           </div>
 
           {/* 2. Top Region: Video Stream Player (100% UNBLOCKED & CLEAR) */}
