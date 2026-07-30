@@ -281,6 +281,24 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
   const [clockTimeLeft, setClockTimeLeft] = useState(600);
   const [clockSubTimeLeft, setClockSubTimeLeft] = useState(null);
   const [scoreboardStyle, setScoreboardStyle] = useState(() => localStorage.getItem('scoreboard_style') || 'modern');
+  const [bettingCountdown, setBettingCountdown] = useState(120);
+
+  useEffect(() => {
+    const calcBettingTime = () => {
+      if (fightInfo && fightInfo.status === 'LIVE') {
+        const started = fightInfo.updated_at ? new Date(fightInfo.updated_at).getTime() : Date.now();
+        const elapsed = Math.floor((Date.now() - started) / 1000);
+        const remaining = Math.max(0, 120 - elapsed);
+        setBettingCountdown(remaining);
+      } else {
+        setBettingCountdown(0);
+      }
+    };
+
+    calcBettingTime();
+    const interval = setInterval(calcBettingTime, 1000);
+    return () => clearInterval(interval);
+  }, [fightInfo]);
 
   useEffect(() => {
     const syncClock = () => {
@@ -1136,7 +1154,36 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
 
         {/* OFFICIAL RELOJ / SCOREBOARD CARD (DYNAMICALLY SYNCED WITH ADMIN SELECTED DESIGN STYLE) */}
         {overlayVisible && (
-          scoreboardStyle === 'broadcast' ? (
+          <div style={{ width: '100%' }}>
+            {/* LIVE BETTING COUNTDOWN BANNER ON RELOJ SCOREBOARD */}
+            {fightInfo.status === 'LIVE' && (
+              <div style={{
+                width: '100%',
+                marginTop: 14,
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.15) 100%)',
+                border: '1.5px solid #10b981',
+                borderRadius: 12,
+                padding: '10px 16px',
+                display: 'flex',
+                alignItems: 'center',
+                justify: 'space-between',
+                flexWrap: 'wrap',
+                gap: 8,
+                boxShadow: '0 0 25px rgba(16,185,129,0.35)',
+                animation: 'pulse-active-fight 2.5s infinite ease-in-out',
+                fontFamily: 'Outfit, sans-serif'
+              }}>
+                <div style={{ color: '#10b981', fontWeight: 900, fontSize: 13, letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span className="live-dot" style={{ background: '#10b981', boxShadow: '0 0 10px #10b981' }} />
+                  🟢 APUESTAS ABIERTAS — ¡HAZ TU JUGADA AHORA!
+                </div>
+                <div style={{ background: '#10b981', color: '#090d14', padding: '6px 14px', borderRadius: 8, fontWeight: 900, fontSize: 14, fontFamily: 'Outfit, sans-serif', letterSpacing: '0.5px' }}>
+                  ⏱️ CIERRE EN: {formatClockTime(bettingCountdown)}
+                </div>
+              </div>
+            )}
+
+            {scoreboardStyle === 'broadcast' ? (
             /* STYLE 3: OSD COMPACTO (TIRA) */
             <div style={{
               marginTop: 14,
@@ -1354,8 +1401,9 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                 ••• COLISEO ANGEL CRUZ [ MARCA: {fightInfo.post_number || '1'} • EN VIVO ] •••
               </div>
             </div>
-          )
-        )}
+          )}
+        </div>
+      )}
       </div>
 
       {/* NEW PROMINENT PROGRAM SECTION UNDERNEATH */}
