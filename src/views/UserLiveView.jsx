@@ -1109,9 +1109,29 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
     return list;
   }, [todayProgram, fightInfo.id]);
 
+  const formatWeight = (val) => {
+    if (!val) return '';
+    if (typeof val === 'object') {
+      return val.weight || val.peso || val.lbs || '';
+    }
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          return parsed.weight || parsed.peso || parsed.lbs || trimmed;
+        } catch(_) {}
+      }
+      return trimmed;
+    }
+    return String(val);
+  };
+
   const activeProgItem = todayProgram.find(p => (fightInfo.id && p.id === fightInfo.id) || (p.post_number && parseInt(p.post_number) === parseInt(fightInfo.post_number)));
-  const weightA = fightInfo.gallo_a_weight || fightInfo.peso_a || activeProgItem?.gallo_a_weight || activeProgItem?.peso_a || activeProgItem?.peso;
-  const weightB = fightInfo.gallo_b_weight || fightInfo.peso_b || activeProgItem?.gallo_b_weight || activeProgItem?.peso_b;
+  const rawWeightA = fightInfo.gallo_a_weight || fightInfo.peso_a || activeProgItem?.gallo_a_weight || activeProgItem?.peso_a || activeProgItem?.peso;
+  const rawWeightB = fightInfo.gallo_b_weight || fightInfo.peso_b || activeProgItem?.gallo_b_weight || activeProgItem?.peso_b;
+  const weightA = formatWeight(rawWeightA);
+  const weightB = formatWeight(rawWeightB);
 
   return (
     <div style={{ background: 'var(--obsidian)', minHeight: '100vh', padding: '16px', maxWidth: 1200, margin: '0 auto', paddingBottom: 100 }}>
