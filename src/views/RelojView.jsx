@@ -1925,7 +1925,7 @@ export default function RelojView() {
               >
                 <div style={{ marginBottom: 14 }}>
                   <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    ⏱️ CRONÓMETROS SECUNDARIOS (CAREO / TIERRA)
+                    ⏱️ CRONÓMETRO SECUNDARIO (CAREO)
                   </Text>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <Button 
@@ -1935,43 +1935,14 @@ export default function RelojView() {
                         background: 'rgba(239, 68, 68, 0.12)', 
                         color: '#ef4444', 
                         borderColor: 'rgba(239, 68, 68, 0.3)', 
-                        fontSize: 11, 
+                        fontSize: 12, 
                         fontWeight: 800,
-                        borderRadius: 8
+                        borderRadius: 8,
+                        height: 40
                       }} 
                       onClick={() => handleStartSubTimer(60, 'CAREO')}
                     >
                       60s CAREO
-                    </Button>
-                    <Button 
-                      size="middle" 
-                      style={{ 
-                        flex: 1, 
-                        background: 'rgba(245, 158, 11, 0.12)', 
-                        color: '#f59e0b', 
-                        borderColor: 'rgba(245, 158, 11, 0.3)', 
-                        fontSize: 11, 
-                        fontWeight: 800,
-                        borderRadius: 8
-                      }} 
-                      onClick={() => handleStartSubTimer(30, 'TIERRA')}
-                    >
-                      30s TIERRA
-                    </Button>
-                    <Button 
-                      size="middle" 
-                      style={{ 
-                        flex: 1, 
-                        background: 'rgba(245, 158, 11, 0.12)', 
-                        color: '#f59e0b', 
-                        borderColor: 'rgba(245, 158, 11, 0.3)', 
-                        fontSize: 11, 
-                        fontWeight: 800,
-                        borderRadius: 8
-                      }} 
-                      onClick={() => handleStartSubTimer(20, 'TIERRA')}
-                    >
-                      20s TIERRA
                     </Button>
                     {subTimeLeft !== null && (
                       <Tooltip title="Cancelar cronómetro secundario">
@@ -1981,7 +1952,7 @@ export default function RelojView() {
                           danger 
                           icon={<CloseCircleOutlined />} 
                           onClick={handleCancelSubTimer} 
-                          style={{ borderRadius: 8 }}
+                          style={{ borderRadius: 8, height: 40 }}
                         />
                       </Tooltip>
                     )}
