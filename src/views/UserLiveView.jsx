@@ -1109,6 +1109,10 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
     return list;
   }, [todayProgram, fightInfo.id]);
 
+  const activeProgItem = todayProgram.find(p => (fightInfo.id && p.id === fightInfo.id) || (p.post_number && parseInt(p.post_number) === parseInt(fightInfo.post_number)));
+  const weightA = fightInfo.gallo_a_weight || fightInfo.peso_a || activeProgItem?.gallo_a_weight || activeProgItem?.peso_a || activeProgItem?.peso;
+  const weightB = fightInfo.gallo_b_weight || fightInfo.peso_b || activeProgItem?.gallo_b_weight || activeProgItem?.peso_b;
+
   return (
     <div style={{ background: 'var(--obsidian)', minHeight: '100vh', padding: '16px', maxWidth: 1200, margin: '0 auto', paddingBottom: 100 }}>
       {/* PRIMARY BATTLE ZONE: Centered Stream Player & Reloj Scoreboard */}
@@ -1217,7 +1221,14 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                     cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default'
                   }}
                 >
-                  <div style={{ fontSize: 9, color: '#93c5fd', fontWeight: 900, letterSpacing: 0.5 }}>LADO AZUL</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
+                    <span style={{ fontSize: 9, color: '#93c5fd', fontWeight: 900, letterSpacing: 0.5 }}>LADO AZUL</span>
+                    {weightA && (
+                      <span style={{ fontSize: 10, background: 'rgba(0,0,0,0.35)', color: '#bfdbfe', padding: '1px 6px', borderRadius: 4, fontWeight: 900 }}>
+                        ⚖️ {weightA}
+                      </span>
+                    )}
+                  </div>
                   <div style={{ fontWeight: 900, fontSize: 16, textTransform: 'uppercase', color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {fightInfo.gallo_a_name || 'LADO AZUL'}
                   </div>
@@ -1270,7 +1281,14 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                     cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default'
                   }}
                 >
-                  <div style={{ fontSize: 9, color: '#0f3dd1', fontWeight: 900, letterSpacing: 0.5 }}>LADO BLANCO</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
+                    <span style={{ fontSize: 9, color: '#0f3dd1', fontWeight: 900, letterSpacing: 0.5 }}>LADO BLANCO</span>
+                    {weightB && (
+                      <span style={{ fontSize: 10, background: 'rgba(0,0,0,0.08)', color: '#1e40af', padding: '1px 6px', borderRadius: 4, fontWeight: 900 }}>
+                        ⚖️ {weightB}
+                      </span>
+                    )}
+                  </div>
                   <div style={{ fontWeight: 900, fontSize: 16, textTransform: 'uppercase', color: '#111111', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {fightInfo.gallo_b_name || 'LADO BLANCO'}
                   </div>
@@ -1299,7 +1317,10 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                   <div style={{ fontWeight: 900, fontSize: 18, textTransform: 'uppercase', margin: '4px 0' }}>
                     {fightInfo.gallo_a_name || 'LADO AZUL'}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 900, color: '#bfdbfe' }}>x{fightInfo.gallo_a_odds?.toFixed(2) || '1.90'}</div>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 900, color: '#bfdbfe' }}>
+                    {weightA && <span>⚖️ {weightA}</span>}
+                    <span>x{fightInfo.gallo_a_odds?.toFixed(2) || '1.90'}</span>
+                  </div>
                 </div>
                 {/* Center Timers */}
                 <div style={{ background: '#111111', borderRadius: 8, padding: 10, textAlign: 'center', border: '1px solid #222' }}>
@@ -1321,7 +1342,10 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                   <div style={{ fontWeight: 900, fontSize: 18, textTransform: 'uppercase', margin: '4px 0' }}>
                     {fightInfo.gallo_b_name || 'LADO BLANCO'}
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 900, color: '#1d4ed8' }}>x{fightInfo.gallo_b_odds?.toFixed(2) || '1.90'}</div>
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 900, color: '#1d4ed8' }}>
+                    {weightB && <span>⚖️ {weightB}</span>}
+                    <span>x{fightInfo.gallo_b_odds?.toFixed(2) || '1.90'}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1381,7 +1405,10 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                       background: '#ffffff', color: '#111111', padding: '10px 16px', fontWeight: 900, fontSize: 16, textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default', borderBottom: '1px solid #e2e8f0'
                     }}
                   >
-                    <span>{fightInfo.gallo_b_name || 'LADO BLANCO'}</span>
+                    <span>
+                      {fightInfo.gallo_b_name || 'LADO BLANCO'}
+                      {weightB && <span style={{ fontSize: 13, color: '#4b5563', marginLeft: 8, fontWeight: 800 }}>(⚖️ {weightB})</span>}
+                    </span>
                     <span style={{ color: '#1d4ed8', fontSize: 14, fontWeight: 900 }}>x{fightInfo.gallo_b_odds?.toFixed(2) || '1.90'}</span>
                   </div>
                   <div 
@@ -1390,7 +1417,10 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                       background: '#1d4ed8', color: '#ffffff', padding: '10px 16px', fontWeight: 900, fontSize: 16, textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default'
                     }}
                   >
-                    <span>{fightInfo.gallo_a_name || 'LADO AZUL'}</span>
+                    <span>
+                      {fightInfo.gallo_a_name || 'LADO AZUL'}
+                      {weightA && <span style={{ fontSize: 13, color: '#bfdbfe', marginLeft: 8, fontWeight: 800 }}>(⚖️ {weightA})</span>}
+                    </span>
                     <span style={{ color: '#93c5fd', fontSize: 14, fontWeight: 900 }}>x{fightInfo.gallo_a_odds?.toFixed(2) || '1.90'}</span>
                   </div>
                 </div>
