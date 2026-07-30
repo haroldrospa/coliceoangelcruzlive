@@ -556,6 +556,27 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
             }
           }
       })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, payload => {
+          if (payload.new) {
+              if (payload.new.id === 'scoreboard_style') {
+                  setScoreboardStyle(payload.new.value);
+                  localStorage.setItem('scoreboard_style', payload.new.value);
+              }
+              if (payload.new.id === 'clock_state') {
+                  try {
+                    const cState = typeof payload.new.value === 'string' ? JSON.parse(payload.new.value) : payload.new.value;
+                    if (cState.clock_running !== undefined) localStorage.setItem('clock_running', cState.clock_running ? 'true' : 'false');
+                    if (cState.clock_started_at !== undefined) localStorage.setItem('clock_started_at', cState.clock_started_at.toString());
+                    if (cState.clock_elapsed_paused !== undefined) localStorage.setItem('clock_elapsed_paused', cState.clock_elapsed_paused.toString());
+                    if (cState.clock_total_duration !== undefined) localStorage.setItem('clock_total_duration', cState.clock_total_duration.toString());
+                    if (cState.sub_timer_left !== undefined) {
+                      if (cState.sub_timer_left !== null) localStorage.setItem('sub_timer_left', cState.sub_timer_left.toString());
+                      else localStorage.removeItem('sub_timer_left');
+                    }
+                  } catch(e){}
+              }
+          }
+      })
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
           if (payload.new) {
               setChatMessages(prev => {
@@ -632,6 +653,23 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               if (payload.new.id === 'live_stream_url') setGlobalStream(payload.new.value);
               if (payload.new.id === 'show_cartelera') setShowCartelera(payload.new.value === 'true');
               if (payload.new.id === 'stream_logic_mode') setStreamMode(payload.new.value);
+              if (payload.new.id === 'scoreboard_style') {
+                  setScoreboardStyle(payload.new.value);
+                  localStorage.setItem('scoreboard_style', payload.new.value);
+              }
+              if (payload.new.id === 'clock_state') {
+                  try {
+                    const cState = typeof payload.new.value === 'string' ? JSON.parse(payload.new.value) : payload.new.value;
+                    if (cState.clock_running !== undefined) localStorage.setItem('clock_running', cState.clock_running ? 'true' : 'false');
+                    if (cState.clock_started_at !== undefined) localStorage.setItem('clock_started_at', cState.clock_started_at.toString());
+                    if (cState.clock_elapsed_paused !== undefined) localStorage.setItem('clock_elapsed_paused', cState.clock_elapsed_paused.toString());
+                    if (cState.clock_total_duration !== undefined) localStorage.setItem('clock_total_duration', cState.clock_total_duration.toString());
+                    if (cState.sub_timer_left !== undefined) {
+                      if (cState.sub_timer_left !== null) localStorage.setItem('sub_timer_left', cState.sub_timer_left.toString());
+                      else localStorage.removeItem('sub_timer_left');
+                    }
+                  } catch(e){}
+              }
           }
       })
       .subscribe((status) => {
@@ -778,6 +816,30 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               }
               return freshBal;
             });
+          }
+        }
+
+        // 4. Sync scoreboard style & clock state
+        const settings = await rawFetch('settings');
+        if (settings && Array.isArray(settings)) {
+          const styleSetting = settings.find(s => s.id === 'scoreboard_style');
+          if (styleSetting && styleSetting.value) {
+            setScoreboardStyle(styleSetting.value);
+            localStorage.setItem('scoreboard_style', styleSetting.value);
+          }
+          const clockSetting = settings.find(s => s.id === 'clock_state');
+          if (clockSetting && clockSetting.value) {
+            try {
+              const cState = typeof clockSetting.value === 'string' ? JSON.parse(clockSetting.value) : clockSetting.value;
+              if (cState.clock_running !== undefined) localStorage.setItem('clock_running', cState.clock_running ? 'true' : 'false');
+              if (cState.clock_started_at !== undefined) localStorage.setItem('clock_started_at', cState.clock_started_at.toString());
+              if (cState.clock_elapsed_paused !== undefined) localStorage.setItem('clock_elapsed_paused', cState.clock_elapsed_paused.toString());
+              if (cState.clock_total_duration !== undefined) localStorage.setItem('clock_total_duration', cState.clock_total_duration.toString());
+              if (cState.sub_timer_left !== undefined) {
+                if (cState.sub_timer_left !== null) localStorage.setItem('sub_timer_left', cState.sub_timer_left.toString());
+                else localStorage.removeItem('sub_timer_left');
+              }
+            } catch(e){}
           }
         }
       } catch (_) {}

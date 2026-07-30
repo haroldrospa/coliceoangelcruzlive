@@ -17,7 +17,7 @@ import {
   PictureOutlined,
   CheckOutlined
 } from '@ant-design/icons';
-import { rawFetch, broadcastEventStatus, resolveBetsForEvent, upsertSetting } from '../lib/supabase';
+import { supabase, rawFetch, broadcastEventStatus, resolveBetsForEvent, upsertSetting } from '../lib/supabase';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -187,6 +187,20 @@ export default function RelojView() {
   const timerRef = useRef(null);
   const subTimerRef = useRef(null);
   const containerRef = useRef(null);
+  const channelRef = useRef(null);
+
+  // Initialize Realtime Channel for instant live broadcasting
+  useEffect(() => {
+    const channel = supabase.channel('chat_live', {
+      config: { broadcast: { self: true } }
+    });
+    channel.subscribe();
+    channelRef.current = channel;
+
+    return () => {
+      try { supabase.removeChannel(channel); } catch(_) {}
+    };
+  }, []);
 
   // Fetch cartelera fights
   const fetchCartelera = async () => {
@@ -602,14 +616,13 @@ export default function RelojView() {
       else localStorage.removeItem('sub_timer_left');
     }
 
-    try {
-      const channel = supabase.channel('chat_live');
-      await channel.send({
+    if (channelRef.current) {
+      channelRef.current.send({
         type: 'broadcast',
         event: 'clock_sync',
         payload
       });
-    } catch(e){}
+    }
 
     await upsertSetting('clock_state', payload);
   };
@@ -618,14 +631,13 @@ export default function RelojView() {
     setScoreboardStyle(newStyle);
     localStorage.setItem('scoreboard_style', newStyle);
 
-    try {
-      const channel = supabase.channel('chat_live');
-      await channel.send({
+    if (channelRef.current) {
+      channelRef.current.send({
         type: 'broadcast',
         event: 'scoreboard_style_sync',
         payload: { style: newStyle }
       });
-    } catch(e){}
+    }
 
     await upsertSetting('scoreboard_style', newStyle);
   };
