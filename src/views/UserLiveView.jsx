@@ -1007,123 +1007,125 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
 
   return (
     <div style={{ background: 'var(--obsidian)', minHeight: '100vh', padding: '16px', maxWidth: 1200, margin: '0 auto', paddingBottom: 100 }}>
-      {/* PRIMARY BATTLE ZONE: Video Stream Player */}
-      <Row gutter={[16, 16]}>
-        <Col span={24} className="player-container" style={{ position: 'relative' }}>
-           <DacastPlayer 
-                status={fightInfo.status} 
-                stream_url={fightInfo.stream_url || globalStream} 
-                streamMode={streamMode}
-                viewerCount={viewerCount}
-           />
+      {/* PRIMARY BATTLE ZONE: Centered Stream Player & Reloj Scoreboard */}
+      <div style={{ maxWidth: 900, margin: '0 auto 24px auto', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        
+        {/* Stream Player Container */}
+        <div className="player-container" style={{ position: 'relative', width: '100%', borderRadius: 12, overflow: 'hidden', boxShadow: '0 12px 36px rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <DacastPlayer 
+            status={fightInfo.status} 
+            stream_url={fightInfo.stream_url || globalStream} 
+            streamMode={streamMode}
+            viewerCount={viewerCount}
+          />
 
-            {/* Action Overlay Buttons */}
-            <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 30, display: 'flex', gap: 8 }}>
-              <button
-                onClick={() => setIsFbFullscreen(true)}
-                style={{
-                  background: 'rgba(29, 78, 216, 0.85)',
-                  border: '1px solid rgba(59, 130, 246, 0.4)',
-                  borderRadius: 6, color: '#fff', fontWeight: 800,
-                  fontSize: 10, padding: '4px 10px', cursor: 'pointer',
-                  letterSpacing: 1, backdropFilter: 'blur(4px)',
-                  display: 'flex', alignItems: 'center', gap: 4
-                }}
-              >
-                📺 FULLSCREEN LIVE
-              </button>
-              <button
-                onClick={() => setOverlayVisible(v => !v)}
-                style={{
-                  background: overlayVisible ? 'rgba(16,185,129,0.85)' : 'rgba(0,0,0,0.6)',
-                  border: 'none', borderRadius: 6, color: '#fff', fontWeight: 800,
-                  fontSize: 10, padding: '4px 10px', cursor: 'pointer',
-                  letterSpacing: 1, backdropFilter: 'blur(4px)'
-                }}
-              >
-                {overlayVisible ? '📊 OCULTAR TABLERO' : '📊 MOSTRAR TABLERO'}
-              </button>
-            </div>
-          </Col>
-       </Row>
-
-      {/* OFFICIAL RELOJ / SCOREBOARD CARD (DEDICATED SECTION ALWAYS SHOWN RIGHT BELOW VIDEO STREAM) */}
-      {overlayVisible && (
-        <div style={{
-          marginTop: 16,
-          marginBottom: 16,
-          background: '#090d14',
-          border: '1px solid rgba(212, 175, 55, 0.4)',
-          borderRadius: 12,
-          padding: '14px 16px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
-          fontFamily: 'Outfit, sans-serif'
-        }}>
-          {/* Header Title & Logos */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 10 }}>
-            <img src="/official_logo.png" style={{ height: 26, borderRadius: '50%', border: '1px solid #d4af37' }} alt="Logo" />
-            <span style={{ color: '#f3f4f6', fontSize: 15, fontWeight: 900, letterSpacing: '3px', textTransform: 'uppercase' }}>
-              COLISEO ANGEL CRUZ
-            </span>
-            <img src="/official_logo.png" style={{ height: 26, borderRadius: '50%', border: '1px solid #d4af37', transform: 'scaleX(-1)' }} alt="Logo" />
-          </div>
-
-          {/* Tri-Timer Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 0.7fr 1fr', background: '#111111', padding: '10px 6px', borderRadius: 8, border: '1px solid #222', marginBottom: 10, textAlign: 'center' }}>
-            <div style={{ borderRight: '1px solid #222', padding: '4px 2px' }}>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 800, letterSpacing: 1 }}>TIEMPO TRANSCURRIDO</div>
-              <div style={{ color: '#10b981', fontSize: 'clamp(22px, 4vw, 36px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
-                {formatClockTime(clockElapsedTime)}
-              </div>
-            </div>
-            <div style={{ borderRight: '1px solid #222', padding: '4px 2px' }}>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 800, letterSpacing: 1 }}>CAREO / TIERRA</div>
-              <div style={{ color: '#ef4444', fontSize: 'clamp(22px, 4vw, 36px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
-                {clockSubTimeLeft !== null ? clockSubTimeLeft.toString().padStart(2, '0') : '00'}
-              </div>
-            </div>
-            <div style={{ padding: '4px 2px' }}>
-              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 800, letterSpacing: 1 }}>TIEMPO RESTANTE</div>
-              <div style={{ color: '#f59e0b', fontSize: 'clamp(22px, 4vw, 36px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
-                {formatClockTime(clockTimeLeft)}
-              </div>
-            </div>
-          </div>
-
-          {/* Active Combatant Stacked Banner */}
-          <div style={{ display: 'flex', border: '1px solid #2d2d2d', borderRadius: 8, overflow: 'hidden', background: '#111' }}>
-            <div style={{ width: '25%', background: '#181818', borderRight: '1px solid #2d2d2d', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '8px' }}>
-              <span style={{ color: '#ef4444', fontWeight: 900, fontSize: 10, letterSpacing: 2 }}>PELEA</span>
-              <span style={{ color: '#ffffff', fontWeight: 900, fontSize: 28, lineHeight: 1 }}>{fightInfo.post_number || '1'}</span>
-            </div>
-            <div style={{ width: '75%', display: 'flex', flexDirection: 'column' }}>
-              <div 
-                onClick={() => fightInfo.status === 'LIVE' && openBetModal('B')}
-                style={{
-                  background: '#ffffff', color: '#111111', padding: '8px 14px', fontWeight: 900, fontSize: 15, textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default', borderBottom: '1px solid #ddd'
-                }}
-              >
-                <span>{fightInfo.gallo_b_name || 'LADO BLANCO'}</span>
-                <span style={{ color: '#1d4ed8', fontSize: 13, fontWeight: 900 }}>x{fightInfo.gallo_b_odds?.toFixed(2) || '1.90'}</span>
-              </div>
-              <div 
-                onClick={() => fightInfo.status === 'LIVE' && openBetModal('A')}
-                style={{
-                  background: '#1d4ed8', color: '#ffffff', padding: '8px 14px', fontWeight: 900, fontSize: 15, textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default'
-                }}
-              >
-                <span>{fightInfo.gallo_a_name || 'LADO AZUL'}</span>
-                <span style={{ color: '#93c5fd', fontSize: 13, fontWeight: 900 }}>x{fightInfo.gallo_a_odds?.toFixed(2) || '1.90'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Ticker footer */}
-          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 700, textAlign: 'right', marginTop: 8, letterSpacing: 0.5 }}>
-            ••• COLISEO ANGEL CRUZ [ MARCA: {fightInfo.post_number || '1'} • EN VIVO ] •••
+          {/* Action Overlay Buttons */}
+          <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 30, display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => setIsFbFullscreen(true)}
+              style={{
+                background: 'rgba(29, 78, 216, 0.85)',
+                border: '1px solid rgba(59, 130, 246, 0.4)',
+                borderRadius: 6, color: '#fff', fontWeight: 800,
+                fontSize: 10, padding: '4px 10px', cursor: 'pointer',
+                letterSpacing: 1, backdropFilter: 'blur(4px)',
+                display: 'flex', alignItems: 'center', gap: 4
+              }}
+            >
+              📺 FULLSCREEN LIVE
+            </button>
+            <button
+              onClick={() => setOverlayVisible(v => !v)}
+              style={{
+                background: overlayVisible ? 'rgba(16,185,129,0.85)' : 'rgba(0,0,0,0.6)',
+                border: 'none', borderRadius: 6, color: '#fff', fontWeight: 800,
+                fontSize: 10, padding: '4px 10px', cursor: 'pointer',
+                letterSpacing: 1, backdropFilter: 'blur(4px)'
+              }}
+            >
+              {overlayVisible ? '📊 OCULTAR TABLERO' : '📊 MOSTRAR TABLERO'}
+            </button>
           </div>
         </div>
-      )}
+
+        {/* OFFICIAL RELOJ / SCOREBOARD CARD (CENTERED & PROPORTIONED DIRECTLY BELOW VIDEO STREAM) */}
+        {overlayVisible && (
+          <div style={{
+            marginTop: 14,
+            width: '100%',
+            background: 'linear-gradient(180deg, #090d14 0%, #0c121d 100%)',
+            border: '1px solid rgba(212, 175, 55, 0.45)',
+            borderRadius: 14,
+            padding: '16px 20px',
+            boxShadow: '0 12px 36px rgba(0,0,0,0.85)',
+            fontFamily: 'Outfit, sans-serif'
+          }}>
+            {/* Header Title & Logos */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 12 }}>
+              <img src="/official_logo.png" style={{ height: 28, borderRadius: '50%', border: '1px solid #d4af37' }} alt="Logo" />
+              <span style={{ color: '#f3f4f6', fontSize: 16, fontWeight: 900, letterSpacing: '4px', textTransform: 'uppercase' }}>
+                COLISEO ANGEL CRUZ
+              </span>
+              <img src="/official_logo.png" style={{ height: 28, borderRadius: '50%', border: '1px solid #d4af37', transform: 'scaleX(-1)' }} alt="Logo" />
+            </div>
+
+            {/* Tri-Timer Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 0.7fr 1fr', background: '#0a0a0a', padding: '12px 8px', borderRadius: 10, border: '1px solid #222222', marginBottom: 12, textAlign: 'center' }}>
+              <div style={{ borderRight: '1px solid #222222', padding: '4px 6px' }}>
+                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 800, letterSpacing: 1.5 }}>TIEMPO TRANSCURRIDO</div>
+                <div style={{ color: '#10b981', fontSize: 'clamp(24px, 4.5vw, 38px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
+                  {formatClockTime(clockElapsedTime)}
+                </div>
+              </div>
+              <div style={{ borderRight: '1px solid #222222', padding: '4px 6px' }}>
+                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 800, letterSpacing: 1.5 }}>CAREO / TIERRA</div>
+                <div style={{ color: '#ef4444', fontSize: 'clamp(24px, 4.5vw, 38px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
+                  {clockSubTimeLeft !== null ? clockSubTimeLeft.toString().padStart(2, '0') : '00'}
+                </div>
+              </div>
+              <div style={{ padding: '4px 6px' }}>
+                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 800, letterSpacing: 1.5 }}>TIEMPO RESTANTE</div>
+                <div style={{ color: '#f59e0b', fontSize: 'clamp(24px, 4.5vw, 38px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1.1 }}>
+                  {formatClockTime(clockTimeLeft)}
+                </div>
+              </div>
+            </div>
+
+            {/* Active Combatant Stacked Banner */}
+            <div style={{ display: 'flex', border: '1px solid #2d2d2d', borderRadius: 10, overflow: 'hidden', background: '#111111' }}>
+              <div style={{ width: '22%', background: '#181818', borderRight: '1px solid #2d2d2d', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '8px' }}>
+                <span style={{ color: '#ef4444', fontWeight: 900, fontSize: 11, letterSpacing: 2 }}>PELEA</span>
+                <span style={{ color: '#ffffff', fontWeight: 900, fontSize: 32, lineHeight: 1 }}>{fightInfo.post_number || '1'}</span>
+              </div>
+              <div style={{ width: '78%', display: 'flex', flexDirection: 'column' }}>
+                <div 
+                  onClick={() => fightInfo.status === 'LIVE' && openBetModal('B')}
+                  style={{
+                    background: '#ffffff', color: '#111111', padding: '10px 16px', fontWeight: 900, fontSize: 16, textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default', borderBottom: '1px solid #e2e8f0'
+                  }}
+                >
+                  <span>{fightInfo.gallo_b_name || 'LADO BLANCO'}</span>
+                  <span style={{ color: '#1d4ed8', fontSize: 14, fontWeight: 900 }}>x{fightInfo.gallo_b_odds?.toFixed(2) || '1.90'}</span>
+                </div>
+                <div 
+                  onClick={() => fightInfo.status === 'LIVE' && openBetModal('A')}
+                  style={{
+                    background: '#1d4ed8', color: '#ffffff', padding: '10px 16px', fontWeight: 900, fontSize: 16, textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: fightInfo.status === 'LIVE' ? 'pointer' : 'default'
+                  }}
+                >
+                  <span>{fightInfo.gallo_a_name || 'LADO AZUL'}</span>
+                  <span style={{ color: '#93c5fd', fontSize: 14, fontWeight: 900 }}>x{fightInfo.gallo_a_odds?.toFixed(2) || '1.90'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Ticker footer */}
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 700, textAlign: 'center', marginTop: 10, letterSpacing: 1 }}>
+              ••• COLISEO ANGEL CRUZ [ MARCA: {fightInfo.post_number || '1'} • EN VIVO ] •••
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* NEW PROMINENT PROGRAM SECTION UNDERNEATH */}
       {showCartelera && (
