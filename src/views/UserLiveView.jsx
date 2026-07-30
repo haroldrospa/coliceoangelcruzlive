@@ -1147,31 +1147,68 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
             viewerCount={viewerCount}
           />
 
-          {/* Action Overlay Buttons */}
-          <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 30, display: 'flex', gap: 8 }}>
+          {/* Premium Glassmorphism Action Overlay Buttons */}
+          <div style={{ 
+            position: 'absolute', 
+            top: 12, 
+            right: 12, 
+            zIndex: 40, 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 8,
+            background: 'rgba(15, 23, 42, 0.75)',
+            padding: '4px 6px',
+            borderRadius: 24,
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            backdropFilter: 'blur(12px)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.55)'
+          }}>
             <button
               onClick={() => setIsFbFullscreen(true)}
               style={{
-                background: 'rgba(29, 78, 216, 0.85)',
-                border: '1px solid rgba(59, 130, 246, 0.4)',
-                borderRadius: 6, color: '#fff', fontWeight: 800,
-                fontSize: 10, padding: '4px 10px', cursor: 'pointer',
-                letterSpacing: 1, backdropFilter: 'blur(4px)',
-                display: 'flex', alignItems: 'center', gap: 4
+                background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
+                border: '1px solid rgba(147, 197, 253, 0.4)',
+                borderRadius: 20, 
+                color: '#ffffff', 
+                fontWeight: 900,
+                fontSize: 11, 
+                padding: '6px 14px', 
+                cursor: 'pointer',
+                letterSpacing: '0.5px',
+                fontFamily: 'Outfit, sans-serif',
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 6,
+                boxShadow: '0 4px 14px rgba(29, 78, 216, 0.45)',
+                transition: 'transform 0.2s ease'
               }}
             >
-              📺 FULLSCREEN LIVE
+              📺 Fullscreen Live
             </button>
+
             <button
               onClick={() => setOverlayVisible(v => !v)}
               style={{
-                background: overlayVisible ? 'rgba(16,185,129,0.85)' : 'rgba(0,0,0,0.6)',
-                border: 'none', borderRadius: 6, color: '#fff', fontWeight: 800,
-                fontSize: 10, padding: '4px 10px', cursor: 'pointer',
-                letterSpacing: 1, backdropFilter: 'blur(4px)'
+                background: overlayVisible 
+                  ? 'linear-gradient(135deg, #10b981 0%, #047857 100%)' 
+                  : 'rgba(255, 255, 255, 0.1)',
+                border: overlayVisible ? '1px solid rgba(167, 243, 208, 0.4)' : '1px solid rgba(255, 255, 255, 0.18)',
+                borderRadius: 20, 
+                color: '#ffffff', 
+                fontWeight: 900,
+                fontSize: 11, 
+                padding: '6px 14px', 
+                cursor: 'pointer',
+                letterSpacing: '0.5px',
+                fontFamily: 'Outfit, sans-serif',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: overlayVisible ? '0 4px 14px rgba(16, 185, 129, 0.45)' : 'none',
+                transition: 'transform 0.2s ease'
               }}
             >
-              {overlayVisible ? '📊 OCULTAR TABLERO' : '📊 MOSTRAR TABLERO'}
+              {overlayVisible ? '📊 Ocultar Tablero' : '📊 Mostrar Tablero'}
             </button>
           </div>
         </div>
