@@ -1348,12 +1348,38 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
 
                         {/* Winner Footer */}
                         {event.status === 'FINISHED' && (
-                          <div className="cart-winner-footer">
-                            <TrophyOutlined className="trophy-icon" />
+                          <div style={{
+                            marginTop: 10,
+                            borderRadius: 10,
+                            padding: '10px 14px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 8,
+                            fontWeight: 900,
+                            fontSize: 13,
+                            letterSpacing: '1px',
+                            textTransform: 'uppercase',
+                            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+                            ...( (event.winner_side === 'A' || event.winner_side === 'AZUL') ? {
+                              background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
+                              border: '1px solid #3b82f6',
+                              color: '#ffffff'
+                            } : (event.winner_side === 'B' || event.winner_side === 'BLANCO') ? {
+                              background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
+                              border: '1px solid #ffffff',
+                              color: '#0f172a'
+                            } : {
+                              background: 'rgba(245, 158, 11, 0.2)',
+                              border: '1px solid rgba(245, 158, 11, 0.5)',
+                              color: '#f59e0b'
+                            } )
+                          }}>
+                            <TrophyOutlined style={{ fontSize: 16, color: (event.winner_side === 'B' || event.winner_side === 'BLANCO') ? '#b45309' : '#fbbf24' }} />
                             <span>
                               {(event.winner_side === 'D' || event.winner_side === 'DRAW') 
                                 ? 'NULO / TABLAS (EMPATE)' 
-                                : `GANADOR: ${event.winner_side === 'A' ? event.gallo_a_name : event.gallo_b_name}`}
+                                : `GANADOR: ${(event.winner_side === 'A' || event.winner_side === 'AZUL') ? (event.gallo_a_name || 'LADO AZUL') : (event.gallo_b_name || 'LADO BLANCO')}`}
                             </span>
                           </div>
                         )}
