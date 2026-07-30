@@ -1166,8 +1166,7 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                       tagColor = 'gold'; 
                       tagLabel = '🏁 FINALIZADA';
                     } else if (isActive && activeStatus === 'CLOSED') {
-                      tagColor = 'red'; 
-                      tagLabel = '⚔️ EN COMBATE';
+                      tagLabel = null; // User requested to remove "EN COMBATE" tag from the top right
                     } else if (isActive && activeStatus === 'LIVE') {
                       tagColor = 'green'; 
                       tagLabel = '🟢 APUESTAS ABIERTAS';
@@ -1191,27 +1190,29 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                         {/* Card Header */}
                         <div className="cart-card-header">
                           <span className="cart-fight-number">PELEA {event.post_number}</span>
-                          <Tag 
-                            color={tagColor} 
-                            onClick={(e) => {
-                              if (isBettingOpen) {
-                                e.stopPropagation();
-                                openBetSelectionModal(event);
-                              }
-                            }}
-                            style={{ 
-                              fontSize: 10, 
-                              borderRadius: 6, 
-                              margin: 0, 
-                              padding: '4px 10px', 
-                              fontWeight: 900,
-                              cursor: isBettingOpen ? 'pointer' : 'default',
-                              border: 'none',
-                              letterSpacing: '0.5px'
-                            }}
-                          >
-                            {tagLabel}
-                          </Tag>
+                          {tagLabel && (
+                            <Tag 
+                              color={tagColor} 
+                              onClick={(e) => {
+                                if (isBettingOpen) {
+                                  e.stopPropagation();
+                                  openBetSelectionModal(event);
+                                }
+                              }}
+                              style={{ 
+                                fontSize: 10, 
+                                borderRadius: 6, 
+                                margin: 0, 
+                                padding: '4px 10px', 
+                                fontWeight: 900,
+                                cursor: isBettingOpen ? 'pointer' : 'default',
+                                border: 'none',
+                                letterSpacing: '0.5px'
+                              }}
+                            >
+                              {tagLabel}
+                            </Tag>
+                          )}
                         </div>
 
                         {/* Card Content (Fighters) */}
