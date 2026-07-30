@@ -271,6 +271,7 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
   const dragState = useRef(null);    // { startX, startY, startPosX, startPosY }
   const [showEmojiBar, setShowEmojiBar] = useState(false);
   const [isFbFullscreen, setIsFbFullscreen] = useState(false);
+  const [fbActiveTab, setFbActiveTab] = useState('chat'); // 'chat' | 'cartelera'
   const [floatingReactions, setFloatingReactions] = useState([]);
   const [fbChatInput, setFbChatInput] = useState('');
   const fbChatContainerRef = useRef(null);
@@ -1695,11 +1696,11 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               </div>
 
               <button
-                onClick={() => setOverlayVisible(v => !v)}
+                onClick={() => setFbActiveTab(tab => tab === 'cartelera' ? 'chat' : 'cartelera')}
                 style={{
-                  background: overlayVisible ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.12)',
-                  border: overlayVisible ? '1px solid rgba(16,185,129,0.5)' : '1px solid rgba(255,255,255,0.2)',
-                  borderRadius: 20, color: overlayVisible ? '#10b981' : '#fff', fontWeight: 800,
+                  background: fbActiveTab === 'cartelera' ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.12)',
+                  border: fbActiveTab === 'cartelera' ? '1px solid rgba(16,185,129,0.5)' : '1px solid rgba(255,255,255,0.2)',
+                  borderRadius: 20, color: fbActiveTab === 'cartelera' ? '#10b981' : '#fff', fontWeight: 800,
                   fontSize: 11, padding: '5px 12px', cursor: 'pointer'
                 }}
               >
@@ -1889,146 +1890,322 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
             </div>
           ) : null}
 
-          {/* 3. Bottom Region: Live Chat Comments List (Minimalist & Professional) */}
-          <div 
-            ref={fbChatContainerRef}
-            style={{
+          {/* View Tab Selector Bar: Chat vs Cartelera */}
+          <div style={{
+            display: 'flex',
+            background: '#090d14',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            padding: '4px 10px',
+            gap: 8,
+            zIndex: 90
+          }}>
+            <button
+              onClick={() => setFbActiveTab('chat')}
+              style={{
+                flex: 1,
+                padding: '6px 12px',
+                borderRadius: 8,
+                background: fbActiveTab === 'chat' ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                border: fbActiveTab === 'chat' ? '1px solid rgba(255, 255, 255, 0.2)' : 'none',
+                color: fbActiveTab === 'chat' ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
+                fontSize: 11,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6
+              }}
+            >
+              <span>💬 CHAT EN VIVO</span>
+            </button>
+
+            <button
+              onClick={() => setFbActiveTab('cartelera')}
+              style={{
+                flex: 1,
+                padding: '6px 12px',
+                borderRadius: 8,
+                background: fbActiveTab === 'cartelera' ? 'rgba(16, 185, 129, 0.2)' : 'transparent',
+                border: fbActiveTab === 'cartelera' ? '1px solid rgba(16, 185, 129, 0.4)' : 'none',
+                color: fbActiveTab === 'cartelera' ? '#10b981' : 'rgba(255, 255, 255, 0.5)',
+                fontSize: 11,
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6
+              }}
+            >
+              <span>⚡ CARTELERA ({sortedCartelera.length})</span>
+            </button>
+          </div>
+
+          {/* 3. Bottom Region: Live Chat OR Cartelera Table */}
+          {fbActiveTab === 'chat' ? (
+            <>
+              <div 
+                ref={fbChatContainerRef}
+                style={{
+                  flex: 1,
+                  background: '#070a11',
+                  padding: '10px 14px',
+                  overflowY: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 6
+                }}
+              >
+                {chatMessages.slice(-30).map((m, idx) => {
+                  const isMe = m.user_id === userId;
+                  const authorName = (m.user_email || 'Usuario').split('@')[0];
+                  return (
+                    <div 
+                      key={m.id || idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        backdropFilter: 'blur(12px)',
+                        border: '1px solid rgba(255, 255, 255, 0.07)',
+                        borderRadius: 14,
+                        padding: '6px 12px',
+                        maxWidth: '88%',
+                        alignSelf: 'flex-start'
+                      }}
+                    >
+                      <div style={{
+                        width: 24, height: 24, borderRadius: '50%',
+                        background: isMe ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                        color: '#fff', fontSize: 11, fontWeight: 800, flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center'
+                      }}>
+                        {authorName.charAt(0).toUpperCase()}
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ color: isMe ? '#10b981' : '#38bdf8', fontSize: 12, fontWeight: 700 }}>
+                          {authorName}
+                        </span>
+                        <span style={{ color: '#ffffff', fontSize: 13, fontWeight: 400, lineHeight: 1.3 }}>
+                          {m.text}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* 4. Minimalist Fixed Bottom Comment & Reaction Bar */}
+              <div style={{
+                padding: '10px 14px',
+                background: '#090d14',
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                zIndex: 100
+              }}>
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (fbChatInput.trim()) {
+                      handleSendMessage(fbChatInput.trim());
+                      setFbChatInput('');
+                    }
+                  }}
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 9999, padding: '3px 10px', height: 40 }}
+                >
+                  <input
+                    type="text"
+                    placeholder="Comentar..."
+                    value={fbChatInput}
+                    onChange={(e) => setFbChatInput(e.target.value)}
+                    style={{
+                      flex: 1,
+                      background: 'transparent',
+                      border: 'none',
+                      outline: 'none',
+                      color: '#fff',
+                      fontSize: 13,
+                      fontWeight: 400
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    style={{ background: '#10b981', border: 'none', borderRadius: '50%', width: 28, height: 28, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                  >
+                    <SendOutlined style={{ fontSize: 12 }} />
+                  </button>
+                </form>
+
+                {/* Glass Reaction Buttons */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button
+                    onClick={() => triggerReaction('👍')}
+                    style={{
+                      width: 36, height: 36, borderRadius: '50%',
+                      background: 'rgba(59, 130, 246, 0.18)',
+                      border: '1px solid rgba(59, 130, 246, 0.35)',
+                      color: '#fff', fontSize: 16,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    👍
+                  </button>
+                  <button
+                    onClick={() => triggerReaction('❤️')}
+                    style={{
+                      width: 36, height: 36, borderRadius: '50%',
+                      background: 'rgba(239, 68, 68, 0.18)',
+                      border: '1px solid rgba(239, 68, 68, 0.35)',
+                      color: '#fff', fontSize: 16,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ❤️
+                  </button>
+                  <button
+                    onClick={() => triggerReaction('🔥')}
+                    style={{
+                      width: 36, height: 36, borderRadius: '50%',
+                      background: 'rgba(245, 158, 11, 0.18)',
+                      border: '1px solid rgba(245, 158, 11, 0.35)',
+                      color: '#fff', fontSize: 16,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🔥
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            /* CARTELERA DE HOY TABLE VIEW */
+            <div style={{
               flex: 1,
               background: '#070a11',
-              padding: '10px 14px',
+              padding: '12px 14px',
               overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',
-              gap: 6
-            }}
-          >
-            {chatMessages.slice(-30).map((m, idx) => {
-              const isMe = m.user_id === userId;
-              const authorName = (m.user_email || 'Usuario').split('@')[0];
-              return (
-                <div 
-                  key={m.id || idx}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    backdropFilter: 'blur(12px)',
-                    border: '1px solid rgba(255, 255, 255, 0.07)',
-                    borderRadius: 14,
-                    padding: '6px 12px',
-                    maxWidth: '88%',
-                    alignSelf: 'flex-start'
-                  }}
-                >
-                  <div style={{
-                    width: 24, height: 24, borderRadius: '50%',
-                    background: isMe ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-                    color: '#fff', fontSize: 11, fontWeight: 800, flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}>
-                    {authorName.charAt(0).toUpperCase()}
-                  </div>
+              gap: 10
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                <span style={{ color: '#fff', fontSize: 13, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <ThunderboltFilled style={{ color: '#10b981', fontSize: 14 }} />
+                  CARTELERA DE HOY
+                </span>
+                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 700 }}>
+                  {sortedCartelera.length} COMBATES
+                </span>
+              </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ color: isMe ? '#10b981' : '#38bdf8', fontSize: 12, fontWeight: 700 }}>
-                      {authorName}
-                    </span>
-                    <span style={{ color: '#ffffff', fontSize: 13, fontWeight: 400, lineHeight: 1.3 }}>
-                      {m.text}
-                    </span>
-                  </div>
+              {sortedCartelera.length === 0 ? (
+                <div style={{ padding: 20, textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>
+                  No hay peleas en esta categoría de momento.
                 </div>
-              );
-            })}
-          </div>
+              ) : (
+                sortedCartelera.map((event) => {
+                  let aData = { weight: event.gallo_a_weight || '0-0.0' };
+                  let bData = { weight: event.gallo_b_weight || '0-0.0' };
+                  try { const pA = JSON.parse(event.gallo_a_weight); if (pA && typeof pA === 'object') aData = pA; } catch(e){}
+                  try { const pB = JSON.parse(event.gallo_b_weight); if (pB && typeof pB === 'object') bData = pB; } catch(e){}
 
-          {/* 4. Minimalist Fixed Bottom Comment & Reaction Bar */}
-          <div style={{
-            padding: '10px 14px',
-            background: '#090d14',
-            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            zIndex: 100
-          }}>
-            <form 
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (fbChatInput.trim()) {
-                  handleSendMessage(fbChatInput.trim());
-                  setFbChatInput('');
-                }
-              }}
-              style={{ flex: 1, display: 'flex', alignItems: 'center', background: 'rgba(255, 255, 255, 0.06)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 9999, padding: '3px 10px', height: 40 }}
-            >
-              <input
-                type="text"
-                placeholder="Comentar..."
-                value={fbChatInput}
-                onChange={(e) => setFbChatInput(e.target.value)}
-                style={{
-                  flex: 1,
-                  background: 'transparent',
-                  border: 'none',
-                  outline: 'none',
-                  color: '#fff',
-                  fontSize: 13,
-                  fontWeight: 400
-                }}
-              />
-              <button
-                type="submit"
-                style={{ background: '#10b981', border: 'none', borderRadius: '50%', width: 28, height: 28, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-              >
-                <SendOutlined style={{ fontSize: 12 }} />
-              </button>
-            </form>
+                  const isActive = fightInfo.id && event.id === fightInfo.id;
+                  const isBettingOpen = isActive && fightInfo.status === 'LIVE';
 
-            {/* Glass Reaction Buttons */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <button
-                onClick={() => triggerReaction('👍')}
-                style={{
-                  width: 36, height: 36, borderRadius: '50%',
-                  background: 'rgba(59, 130, 246, 0.18)',
-                  border: '1px solid rgba(59, 130, 246, 0.35)',
-                  color: '#fff', fontSize: 16,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer'
-                }}
-              >
-                👍
-              </button>
-              <button
-                onClick={() => triggerReaction('❤️')}
-                style={{
-                  width: 36, height: 36, borderRadius: '50%',
-                  background: 'rgba(239, 68, 68, 0.18)',
-                  border: '1px solid rgba(239, 68, 68, 0.35)',
-                  color: '#fff', fontSize: 16,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer'
-                }}
-              >
-                ❤️
-              </button>
-              <button
-                onClick={() => triggerReaction('🔥')}
-                style={{
-                  width: 36, height: 36, borderRadius: '50%',
-                  background: 'rgba(245, 158, 11, 0.18)',
-                  border: '1px solid rgba(245, 158, 11, 0.35)',
-                  color: '#fff', fontSize: 16,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer'
-                }}
-              >
-                🔥
-              </button>
+                  let statusColor = 'rgba(255,255,255,0.08)';
+                  let statusTextColor = 'rgba(255,255,255,0.5)';
+                  let statusLabel = '⏳ PROGRAMADA';
+
+                  if (event.status === 'FINISHED') {
+                    statusColor = 'rgba(245, 158, 11, 0.15)';
+                    statusTextColor = '#f59e0b';
+                    statusLabel = `🏁 GANÓ ${event.winner || 'FINALIZADA'}`;
+                  } else if (isActive && fightInfo.status === 'CLOSED') {
+                    statusColor = 'rgba(239, 68, 68, 0.15)';
+                    statusTextColor = '#ef4444';
+                    statusLabel = '⚔️ EN COMBATE';
+                  } else if (isActive && fightInfo.status === 'LIVE') {
+                    statusColor = 'rgba(16, 185, 129, 0.15)';
+                    statusTextColor = '#10b981';
+                    statusLabel = '🟢 APUESTAS ABIERTAS';
+                  }
+
+                  return (
+                    <div 
+                      key={event.id}
+                      style={{
+                        background: isActive ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(10, 14, 23, 0.95) 100%)' : 'rgba(255, 255, 255, 0.03)',
+                        border: isActive ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255, 255, 255, 0.07)',
+                        borderRadius: 12,
+                        padding: '10px 12px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 8
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#fff', fontSize: 12, fontWeight: 900 }}>
+                          PELEA #{event.post_number}
+                        </span>
+                        <span style={{ background: statusColor, color: statusTextColor, fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 6, border: `1px solid ${statusTextColor}40` }}>
+                          {statusLabel}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0,0,0,0.3)', padding: '8px 10px', borderRadius: 8 }}>
+                        {/* Azul */}
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ color: '#60a5fa', fontSize: 12, fontWeight: 800 }}>
+                            {event.gallo_a_name || 'Gallo Azul'}
+                          </span>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>
+                            Peso: {aData.weight || event.gallo_a_weight}
+                          </span>
+                        </div>
+
+                        <span style={{ color: '#f59e0b', fontWeight: 900, fontSize: 11 }}>VS</span>
+
+                        {/* Blanco */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                          <span style={{ color: '#ffffff', fontSize: 12, fontWeight: 800 }}>
+                            {event.gallo_b_name || 'Gallo Blanco'}
+                          </span>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10 }}>
+                            Peso: {bData.weight || event.gallo_b_weight}
+                          </span>
+                        </div>
+                      </div>
+
+                      {isBettingOpen && (
+                        <div style={{ display: 'flex', gap: 6, marginTop: 2 }}>
+                          <button
+                            onClick={() => openBetModal('A', event)}
+                            style={{ flex: 1, background: '#1d4ed8', border: 'none', borderRadius: 6, color: '#fff', padding: '6px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                          >
+                            AZUL (x{event.gallo_a_odds?.toFixed(2) || '1.90'})
+                          </button>
+                          <button
+                            onClick={() => openBetModal('B', event)}
+                            style={{ flex: 1, background: '#ffffff', border: 'none', borderRadius: 6, color: '#0f172a', padding: '6px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                          >
+                            BLANCO (x{event.gallo_b_odds?.toFixed(2) || '1.90'})
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>
