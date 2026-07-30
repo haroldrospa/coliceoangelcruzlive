@@ -1147,17 +1147,16 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
             viewerCount={viewerCount}
           />
 
-          {/* Premium Glassmorphism Action Overlay Buttons */}
+          {/* Premium Glassmorphism Fullscreen Button */}
           <div style={{ 
             position: 'absolute', 
             top: 12, 
             right: 12, 
             zIndex: 40, 
             display: 'flex', 
-            alignItems: 'center', 
-            gap: 8,
+            alignItems: 'center',
             background: 'rgba(15, 23, 42, 0.75)',
-            padding: '4px 6px',
+            padding: '3px 4px',
             borderRadius: 24,
             border: '1px solid rgba(255, 255, 255, 0.15)',
             backdropFilter: 'blur(12px)',
@@ -1184,31 +1183,6 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               }}
             >
               📺 Fullscreen Live
-            </button>
-
-            <button
-              onClick={() => setOverlayVisible(v => !v)}
-              style={{
-                background: overlayVisible 
-                  ? 'linear-gradient(135deg, #10b981 0%, #047857 100%)' 
-                  : 'rgba(255, 255, 255, 0.1)',
-                border: overlayVisible ? '1px solid rgba(167, 243, 208, 0.4)' : '1px solid rgba(255, 255, 255, 0.18)',
-                borderRadius: 20, 
-                color: '#ffffff', 
-                fontWeight: 900,
-                fontSize: 11, 
-                padding: '6px 14px', 
-                cursor: 'pointer',
-                letterSpacing: '0.5px',
-                fontFamily: 'Outfit, sans-serif',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                boxShadow: overlayVisible ? '0 4px 14px rgba(16, 185, 129, 0.45)' : 'none',
-                transition: 'transform 0.2s ease'
-              }}
-            >
-              {overlayVisible ? '📊 Ocultar Tablero' : '📊 Mostrar Tablero'}
             </button>
           </div>
         </div>
