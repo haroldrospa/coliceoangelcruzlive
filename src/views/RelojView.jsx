@@ -17,7 +17,7 @@ import {
   PictureOutlined,
   CheckOutlined
 } from '@ant-design/icons';
-import { rawFetch, broadcastEventStatus, resolveBetsForEvent } from '../lib/supabase';
+import { rawFetch, broadcastEventStatus, resolveBetsForEvent, upsertSetting } from '../lib/supabase';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -611,13 +611,7 @@ export default function RelojView() {
       });
     } catch(e){}
 
-    try {
-      await rawFetch('settings', {
-        method: 'POST',
-        headers: { 'Prefer': 'resolution=merge-duplicates' },
-        body: { id: 'clock_state', value: JSON.stringify(payload) }
-      });
-    } catch(e){}
+    await upsertSetting('clock_state', payload);
   };
 
   const handleScoreboardStyleChange = async (newStyle) => {
@@ -633,13 +627,7 @@ export default function RelojView() {
       });
     } catch(e){}
 
-    try {
-      await rawFetch('settings', {
-        method: 'POST',
-        headers: { 'Prefer': 'resolution=merge-duplicates' },
-        body: { id: 'scoreboard_style', value: newStyle }
-      });
-    } catch(e){}
+    await upsertSetting('scoreboard_style', newStyle);
   };
 
   // Actions

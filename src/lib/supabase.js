@@ -78,6 +78,27 @@ export const ensureUserProfile = async (user) => {
   }
 };
 
+// SAFE SETTINGS UPSERT HELPER (Avoid 409 duplicate key errors)
+export const upsertSetting = async (id, value) => {
+  try {
+    const stringVal = typeof value === 'object' ? JSON.stringify(value) : String(value);
+    const existing = await rawFetch(`settings?id=eq.${id}`);
+    if (existing && existing.length > 0) {
+      await rawFetch(`settings?id=eq.${id}`, {
+        method: 'PATCH',
+        body: { value: stringVal }
+      });
+    } else {
+      await rawFetch('settings', {
+        method: 'POST',
+        body: { id, value: stringVal }
+      });
+    }
+  } catch(e) {
+    console.warn(`upsertSetting [${id}] notice:`, e);
+  }
+};
+
 // REALTIME BROADCAST STATUS HELPER
 export const broadcastEventStatus = async (postNumber, status, eventId = null) => {
   try {
