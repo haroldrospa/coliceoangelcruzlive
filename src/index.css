@@ -261,6 +261,16 @@ body.light-theme .step-circle-inactive {
 }
 
 /* Minimalist Nav Tab Items */
+.nav-tab-item {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.nav-tab-item .ant-typography {
+  white-space: nowrap !important;
+  display: inline-block !important;
+}
+
 .nav-tab-item:hover {
   background: rgba(255, 255, 255, 0.06) !important;
   border-color: rgba(255, 255, 255, 0.12) !important;

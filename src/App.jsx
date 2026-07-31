@@ -101,19 +101,19 @@ function MainContent({ currentUser, setCurrentUser, currentView, setCurrentView,
       <Header className="desktop-only" style={{ 
         position: 'sticky', top: 0, zIndex: 1001, width: '100%', 
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 36px', height: 68, 
-        background: theme === 'dark' ? 'rgba(11, 15, 23, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+        padding: '0 20px', height: 68, 
+        background: theme === 'dark' ? 'rgba(11, 15, 23, 0.92)' : 'rgba(255, 255, 255, 0.92)',
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
         borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid rgba(0, 0, 0, 0.06)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={() => setCurrentView('live')}>
-           <img src={theme === 'dark' ? '/Logominiatura.png' : '/LogominiaturaBlanco.png'} style={{ height: 36 }} alt="Coliseo Logo" />
-           <Title level={5} style={{ color: 'var(--text-main)', margin: 0, fontWeight: 800, letterSpacing: '0.5px', fontFamily: 'Outfit, sans-serif', textTransform: 'uppercase', fontSize: 13 }}>COLISEO ANGEL CRUZ</Title>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', flexShrink: 0 }} onClick={() => setCurrentView('live')}>
+           <img src={theme === 'dark' ? '/Logominiatura.png' : '/LogominiaturaBlanco.png'} style={{ height: 34 }} alt="Coliseo Logo" />
+           <Title level={5} style={{ color: 'var(--text-main)', margin: 0, fontWeight: 900, letterSpacing: '0.5px', fontFamily: 'Outfit, sans-serif', textTransform: 'uppercase', fontSize: 13, whiteSpace: 'nowrap' }}>COLISEO ANGEL CRUZ</Title>
         </div>
 
         {/* Minimalist Nav Links */}
-        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'nowrap', overflowX: 'auto' }}>
           {itemsToShow.map(item => {
             const isActive = currentView === item.key;
             return (
@@ -124,25 +124,29 @@ function MainContent({ currentUser, setCurrentUser, currentView, setCurrentView,
                    cursor: 'pointer', 
                    display: 'flex', 
                    alignItems: 'center', 
-                   gap: 8, 
-                   padding: '8px 16px',
+                   gap: 7, 
+                   padding: '7px 14px',
                    borderRadius: '8px',
-                   background: isActive ? (theme === 'dark' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.1)') : 'transparent',
+                   background: isActive ? (theme === 'dark' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(16, 185, 129, 0.12)') : 'transparent',
                    transition: 'all 0.2s ease',
                    border: 'none',
-                   position: 'relative'
+                   position: 'relative',
+                   whiteSpace: 'nowrap',
+                   flexShrink: 0
                 }}
                 className="nav-tab-item"
               >
-                <span style={{ color: isActive ? '#10b981' : 'var(--text-muted)', fontSize: 14, transition: 'color 0.2s' }}>
+                <span style={{ color: isActive ? '#10b981' : 'var(--text-muted)', fontSize: 14, transition: 'color 0.2s', display: 'flex', alignItems: 'center' }}>
                   {getIcon(item.key, isActive)}
                 </span>
                 <Text style={{ 
                   color: isActive ? (theme === 'dark' ? '#ffffff' : '#0f172a') : 'var(--text-muted)', 
                   fontSize: 11, 
-                  fontWeight: isActive ? 800 : 600, 
+                  fontWeight: isActive ? 900 : 700, 
                   letterSpacing: '0.5px', 
                   textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
+                  display: 'inline-block',
                   transition: 'color 0.2s'
                 }}>
                   {item.label}
@@ -151,8 +155,8 @@ function MainContent({ currentUser, setCurrentUser, currentView, setCurrentView,
                   <div style={{
                     position: 'absolute',
                     bottom: -2,
-                    left: '20%',
-                    right: '20%',
+                    left: '15%',
+                    right: '15%',
                     height: 2,
                     background: '#10b981',
                     borderRadius: 2
