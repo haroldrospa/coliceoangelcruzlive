@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Space, Card, Row, Col, Modal, Button, Skeleton, Badge, Input, DatePicker, Select, message, Popconfirm, Form, Divider } from 'antd';
-import { PlayCircleOutlined, PlayCircleFilled, HistoryOutlined, ThunderboltFilled, TrophyOutlined, TrophyFilled, VideoCameraOutlined, DownloadOutlined, ShareAltOutlined, WhatsAppOutlined, CopyOutlined, DeleteOutlined, EditOutlined, InboxOutlined, CloseOutlined, CalendarOutlined, EyeOutlined, FilterOutlined } from '@ant-design/icons';
+import { Typography, Space, Card, Row, Col, Modal, Button, Skeleton, Input, Select, message, Popconfirm, Form } from 'antd';
+import { PlayCircleOutlined, PlayCircleFilled, HistoryOutlined, ThunderboltFilled, TrophyFilled, VideoCameraOutlined, DownloadOutlined, ShareAltOutlined, WhatsAppOutlined, CopyOutlined, DeleteOutlined, EditOutlined, CloseOutlined, CalendarOutlined, SearchOutlined } from '@ant-design/icons';
 import { supabase, rawFetch } from '../lib/supabase';
 
 const { Title, Text } = Typography;
@@ -20,23 +20,19 @@ const ReplaysView = ({ currentUser }) => {
   const [loading, setLoading] = useState(true);
   const [selectedReplay, setSelectedReplay] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDateFilter, setSelectedDateFilter] = useState('ALL');
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [editingReplay, setEditingReplay] = useState(null);
-  const [sortBy, setSortBy] = useState('newest'); // newest, oldest, number-asc, number-desc
-  const [activeDateFilter, setActiveDateFilter] = useState('ALL');
+  const [sortBy, setSortBy] = useState('newest');
   const [form] = Form.useForm();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
 
   const fetchReplays = async () => {
     try {
-      // Fetch finished events 
       const data = await rawFetch(`events?select=*&status=eq.FINISHED&order=created_at.desc&limit=100`);
       if (data) {
         setReplays(data);
-        
-        // Auto-open replay if ID in URL
         const params = new URLSearchParams(window.location.search);
         const replayId = params.get('replay');
         if (replayId) {
@@ -64,7 +60,7 @@ const ReplaysView = ({ currentUser }) => {
         setIsDeleting(true);
         await rawFetch(`bets?event_id=eq.${id}`, { method: 'DELETE' });
         await rawFetch(`events?id=eq.${id}`, { method: 'DELETE' });
-        message.success('PELEA ELIMINADA DEFINITIVAMENTE');
+        message.success('Pelea eliminada correctamente');
         fetchReplays();
      } catch (err) {
         message.error('Error al eliminar: ' + err.message);
@@ -76,9 +72,7 @@ const ReplaysView = ({ currentUser }) => {
   const openEditor = (event) => {
       setEditingReplay(event);
       setIsAdminOpen(true);
-      form.setFieldsValue({
-          stream_url: event.stream_url
-      });
+      form.setFieldsValue({ stream_url: event.stream_url });
   };
 
   const handleUpdateReplay = async (values) => {
@@ -88,8 +82,7 @@ const ReplaysView = ({ currentUser }) => {
         method: 'PATCH', 
         body: { stream_url: values.stream_url } 
       });
-      
-      message.success('REPETICIÓN ACTUALIZADA');
+      message.success('Repetición actualizada');
       setIsAdminOpen(false);
       setEditingReplay(null);
       form.resetFields();
@@ -100,6 +93,18 @@ const ReplaysView = ({ currentUser }) => {
       setLoading(false);
     }
   };
+
+  // Extract all distinct dates for dropdown filter
+  const availableDatesMap = (replays || []).reduce((acc, event) => {
+    if (!event || !event.created_at) return acc;
+    const dateObj = new Date(event.created_at);
+    const dStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    if (!acc[dStr]) acc[dStr] = { dateStr: dStr, count: 0, timestamp: dateObj.getTime() };
+    acc[dStr].count += 1;
+    return acc;
+  }, {});
+
+  const availableDatesList = Object.values(availableDatesMap).sort((a, b) => b.timestamp - a.timestamp);
 
   const filteredReplays = (replays || [])
     .filter(event => {
@@ -115,20 +120,12 @@ const ReplaysView = ({ currentUser }) => {
             galloB.includes(term) ||
             post.includes(term);
         
-        if (activeDateFilter !== 'ALL') {
+        if (selectedDateFilter !== 'ALL') {
           const dStr = new Date(event.created_at || Date.now()).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-          if (dStr !== activeDateFilter) return false;
+          if (dStr !== selectedDateFilter) return false;
         }
 
-        if (!selectedDate) return matchesSearch;
-
-        try {
-            const eventDate = new Date(event.created_at).setHours(0, 0, 0, 0);
-            const filterDate = selectedDate.toDate().setHours(0, 0, 0, 0);
-            return matchesSearch && eventDate === filterDate;
-        } catch (e) {
-            return matchesSearch;
-        }
+        return matchesSearch;
     })
     .sort((a, b) => {
         if (sortBy === 'newest') return new Date(b.created_at) - new Date(a.created_at);
@@ -138,38 +135,19 @@ const ReplaysView = ({ currentUser }) => {
         return 0;
     });
 
-  // Group filtered replays by formatted date
+  // Group filtered replays by formatted date for clean section layout
   const groupedByDate = (filteredReplays || []).reduce((acc, event) => {
     if (!event) return acc;
     const dateObj = new Date(event.created_at || Date.now());
-    const formattedDate = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
     const fullDateTitle = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     
-    if (!acc[formattedDate]) {
-      acc[formattedDate] = {
-        dateStr: formattedDate,
-        fullTitle: fullDateTitle,
-        timestamp: dateObj.getTime(),
-        events: []
-      };
+    if (!acc[dateStr]) {
+      acc[dateStr] = { dateStr, fullTitle: fullDateTitle, timestamp: dateObj.getTime(), events: [] };
     }
-    acc[formattedDate].events.push(event);
+    acc[dateStr].events.push(event);
     return acc;
   }, {});
-
-  // All distinct dates available for quick pill buttons
-  const availableDates = Object.values(
-    (replays || []).reduce((acc, event) => {
-      if (!event) return acc;
-      const dateObj = new Date(event.created_at || Date.now());
-      const formattedDate = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      if (!acc[formattedDate]) {
-        acc[formattedDate] = { dateStr: formattedDate, count: 0, timestamp: dateObj.getTime() };
-      }
-      acc[formattedDate].count += 1;
-      return acc;
-    }, {})
-  ).sort((a, b) => b.timestamp - a.timestamp);
 
   const dateGroupsList = Object.values(groupedByDate).sort((a, b) => {
     if (sortBy === 'oldest') return a.timestamp - b.timestamp;
@@ -179,7 +157,6 @@ const ReplaysView = ({ currentUser }) => {
   const openReplay = (event) => {
     setSelectedReplay(event);
     setIsVideoLoading(true);
-    
     const newUrl = `${window.location.origin}${window.location.pathname}?replay=${event.id}`;
     window.history.replaceState({ path: newUrl }, '', newUrl);
   };
@@ -187,7 +164,6 @@ const ReplaysView = ({ currentUser }) => {
   const closeReplay = () => {
     setSelectedReplay(null);
     setIsVideoLoading(false);
-    
     const newUrl = `${window.location.origin}${window.location.pathname}`;
     window.history.replaceState({ path: newUrl }, '', newUrl);
   };
@@ -197,13 +173,13 @@ const ReplaysView = ({ currentUser }) => {
 
     const filename = `Combate_${postNumber || 'Gallos'}.mp4`;
     const proxyUrl = `/api/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(filename)}`;
-    const hide = message.loading('Descargando video al dispositivo...', 0);
+    const hide = message.loading('Descargando video...', 0);
 
     try {
       const response = await fetch(proxyUrl);
       if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
       const blob = await response.blob();
-      if (blob.size === 0) throw new Error('El archivo recibido está vacío');
+      if (blob.size === 0) throw new Error('El archivo está vacío');
 
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -217,18 +193,12 @@ const ReplaysView = ({ currentUser }) => {
       }, 200);
 
       hide();
-      message.success(`✅ "${filename}" descargado correctamente`);
+      message.success(`Descargado "${filename}"`);
     } catch (err) {
       hide();
-      console.error('[Download] Error:', err.message);
       const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
-      const isBunnyPlayer = url.includes('player.mediadelivery.net');
-
       if (isYouTube) {
-        message.warning('YouTube no permite descarga directa. Abre el video en YouTube.');
         window.open(url, '_blank');
-      } else if (isBunnyPlayer) {
-        message.error('Este es un enlace de reproductor. En Bunny.net, ve al video → Downloads → copia el enlace .mp4 directo.');
       } else {
         const link = document.createElement('a');
         link.href = url;
@@ -237,7 +207,6 @@ const ReplaysView = ({ currentUser }) => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        message.info('Iniciando descarga directa...');
       }
     }
   };
@@ -251,16 +220,12 @@ const ReplaysView = ({ currentUser }) => {
     
     const shareData = {
       title: `Coliseo Ángel Cruz - Pelea #${event.post_number || ''}`,
-      text: `¡Mira esta pelea! Pelea #${event.post_number || ''}: ${nameA} vs ${nameB}. Ganador: ${winnerName}`,
+      text: `Pelea #${event.post_number || ''}: ${nameA} vs ${nameB}. Ganador: ${winnerName}`,
       url: shareUrl,
     };
 
     if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        console.error('Share Error:', err);
-      }
+      try { await navigator.share(shareData); } catch (err) {}
     } else {
       const waUrl = `https://wa.me/?text=${encodeURIComponent(shareData.text + ' ' + shareData.url)}`;
       window.open(waUrl, '_blank');
@@ -269,7 +234,7 @@ const ReplaysView = ({ currentUser }) => {
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
-    message.success('Enlace copiado al portapapeles');
+    message.success('Enlace copiado');
   };
 
   const getShareUrl = (event) => {
@@ -278,215 +243,112 @@ const ReplaysView = ({ currentUser }) => {
   };
 
   return (
-    <div style={{ padding: '30px 20px', maxWidth: 1300, margin: '0 auto', background: 'var(--obsidian)', minHeight: '100vh', paddingBottom: 100 }}>
-      {/* Header Banner */}
-      <div style={{ marginBottom: 32, textAlign: 'center' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 12, padding: '5px 16px', background: 'rgba(16,185,129,0.1)', borderRadius: 20, border: '1px solid rgba(16,185,129,0.25)' }}>
-          <HistoryOutlined style={{ color: '#10b981', fontSize: 14 }} />
-          <Text style={{ color: '#10b981', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>Cámara de Repeticiones HD Por Fecha</Text>
+    <div style={{ padding: '24px 16px', maxWidth: 1200, margin: '0 auto', minHeight: '100vh', paddingBottom: 80 }}>
+      {/* Simple Header */}
+      <div style={{ marginBottom: 24, textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div>
+          <Title level={2} style={{ color: '#ffffff', margin: 0, fontWeight: 900, fontFamily: 'Outfit, sans-serif', fontSize: 26, letterSpacing: '-0.5px' }}>
+            📹 REPETICIONES DE COMBATE
+          </Title>
+          <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, fontWeight: 600 }}>
+            Peleas concluidas del Coliseo Ángel Cruz ({filteredReplays.length} peleas)
+          </Text>
         </div>
-        <Title level={1} style={{ color: '#fff', fontSize: 'clamp(28px, 5vw, 42px)', fontWeight: 900, margin: 0, fontFamily: 'Outfit, sans-serif', letterSpacing: '-1px' }}>
-          REPETICIONES POR <span style={{ color: '#10b981' }}>FECHA DE COMBATE</span>
-        </Title>
-        <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, fontWeight: 600, display: 'block', marginTop: 6 }}>
-          Selecciona una fecha de la cartelera para revisar las peleas concluidas ({filteredReplays.length} peleas en total)
-        </Text>
       </div>
 
-      {/* Filter Controls Bar */}
-      <Card 
-        styles={{ body: { padding: '16px 20px' } }} 
-        style={{ 
-          marginBottom: 24, 
-          background: 'rgba(15, 23, 42, 0.75)', 
-          border: '1px solid rgba(255,255,255,0.08)', 
-          borderRadius: 18, 
-          backdropFilter: 'blur(16px)',
-          boxShadow: '0 12px 35px rgba(0,0,0,0.4)'
-        }}
-      >
-        <Row gutter={[12, 12]} align="middle">
-            <Col xs={24} md={10}>
-                <Input 
-                    placeholder="Buscar por gallo o número de pelea (#)..." 
-                    value={searchTerm} 
-                    prefix={<HistoryOutlined style={{ color: '#10b981' }} />}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    style={{ background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', borderRadius: 10, height: 44 }}
-                    allowClear
-                />
-            </Col>
-            <Col xs={12} md={7}>
-                <DatePicker 
-                    placeholder="Filtrar por fecha exacta" 
-                    style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', borderRadius: 10, height: 44 }}
-                    onChange={date => setSelectedDate(date)}
-                    format="DD/MM/YYYY"
-                    allowClear
-                />
-            </Col>
-            <Col xs={12} md={7}>
-                <Select 
-                    placeholder="Ordenar..."
-                    value={sortBy}
-                    onChange={val => setSortBy(val)}
-                    style={{ width: '100%', height: 44 }}
-                    className="premium-select"
-                    options={[
-                        { label: 'Fechas Recientes primero', value: 'newest' },
-                        { label: 'Fechas Antiguas primero', value: 'oldest' },
-                        { label: 'Pelea # (Ascendente)', value: 'number-asc' },
-                        { label: 'Pelea # (Descendente)', value: 'number-desc' }
-                    ]}
-                />
-            </Col>
+      {/* Clean Single Filter Bar */}
+      <div style={{ 
+        marginBottom: 28, 
+        background: 'rgba(255,255,255,0.03)', 
+        border: '1px solid rgba(255,255,255,0.08)', 
+        borderRadius: 12, 
+        padding: '12px 14px' 
+      }}>
+        <Row gutter={[10, 10]} align="middle">
+          {/* Search */}
+          <Col xs={24} sm={10} md={12}>
+            <Input 
+              placeholder="Buscar por gallo o pelea #..." 
+              value={searchTerm} 
+              prefix={<SearchOutlined style={{ color: '#10b981' }} />}
+              onChange={e => setSearchTerm(e.target.value)}
+              style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: 8, height: 40 }}
+              allowClear
+            />
+          </Col>
+
+          {/* Date Selector Dropdown */}
+          <Col xs={12} sm={7} md={6}>
+            <Select 
+              placeholder="Filtrar por fecha"
+              value={selectedDateFilter}
+              onChange={val => setSelectedDateFilter(val)}
+              style={{ width: '100%', height: 40 }}
+              className="clean-select"
+              options={[
+                { label: `📅 TODAS LAS FECHAS (${replays.length})`, value: 'ALL' },
+                ...availableDatesList.map(d => ({
+                  label: `📅 FECHA: ${d.dateStr} (${d.count})`,
+                  value: d.dateStr
+                }))
+              ]}
+            />
+          </Col>
+
+          {/* Sort Selector */}
+          <Col xs={12} sm={7} md={6}>
+            <Select 
+              placeholder="Ordenar"
+              value={sortBy}
+              onChange={val => setSortBy(val)}
+              style={{ width: '100%', height: 40 }}
+              className="clean-select"
+              options={[
+                { label: 'Más Recientes primero', value: 'newest' },
+                { label: 'Más Antiguos primero', value: 'oldest' },
+                { label: 'Pelea # (Ascendente)', value: 'number-asc' },
+                { label: 'Pelea # (Descendente)', value: 'number-desc' }
+              ]}
+            />
+          </Col>
         </Row>
-      </Card>
-
-      {/* Quick Date Pills Selector Bar */}
-      {availableDates.length > 0 && (
-        <div style={{ marginBottom: 36 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-            <CalendarOutlined style={{ color: '#10b981', fontSize: 13 }} />
-            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
-              SELECCIONAR JORNADA / FECHA DE CARTELERA:
-            </Text>
-          </div>
-
-          <div style={{ 
-            display: 'flex', 
-            flexWrap: 'wrap',
-            gap: 10, 
-            alignItems: 'center'
-          }}>
-            {/* "All" button */}
-            <button
-              onClick={() => setActiveDateFilter('ALL')}
-              style={{
-                background: activeDateFilter === 'ALL' 
-                  ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' 
-                  : 'rgba(255, 255, 255, 0.05)',
-                border: activeDateFilter === 'ALL' ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#ffffff',
-                padding: '8px 18px',
-                borderRadius: 12,
-                fontSize: 12,
-                fontWeight: 900,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                boxShadow: activeDateFilter === 'ALL' ? '0 4px 15px rgba(16, 185, 129, 0.4)' : 'none',
-                transition: 'all 0.25s ease'
-              }}
-            >
-              <span>⚡ TODAS LAS FECHAS</span>
-              <span style={{ background: activeDateFilter === 'ALL' ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: 10, fontSize: 10 }}>
-                {replays.length}
-              </span>
-            </button>
-
-            {/* Date Pills */}
-            {availableDates.map(item => {
-              const isSelected = activeDateFilter === item.dateStr;
-              return (
-                <button
-                  key={item.dateStr}
-                  onClick={() => setActiveDateFilter(item.dateStr)}
-                  style={{
-                    background: isSelected 
-                      ? 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)' 
-                      : 'rgba(255, 255, 255, 0.04)',
-                    border: isSelected ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
-                    color: isSelected ? '#ffffff' : 'rgba(255,255,255,0.85)',
-                    padding: '8px 18px',
-                    borderRadius: 12,
-                    fontSize: 12,
-                    fontWeight: 900,
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    boxShadow: isSelected ? '0 4px 15px rgba(56, 189, 248, 0.4)' : 'none',
-                    transition: 'all 0.25s ease'
-                  }}
-                >
-                  <span>📅 FECHA: {item.dateStr}</span>
-                  <span style={{ 
-                    background: isSelected ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.1)', 
-                    padding: '2px 8px', 
-                    borderRadius: 10, 
-                    fontSize: 10 
-                  }}>
-                    {item.count} {item.count === 1 ? 'pelea' : 'peleas'}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      </div>
 
       {/* Date Groups Rows */}
       {loading ? (
-        <Row gutter={[20, 20]}>
-          {Array(8).fill(0).map((_, idx) => (
+        <Row gutter={[16, 16]}>
+          {Array(6).fill(0).map((_, idx) => (
             <Col xs={24} sm={12} md={8} lg={6} key={idx}>
-              <Skeleton.Button active style={{ width: '100%', height: 260, borderRadius: 18 }} />
+              <Skeleton.Button active style={{ width: '100%', height: 220, borderRadius: 14 }} />
             </Col>
           ))}
         </Row>
       ) : dateGroupsList.length > 0 ? (
         dateGroupsList.map((group) => (
-          <div key={group.dateStr} style={{ marginBottom: 44 }}>
-            {/* Section Header for Date Row */}
+          <div key={group.dateStr} style={{ marginBottom: 32 }}>
+            {/* Simple Minimalist Date Title */}
             <div style={{
-              background: 'linear-gradient(90deg, rgba(16, 185, 129, 0.12) 0%, rgba(56, 189, 248, 0.08) 50%, rgba(255, 255, 255, 0.02) 100%)',
-              borderLeft: '5px solid #10b981',
-              borderTop: '1px solid rgba(255,255,255,0.06)',
-              borderRight: '1px solid rgba(255,255,255,0.06)',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
-              borderRadius: 14,
-              padding: '12px 20px',
-              marginBottom: 20,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              flexWrap: 'wrap',
-              gap: 10,
-              boxShadow: '0 8px 25px rgba(0,0,0,0.4)'
+              paddingBottom: 8,
+              marginBottom: 16,
+              borderBottom: '1px solid rgba(255,255,255,0.08)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <CalendarOutlined style={{ color: '#10b981', fontSize: 18 }} />
-                <div>
-                  <Title level={4} style={{ color: '#ffffff', margin: 0, fontWeight: 900, fontFamily: 'Outfit, sans-serif', textTransform: 'capitalize', fontSize: 18, lineHeight: 1.1 }}>
-                    📅 CARTELERA DE {group.fullTitle.toUpperCase()}
-                  </Title>
-                  <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: 700 }}>
-                    FECHA: {group.dateStr}
-                  </Text>
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <CalendarOutlined style={{ color: '#10b981', fontSize: 15 }} />
+                <Text style={{ color: '#ffffff', fontWeight: 900, fontSize: 15, fontFamily: 'Outfit, sans-serif', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {group.fullTitle} ({group.dateStr})
+                </Text>
               </div>
 
-              <div style={{
-                background: 'rgba(16, 185, 129, 0.18)',
-                border: '1px solid rgba(16, 185, 129, 0.35)',
-                color: '#10b981',
-                padding: '5px 14px',
-                borderRadius: 20,
-                fontSize: 11,
-                fontWeight: 900,
-                letterSpacing: '1px',
-                fontFamily: 'Outfit, sans-serif'
-              }}>
-                🎬 {group.events.length} {group.events.length === 1 ? 'REPETICIÓN DISPONIBLE' : 'REPETICIONES DISPONIBLES'}
-              </div>
+              <span style={{ fontSize: 11, color: '#10b981', fontWeight: 800, background: 'rgba(16,185,129,0.1)', padding: '2px 10px', borderRadius: 12 }}>
+                {group.events.length} {group.events.length === 1 ? 'pelea' : 'peleas'}
+              </span>
             </div>
 
-            {/* Fights Row for this specific date */}
-            <Row gutter={[20, 20]}>
+            {/* Cards Grid */}
+            <Row gutter={[16, 16]}>
               {group.events.map((event) => {
                 const nameA = (event.gallo_a_name || 'Gallo Azul').replace('[ARCHIVED] ', '');
                 const nameB = (event.gallo_b_name || 'Gallo Blanco');
@@ -496,232 +358,99 @@ const ReplaysView = ({ currentUser }) => {
                 return (
                   <Col xs={24} sm={12} md={8} lg={6} key={event.id}>
                     <div 
-                      className="premium-replay-card fade-up"
+                      className="simple-replay-card"
                       onClick={() => openReplay(event)}
                       style={{ 
                         background: 'linear-gradient(135deg, #11161d 0%, #0b0f17 100%)', 
-                        borderRadius: 16, 
+                        borderRadius: 14, 
                         border: '1px solid rgba(255, 255, 255, 0.08)',
-                        overflow: 'hidden',
+                        padding: '14px',
                         cursor: 'pointer',
-                        transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                        transition: 'all 0.25s ease',
                         display: 'flex',
                         flexDirection: 'column',
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                        position: 'relative'
+                        gap: 10
                       }}
                     >
-                      {/* Top Thumbnail Banner Box */}
-                      <div style={{
-                        position: 'relative',
-                        height: 135,
-                        background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-                        overflow: 'hidden'
-                      }}>
-                        {/* Background Glow */}
-                        <div style={{
-                          position: 'absolute',
-                          inset: 0,
-                          opacity: 0.2,
-                          backgroundImage: 'radial-gradient(circle at 50% 40%, #38bdf8 0%, transparent 70%)',
-                          pointerEvents: 'none'
-                        }} />
-
-                        {/* Top Left: PELEA # Badge */}
-                        <div style={{
-                          position: 'absolute',
-                          top: 10,
-                          left: 10,
-                          background: 'rgba(56, 189, 248, 0.18)',
-                          border: '1px solid rgba(56, 189, 248, 0.4)',
-                          color: '#38bdf8',
-                          padding: '3px 10px',
-                          borderRadius: 6,
-                          fontSize: 11,
-                          fontWeight: 900,
-                          letterSpacing: '1px',
-                          fontFamily: 'Outfit, sans-serif'
-                        }}>
+                      {/* Top Header: PELEA # + Winner */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ background: 'rgba(56,189,248,0.15)', border: '1px solid rgba(56,189,248,0.3)', color: '#38bdf8', padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 900 }}>
                           PELEA #{event.post_number}
                         </div>
 
-                        {/* Top Right: HD Badge */}
                         <div style={{
-                          position: 'absolute',
-                          top: 10,
-                          right: 10,
-                          background: 'rgba(16, 185, 129, 0.15)',
-                          border: '1px solid rgba(16, 185, 129, 0.3)',
-                          color: '#10b981',
-                          padding: '3px 8px',
-                          borderRadius: 6,
                           fontSize: 9,
                           fontWeight: 900,
-                          letterSpacing: '0.5px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 4
+                          padding: '2px 8px',
+                          borderRadius: 6,
+                          textTransform: 'uppercase',
+                          ...(event.winner_side === 'A' || event.winner_side === 'Azul'
+                            ? { background: 'rgba(29, 78, 216, 0.85)', color: '#fff' }
+                            : event.winner_side === 'B' || event.winner_side === 'Blanco'
+                            ? { background: 'rgba(241, 245, 249, 0.9)', color: '#0f172a' }
+                            : { background: 'rgba(180, 83, 9, 0.85)', color: '#fff' }
+                          )
                         }}>
-                          <VideoCameraOutlined /> HD REPETICIÓN
+                          🏆 {event.winner_side === 'A' ? nameA : event.winner_side === 'B' ? nameB : 'TABLAS'}
                         </div>
+                      </div>
 
-                        {/* Center Play Button Icon */}
-                        <div className="card-play-icon" style={{
-                          width: 46,
-                          height: 46,
-                          borderRadius: '50%',
-                          background: 'rgba(16, 185, 129, 0.2)',
-                          border: '2px solid #10b981',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          boxShadow: '0 0 20px rgba(16, 185, 129, 0.4)',
-                          transition: 'all 0.3s ease'
-                        }}>
-                          <PlayCircleFilled style={{ color: '#ffffff', fontSize: 24 }} />
+                      {/* Fighters Info */}
+                      <div style={{ background: 'rgba(0,0,0,0.3)', padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.04)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 8, color: '#3b82f6', fontWeight: 900 }}>AZUL</div>
+                            <div style={{ fontSize: 12, color: '#fff', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nameA}</div>
+                            {weightA && <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>{weightA}</div>}
+                          </div>
+
+                          <div style={{ fontSize: 8, fontWeight: 900, color: 'rgba(255,255,255,0.3)' }}>VS</div>
+
+                          <div style={{ flex: 1, minWidth: 0, textAlign: 'right' }}>
+                            <div style={{ fontSize: 8, color: '#e2e8f0', fontWeight: 900 }}>BLANCO</div>
+                            <div style={{ fontSize: 12, color: '#fff', fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{nameB}</div>
+                            {weightB && <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)' }}>{weightB}</div>}
+                          </div>
                         </div>
+                      </div>
 
-                        {/* Bottom Winner Banner */}
-                        <div style={{
-                          position: 'absolute',
-                          bottom: 8,
-                          left: 8,
-                          right: 8,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>
-                          <div style={{
-                            padding: '3px 12px',
-                            borderRadius: 20,
+                      {/* Action Button */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 2 }}>
+                        <Button 
+                          size="small"
+                          type="primary"
+                          icon={<PlayCircleOutlined />}
+                          onClick={(e) => { e.stopPropagation(); openReplay(event); }}
+                          style={{
+                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                            border: 'none',
+                            borderRadius: 6,
                             fontSize: 10,
                             fontWeight: 900,
-                            letterSpacing: '0.5px',
-                            textTransform: 'uppercase',
-                            backdropFilter: 'blur(8px)',
-                            textAlign: 'center',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            maxWidth: '95%',
-                            ...(event.winner_side === 'A' || event.winner_side === 'Azul'
-                              ? { background: 'rgba(29, 78, 216, 0.9)', color: '#ffffff', border: '1px solid #3b82f6' }
-                              : event.winner_side === 'B' || event.winner_side === 'Blanco'
-                              ? { background: 'rgba(241, 245, 249, 0.95)', color: '#0f172a', border: '1px solid #ffffff' }
-                              : { background: 'rgba(180, 83, 9, 0.9)', color: '#ffffff', border: '1px solid #f59e0b' }
-                            )
-                          }}>
-                            🏆 GANADOR: {
-                              event.winner_side === 'A' ? nameA :
-                              event.winner_side === 'B' ? nameB :
-                              '¡TABLAS / NULA!'
-                            }
-                          </div>
-                        </div>
-                      </div>
+                            height: 28,
+                            flex: 1,
+                            marginRight: 6
+                          }}
+                        >
+                          VER REPETICIÓN
+                        </Button>
 
-                      {/* Fighter Comparison Box */}
-                      <div style={{ padding: '12px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                        <div style={{
-                          background: 'rgba(0, 0, 0, 0.35)',
-                          borderRadius: 10,
-                          padding: '8px 10px',
-                          border: '1px solid rgba(255, 255, 255, 0.05)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 6
-                        }}>
-                          {/* Left: Gallo Azul */}
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 9, fontWeight: 900, color: '#3b82f6', letterSpacing: '0.5px' }}>LADO AZUL</div>
-                            <div style={{ fontSize: 12, fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'Outfit, sans-serif' }}>
-                              {nameA}
-                            </div>
-                            {weightA && <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>⚖️ {weightA}</div>}
-                          </div>
+                        <Button 
+                          size="small"
+                          type="text"
+                          icon={<ShareAltOutlined style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12 }} />}
+                          onClick={(e) => { e.stopPropagation(); handleShare(event); }}
+                          style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 6, height: 28, width: 28, padding: 0 }}
+                        />
 
-                          {/* VS Divider Badge */}
-                          <div style={{
-                            width: 22,
-                            height: 22,
-                            borderRadius: '50%',
-                            background: 'rgba(255,255,255,0.06)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: 8,
-                            fontWeight: 900,
-                            color: 'rgba(255,255,255,0.4)',
-                            flexShrink: 0
-                          }}>VS</div>
-
-                          {/* Right: Gallo Blanco */}
-                          <div style={{ flex: 1, minWidth: 0, textAlign: 'right' }}>
-                            <div style={{ fontSize: 9, fontWeight: 900, color: '#e2e8f0', letterSpacing: '0.5px' }}>LADO BLANCO</div>
-                            <div style={{ fontSize: 12, fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'Outfit, sans-serif' }}>
-                              {nameB}
-                            </div>
-                            {weightB && <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>⚖️ {weightB}</div>}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Card Bottom Bar */}
-                      <div style={{
-                        padding: '10px 12px',
-                        borderTop: '1px solid rgba(255,255,255,0.05)',
-                        background: 'rgba(0, 0, 0, 0.25)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between'
-                      }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <CalendarOutlined style={{ fontSize: 11, color: '#10b981' }} />
-                          {group.dateStr}
-                        </span>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <Button 
-                            size="small"
-                            type="primary"
-                            icon={<PlayCircleOutlined />}
-                            onClick={(e) => { e.stopPropagation(); openReplay(event); }}
-                            style={{
-                              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                              border: 'none',
-                              borderRadius: 8,
-                              fontSize: 10,
-                              fontWeight: 900,
-                              height: 28,
-                              padding: '0 12px'
-                            }}
-                          >
-                            VER
-                          </Button>
-
-                          <Button 
-                            size="small"
-                            type="text"
-                            icon={<ShareAltOutlined style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }} />}
-                            onClick={(e) => { e.stopPropagation(); handleShare(event); }}
-                            style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 8, height: 28, width: 28, padding: 0 }}
-                          />
-
-                          {currentUser?.role === 'admin' && (
-                            <Space size={4} onClick={e => e.stopPropagation()}>
-                              <Button size="small" type="text" icon={<EditOutlined style={{ fontSize: 12, color: '#38bdf8' }} />} onClick={(e) => { e.stopPropagation(); openEditor(event); }} style={{ padding: 0, width: 24, height: 28 }} />
-                              <Popconfirm title="¿Eliminar de repeticiones?" onConfirm={() => handleDeleteReplay(event.id)} okText="Sí" cancelText="No">
-                                <Button size="small" type="text" danger icon={<DeleteOutlined style={{ fontSize: 12 }} />} onClick={e => e.stopPropagation()} style={{ padding: 0, width: 24, height: 28 }} />
-                              </Popconfirm>
-                            </Space>
-                          )}
-                        </div>
+                        {currentUser?.role === 'admin' && (
+                          <Space size={4} onClick={e => e.stopPropagation()} style={{ marginLeft: 4 }}>
+                            <Button size="small" type="text" icon={<EditOutlined style={{ fontSize: 11, color: '#38bdf8' }} />} onClick={(e) => { e.stopPropagation(); openEditor(event); }} style={{ padding: 0, width: 20, height: 28 }} />
+                            <Popconfirm title="¿Eliminar?" onConfirm={() => handleDeleteReplay(event.id)} okText="Sí" cancelText="No">
+                              <Button size="small" type="text" danger icon={<DeleteOutlined style={{ fontSize: 11 }} />} onClick={e => e.stopPropagation()} style={{ padding: 0, width: 20, height: 28 }} />
+                            </Popconfirm>
+                          </Space>
+                        )}
                       </div>
                     </div>
                   </Col>
@@ -731,13 +460,11 @@ const ReplaysView = ({ currentUser }) => {
           </div>
         ))
       ) : (
-        <Col span={24}>
-            <div style={{ textAlign: 'center', padding: '100px 0', background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px dashed rgba(255,255,255,0.1)' }}>
-               <HistoryOutlined style={{ fontSize: 56, color: 'rgba(255,255,255,0.08)', marginBottom: 20 }} />
-               <br />
-               <Text style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, letterSpacing: '2px', fontWeight: 800 }}>NO SE ENCONTRARON REPETICIONES PARA ESTA SELECCIÓN</Text>
-            </div>
-        </Col>
+        <div style={{ textAlign: 'center', padding: '60px 0', background: 'rgba(255,255,255,0.02)', borderRadius: 12 }}>
+          <HistoryOutlined style={{ fontSize: 36, color: 'rgba(255,255,255,0.1)', marginBottom: 12 }} />
+          <br />
+          <Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, fontWeight: 700 }}>No hay repeticiones disponibles para el filtro seleccionado</Text>
+        </div>
       )}
 
       {/* Video Modal Player */}
@@ -745,43 +472,39 @@ const ReplaysView = ({ currentUser }) => {
         open={!!selectedReplay}
         onCancel={closeReplay}
         footer={null}
-        width="min(95%, 950px)"
+        width="min(95%, 900px)"
         centered
         zIndex={9999}
         destroyOnHidden={true}
         closable={false}
         styles={{ 
-            body: { padding: 0, overflow: 'hidden', background: '#040806', borderRadius: 24, border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 0 50px rgba(0,0,0,0.7)' },
+            body: { padding: 0, overflow: 'hidden', background: '#040806', borderRadius: 20, border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 0 50px rgba(0,0,0,0.7)' },
             mask: { backdropFilter: 'blur(20px)', background: 'rgba(0,0,0,0.92)' }
         }}
       >
         {selectedReplay && (
           <div style={{ position: 'relative' }}>
-              {/* Floating Close Button */}
               <div 
                 onClick={closeReplay}
                 style={{ 
-                    position: 'absolute', top: 20, right: 20, zIndex: 1000, 
-                    width: 44, height: 44, background: 'rgba(0,0,0,0.75)', 
+                    position: 'absolute', top: 16, right: 16, zIndex: 1000, 
+                    width: 38, height: 38, background: 'rgba(0,0,0,0.75)', 
                     borderRadius: '50%', display: 'flex', alignItems: 'center', 
                     justifyContent: 'center', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.2)',
-                    backdropFilter: 'blur(12px)', color: '#fff', fontSize: 20, transition: 'all 0.3s ease',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
+                    color: '#fff', fontSize: 16
                 }}
-                className="close-float-btn"
               >
                 ✕
               </div>
 
-              <div style={{ position: 'relative', width: '100%', background: '#000', minHeight: 420, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+              <div style={{ position: 'relative', width: '100%', background: '#000', minHeight: 400, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
                   {isVideoLoading && (
                       <div style={{ 
                           position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', 
                           zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                           background: '#040806', gap: 15
                       }}>
-                          <div className="loader-ring" />
-                          <Text style={{ color: '#10b981', fontSize: 10, fontWeight: 900, letterSpacing: '4px', textTransform: 'uppercase' }}>Cargando Repetición...</Text>
+                          <Text style={{ color: '#10b981', fontSize: 10, fontWeight: 900, letterSpacing: '2px' }}>CARGANDO VIDEO...</Text>
                       </div>
                   )}
                {(() => {
@@ -820,134 +543,51 @@ const ReplaysView = ({ currentUser }) => {
               </div>
 
               {/* Modal Details Section */}
-              <div style={{ padding: '32px 36px', background: 'linear-gradient(180deg, #060c09 0%, #040806 100%)', borderTop: '1px solid rgba(16,185,129,0.2)' }}>
-                  <Row gutter={[32, 32]} align="middle">
-                     <Col xs={24} lg={15}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                           <div style={{ width: 32, height: 2, background: 'linear-gradient(90deg, #10b981, transparent)' }} />
-                           <Text style={{ color: '#10b981', fontSize: 11, fontWeight: 900, letterSpacing: '3px', textTransform: 'uppercase' }}>Pelea #{selectedReplay.post_number} — Veredicto Oficial</Text>
-                        </div>
-                        
-                        <div style={{ marginBottom: 24 }}>
-                           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                              <Title level={2} style={{ color: '#fff', margin: 0, fontWeight: 900, fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(24px, 4vw, 36px)', letterSpacing: '-1px' }}>
-                                 {(selectedReplay.gallo_a_name || 'Gallo Azul').replace('[ARCHIVED] ', '')}
-                              </Title>
-                              <div style={{ 
-                                 width: 36, height: 36, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.15)', 
-                                 display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                                 background: 'rgba(255,255,255,0.04)', fontSize: 10, fontWeight: 900, color: 'rgba(255,255,255,0.4)'
-                              }}>VS</div>
-                              <Title level={2} style={{ color: '#fff', margin: 0, fontWeight: 900, fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(24px, 4vw, 36px)', letterSpacing: '-1px' }}>
-                                 {selectedReplay.gallo_b_name || 'Gallo Blanco'}
-                              </Title>
-                           </div>
-                        </div>
+              <div style={{ padding: '24px', background: '#040806' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                     <div>
+                        <Text style={{ color: '#10b981', fontSize: 11, fontWeight: 900, display: 'block', marginBottom: 4 }}>
+                           PELEA #{selectedReplay.post_number} — {new Date(selectedReplay.created_at).toLocaleDateString('es-ES')}
+                        </Text>
+                        <Title level={3} style={{ color: '#fff', margin: 0, fontWeight: 900, fontFamily: 'Outfit, sans-serif' }}>
+                           {(selectedReplay.gallo_a_name || 'Gallo Azul').replace('[ARCHIVED] ', '')} vs {selectedReplay.gallo_b_name || 'Gallo Blanco'}
+                        </Title>
+                     </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
-                           <div style={{ 
-                              background: 'rgba(16,185,129,0.05)', 
-                              border: '1px solid rgba(16,185,129,0.2)', 
-                              padding: '16px', 
-                              borderRadius: 14,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 14
-                           }}>
-                              <div style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(16,185,129,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                 <TrophyFilled style={{ color: '#10b981', fontSize: 20 }} />
-                              </div>
-                              <div>
-                                 <Text style={{ color: 'rgba(16,185,129,0.6)', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', display: 'block', letterSpacing: '1.5px' }}>Veredicto / Ganador</Text>
-                                 <Text style={{ color: '#fff', fontWeight: 900, fontSize: 16, fontFamily: 'Outfit, sans-serif' }}>
-                                    {((selectedReplay.winner_side === 'A' ? selectedReplay.gallo_a_name : (selectedReplay.winner_side === 'B' ? selectedReplay.gallo_b_name : 'TABLAS / NULA')) || '').replace('[ARCHIVED] ', '').toUpperCase()}
-                                 </Text>
-                              </div>
-                           </div>
-                           
-                           <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: '16px', borderRadius: 14, display: 'flex', alignItems: 'center', gap: 14 }}>
-                              <div style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                 <ThunderboltFilled style={{ color: 'rgba(255,255,255,0.4)', fontSize: 20 }} />
-                              </div>
-                              <div>
-                                 <Text style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', display: 'block', letterSpacing: '1.5px' }}>Fecha de Pelea</Text>
-                                 <Text style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 700, fontSize: 14 }}>
-                                    {selectedReplay.created_at ? new Date(selectedReplay.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}
-                                 </Text>
-                              </div>
-                           </div>
-                        </div>
-                     </Col>
-                     
-                     <Col xs={24} lg={9}>
-                        <div style={{ background: 'rgba(255,255,255,0.02)', padding: '20px', borderRadius: 20, border: '1px solid rgba(255,255,255,0.06)' }}>
-                           <Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px', display: 'block', marginBottom: 14, textAlign: 'center' }}>Acciones</Text>
-                           <Space direction="vertical" style={{ width: '100%' }} size={10}>
-                              <Button block icon={<WhatsAppOutlined />} onClick={() => handleShare(selectedReplay)} className="premium-btn whatsapp" style={{ height: 46, borderRadius: 10, border: 'none', background: '#25D366', color: '#fff', fontWeight: 900, fontSize: 11, textTransform: 'uppercase', letterSpacing: '1px' }}>Compartir Pelea</Button>
-                              
-                              <Row gutter={10}>
-                                 <Col span={selectedReplay.stream_url ? 12 : 24}>
-                                    <Button block icon={<CopyOutlined />} onClick={() => copyToClipboard(getShareUrl(selectedReplay))} className="premium-btn copy" style={{ height: 44, borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', color: '#fff', fontWeight: 800, fontSize: 10, textTransform: 'uppercase' }}>Copiar Link</Button>
-                                 </Col>
-                                 {selectedReplay.stream_url && (
-                                    <Col span={12}>
-                                       <Button block icon={<DownloadOutlined />} onClick={() => handleDownload(selectedReplay.stream_url, selectedReplay.post_number)} className="premium-btn download" style={{ height: 44, borderRadius: 10, border: 'none', background: '#10b981', color: '#fff', fontWeight: 900, fontSize: 10, textTransform: 'uppercase' }}>Descargar</Button>
-                                    </Col>
-                                 )}
-                              </Row>
-
-                              <Button block icon={<CloseOutlined />} onClick={closeReplay} className="premium-btn close" style={{ height: 44, borderRadius: 10, border: "1px solid rgba(255,77,79,0.3)", background: "rgba(255,77,79,0.08)", color: "#ff4d4f", fontWeight: 800, fontSize: 11, textTransform: "uppercase", letterSpacing: "1px", marginTop: 4 }}>Cerrar Galería</Button>
-                           </Space>
-                        </div>
-                     </Col>
-                  </Row>
+                     <Space size={8}>
+                        <Button icon={<WhatsAppOutlined />} onClick={() => handleShare(selectedReplay)} style={{ background: '#25D366', border: 'none', color: '#fff', fontWeight: 800, borderRadius: 8 }}>Compartir</Button>
+                        {selectedReplay.stream_url && (
+                          <Button icon={<DownloadOutlined />} onClick={() => handleDownload(selectedReplay.stream_url, selectedReplay.post_number)} style={{ background: '#10b981', border: 'none', color: '#fff', fontWeight: 800, borderRadius: 8 }}>Descargar</Button>
+                        )}
+                        <Button icon={<CloseOutlined />} onClick={closeReplay} style={{ borderRadius: 8 }}>Cerrar</Button>
+                     </Space>
+                  </div>
                </div>
             </div>
          )}
       </Modal>
 
       <style>{`
-        .premium-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important; }
-        .premium-btn:hover { transform: translateY(-2px); filter: brightness(1.15); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
-        .premium-btn:active { transform: translateY(0); }
-        .close-float-btn:hover {
-           background: rgba(16,185,129,0.25) !important;
-           border-color: #10b981 !important;
-           transform: scale(1.1);
-           box-shadow: 0 0 20px rgba(16,185,129,0.5);
-        }
-        .premium-replay-card:hover { 
-           transform: translateY(-6px); 
-           background: linear-gradient(135deg, #182230 0%, #0f172a 100%) !important; 
-           border-color: rgba(56, 189, 248, 0.4) !important;
-           box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 20px rgba(56, 189, 248, 0.15) !important; 
-        }
-        .premium-replay-card:hover .card-play-icon {
-           background: #10b981 !important;
-           border-color: #10b981 !important;
-           transform: scale(1.15);
-           box-shadow: 0 0 25px rgba(16, 185, 129, 0.7) !important;
-        }
-        .loader-ring { width: 40px; height: 40px; border: 3px solid rgba(16,185,129,0.15); border-radius: 50%; border-top-color: #10b981; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .fade-up { animation: fadeUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .premium-select .ant-select-selector {
-           background: rgba(0,0,0,0.4) !important;
-           border: 1px solid rgba(255,255,255,0.12) !important;
+        .clean-select .ant-select-selector {
+           background: rgba(0,0,0,0.3) !important;
+           border: 1px solid rgba(255,255,255,0.1) !important;
            color: #fff !important;
-           border-radius: 10px !important;
-           height: 44px !important;
-           padding: 0 15px !important;
+           border-radius: 8px !important;
+           height: 40px !important;
            display: flex !important;
            align-items: center !important;
         }
-        .premium-select .ant-select-selection-item { color: #fff !important; font-weight: 700 !important; }
-        .premium-select .ant-select-arrow { color: rgba(255,255,255,0.3) !important; }
+        .clean-select .ant-select-selection-item { color: #fff !important; font-weight: 700 !important; }
+        .clean-select .ant-select-arrow { color: rgba(255,255,255,0.4) !important; }
+        .simple-replay-card:hover {
+           transform: translateY(-3px);
+           border-color: rgba(16,185,129,0.4) !important;
+           box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+        }
       `}</style>
        
        <Modal
-          title={<Text style={{ color: "#10b981", fontWeight: 900, letterSpacing: "2px", fontSize: 12 }}>🛠️ EDITAR REPETICIÓN</Text>}
+          title={<Text style={{ color: "#10b981", fontWeight: 900, fontSize: 12 }}>EDITAR REPETICIÓN</Text>}
           open={isAdminOpen}
           onCancel={() => { setIsAdminOpen(false); setEditingReplay(null); }}
           footer={null}
@@ -957,9 +597,9 @@ const ReplaysView = ({ currentUser }) => {
        >
           <Form form={form} layout="vertical" onFinish={handleUpdateReplay}>
               <Form.Item name="stream_url" label={<Text style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 900 }}>URL DEL VIDEO</Text>}>
-                  <Input style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: 10, height: 44 }} placeholder="https://..." />
+                  <Input style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: 8, height: 40 }} placeholder="https://..." />
               </Form.Item>
-              <Button type="primary" htmlType="submit" loading={loading} block style={{ height: 48, background: '#10b981', border: 'none', fontWeight: 900, borderRadius: 12 }}>ACTUALIZAR</Button>
+              <Button type="primary" htmlType="submit" loading={loading} block style={{ height: 44, background: '#10b981', border: 'none', fontWeight: 900, borderRadius: 8 }}>ACTUALIZAR</Button>
           </Form>
        </Modal>
     </div>
