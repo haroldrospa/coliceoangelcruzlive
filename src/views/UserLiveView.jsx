@@ -2031,53 +2031,23 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               </button>
             </div>
 
-            {/* Right Control Group */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {/* Wallet Balance Badge */}
-              <div style={{
-                background: 'rgba(16, 185, 129, 0.12)',
-                border: '1px solid rgba(16, 185, 129, 0.35)',
-                color: '#10b981',
-                fontWeight: 900,
-                fontSize: 11,
-                padding: '5px 12px',
-                borderRadius: 16,
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 6,
-                backdropFilter: 'blur(12px)',
-                letterSpacing: '0.5px'
-              }}>
-                <span style={{ fontSize: 12 }}>💳</span>
-                <span>${(userBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              </div>
-
-              {/* Tablero / Cartelera Toggle Button */}
-              <button
-                onClick={() => setFbActiveTab(tab => tab === 'cartelera' ? 'chat' : 'cartelera')}
-                style={{
-                  background: fbActiveTab === 'cartelera' 
-                    ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%)' 
-                    : 'rgba(255, 255, 255, 0.08)',
-                  border: fbActiveTab === 'cartelera' 
-                    ? '1px solid rgba(16, 185, 129, 0.5)' 
-                    : '1px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: 16, 
-                  color: fbActiveTab === 'cartelera' ? '#10b981' : '#ffffff', 
-                  fontWeight: 900,
-                  fontSize: 11, 
-                  padding: '5px 12px', 
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  letterSpacing: '0.5px',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                <span>{fbActiveTab === 'cartelera' ? '📋' : '⚡'}</span>
-                <span>{fbActiveTab === 'cartelera' ? 'Cartelera' : 'Tablero'}</span>
-              </button>
+            {/* Right Control Group: Wallet Balance Badge */}
+            <div style={{
+              background: 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid rgba(16, 185, 129, 0.35)',
+              color: '#10b981',
+              fontWeight: 900,
+              fontSize: 11,
+              padding: '5px 12px',
+              borderRadius: 16,
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 6,
+              backdropFilter: 'blur(12px)',
+              letterSpacing: '0.5px'
+            }}>
+              <span style={{ fontSize: 12 }}>💳</span>
+              <span>${(userBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           </div>
 
