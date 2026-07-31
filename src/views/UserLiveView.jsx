@@ -2029,41 +2029,6 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               >
                 ✕
               </button>
-
-              {/* LIVE Pill */}
-              <div style={{
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                color: '#ffffff', 
-                fontWeight: 900, 
-                fontSize: 10,
-                padding: '4px 10px', 
-                borderRadius: 16,
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 6,
-                letterSpacing: '0.8px',
-                boxShadow: '0 0 12px rgba(239, 68, 68, 0.45)'
-              }}>
-                <span style={{ width: 6, height: 6, background: '#ffffff', borderRadius: '50%', animation: 'pulse-live 1.5s infinite' }} />
-                EN VIVO
-              </div>
-
-              {/* Viewers Pill */}
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                color: '#e2e8f0', 
-                fontWeight: 800, 
-                fontSize: 11,
-                padding: '4px 10px', 
-                borderRadius: 16,
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 5
-              }}>
-                <EyeOutlined style={{ fontSize: 12, color: '#38bdf8' }} />
-                <span>{viewerCount}</span>
-              </div>
             </div>
 
             {/* Right Control Group */}
