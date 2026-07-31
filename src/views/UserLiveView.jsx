@@ -306,12 +306,20 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
       const startedAt = parseInt(localStorage.getItem('clock_started_at') || '0', 10);
       const totalDuration = parseInt(localStorage.getItem('clock_total_duration') || '600', 10);
       const elapsedPaused = parseInt(localStorage.getItem('clock_elapsed_paused') || '0', 10);
-      const subLeft = localStorage.getItem('sub_timer_left');
 
-      if (subLeft) {
-        setClockSubTimeLeft(parseInt(subLeft, 10));
+      // Calculate sub-timer (Careo) dynamically from sub_started_at and sub_total_duration
+      const subRunning = localStorage.getItem('sub_running') === 'true';
+      const subStartedAt = parseInt(localStorage.getItem('sub_started_at') || '0', 10);
+      const subTotalDuration = parseInt(localStorage.getItem('sub_total_duration') || '0', 10);
+
+      if (subRunning && subStartedAt > 0 && subTotalDuration > 0) {
+        const now = Date.now();
+        const subDelta = Math.floor((now - subStartedAt) / 1000);
+        const subRemaining = Math.max(0, subTotalDuration - subDelta);
+        setClockSubTimeLeft(subRemaining);
       } else {
-        setClockSubTimeLeft(null);
+        const subLeft = localStorage.getItem('sub_timer_left');
+        setClockSubTimeLeft(subLeft ? parseInt(subLeft, 10) : null);
       }
 
       if (isRun && startedAt > 0) {
@@ -582,9 +590,16 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
             if (payload.clock_started_at !== undefined) localStorage.setItem('clock_started_at', payload.clock_started_at.toString());
             if (payload.clock_elapsed_paused !== undefined) localStorage.setItem('clock_elapsed_paused', payload.clock_elapsed_paused.toString());
             if (payload.clock_total_duration !== undefined) localStorage.setItem('clock_total_duration', payload.clock_total_duration.toString());
+            // Sub-timer: store both the absolute start reference and total duration for live countdown
+            if (payload.sub_started_at !== undefined) localStorage.setItem('sub_started_at', payload.sub_started_at.toString());
+            if (payload.sub_total_duration !== undefined) localStorage.setItem('sub_total_duration', payload.sub_total_duration.toString());
+            if (payload.sub_running !== undefined) localStorage.setItem('sub_running', payload.sub_running ? 'true' : 'false');
             if (payload.sub_timer_left !== undefined) {
               if (payload.sub_timer_left !== null) localStorage.setItem('sub_timer_left', payload.sub_timer_left.toString());
-              else localStorage.removeItem('sub_timer_left');
+              else {
+                localStorage.removeItem('sub_timer_left');
+                localStorage.setItem('sub_running', 'false');
+              }
             }
           }
       })
@@ -601,9 +616,15 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                     if (cState.clock_started_at !== undefined) localStorage.setItem('clock_started_at', cState.clock_started_at.toString());
                     if (cState.clock_elapsed_paused !== undefined) localStorage.setItem('clock_elapsed_paused', cState.clock_elapsed_paused.toString());
                     if (cState.clock_total_duration !== undefined) localStorage.setItem('clock_total_duration', cState.clock_total_duration.toString());
+                    if (cState.sub_started_at !== undefined) localStorage.setItem('sub_started_at', cState.sub_started_at.toString());
+                    if (cState.sub_total_duration !== undefined) localStorage.setItem('sub_total_duration', cState.sub_total_duration.toString());
+                    if (cState.sub_running !== undefined) localStorage.setItem('sub_running', cState.sub_running ? 'true' : 'false');
                     if (cState.sub_timer_left !== undefined) {
                       if (cState.sub_timer_left !== null) localStorage.setItem('sub_timer_left', cState.sub_timer_left.toString());
-                      else localStorage.removeItem('sub_timer_left');
+                      else {
+                        localStorage.removeItem('sub_timer_left');
+                        localStorage.setItem('sub_running', 'false');
+                      }
                     }
                   } catch(e){}
               }
@@ -867,9 +888,15 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               if (cState.clock_started_at !== undefined) localStorage.setItem('clock_started_at', cState.clock_started_at.toString());
               if (cState.clock_elapsed_paused !== undefined) localStorage.setItem('clock_elapsed_paused', cState.clock_elapsed_paused.toString());
               if (cState.clock_total_duration !== undefined) localStorage.setItem('clock_total_duration', cState.clock_total_duration.toString());
+              if (cState.sub_started_at !== undefined) localStorage.setItem('sub_started_at', cState.sub_started_at.toString());
+              if (cState.sub_total_duration !== undefined) localStorage.setItem('sub_total_duration', cState.sub_total_duration.toString());
+              if (cState.sub_running !== undefined) localStorage.setItem('sub_running', cState.sub_running ? 'true' : 'false');
               if (cState.sub_timer_left !== undefined) {
                 if (cState.sub_timer_left !== null) localStorage.setItem('sub_timer_left', cState.sub_timer_left.toString());
-                else localStorage.removeItem('sub_timer_left');
+                else {
+                  localStorage.removeItem('sub_timer_left');
+                  localStorage.setItem('sub_running', 'false');
+                }
               }
             } catch(e){}
           }

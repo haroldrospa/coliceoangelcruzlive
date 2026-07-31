@@ -610,12 +610,19 @@ export default function RelojView() {
       startedAtToUse = storedStartedAt > 0 ? storedStartedAt : now;
     }
 
+    const subStartedAt = parseInt(localStorage.getItem('sub_started_at') || '0', 10);
+    const subTotalDuration = parseInt(localStorage.getItem('sub_total_duration') || '0', 10);
+    const subRunning = localStorage.getItem('sub_running') === 'true';
+
     const payload = {
       clock_running: isRun,
       clock_started_at: startedAtToUse,
       clock_elapsed_paused: isRun ? parseInt(localStorage.getItem('clock_elapsed_paused') || '0', 10) : elapsed,
       clock_total_duration: total,
       sub_timer_left: subLeftVal !== undefined ? subLeftVal : subTimeLeft,
+      sub_started_at: subStartedAt,
+      sub_total_duration: subTotalDuration,
+      sub_running: subRunning,
       updated_at: now
     };
 
@@ -703,11 +710,12 @@ export default function RelojView() {
     setSubTimerLabel(label);
     setSubTimeLeft(seconds);
     
-    const now = new Date().getTime();
+    const now = Date.now();
     localStorage.setItem('sub_running', 'true');
     localStorage.setItem('sub_started_at', now.toString());
     localStorage.setItem('sub_total_duration', seconds.toString());
     localStorage.setItem('sub_timer_label', label);
+    localStorage.setItem('sub_timer_left', seconds.toString());
 
     let mainRunning = isRunning;
     if (pauseMainOnSub && isRunning) {
