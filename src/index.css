@@ -665,25 +665,34 @@ body.light-theme .cart-card-premium {
 /* ─── Header ─── */
 .cart-card-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  position: relative;
   padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.05) 0%, rgba(56, 189, 248, 0.12) 50%, rgba(56, 189, 248, 0.05) 100%);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
 }
 
 body.light-theme .cart-card-header {
-  background: rgba(0, 0, 0, 0.02);
-  border-bottom-color: rgba(0, 0, 0, 0.05);
+  background: rgba(2, 132, 199, 0.08);
+  border-bottom-color: rgba(2, 132, 199, 0.15);
 }
 
 .cart-fight-number {
-  color: rgba(148, 163, 184, 0.85);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
+  color: #38bdf8;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 2.5px;
   text-transform: uppercase;
   font-family: 'Outfit', sans-serif;
+  text-align: center;
+  width: 100%;
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+}
+
+body.light-theme .cart-fight-number {
+  color: #0284c7;
+  text-shadow: none;
 }
 
 /* ─── Main content: fighters side by side ─── */

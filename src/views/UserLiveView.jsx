@@ -1744,10 +1744,14 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                                 }
                               }}
                               style={{ 
+                                position: 'absolute',
+                                right: 12,
+                                top: '50%',
+                                transform: 'translateY(-50%)',
                                 fontSize: 10, 
                                 borderRadius: 6, 
                                 margin: 0, 
-                                padding: '4px 10px', 
+                                padding: '3px 9px', 
                                 fontWeight: 900,
                                 cursor: isBettingOpen ? 'pointer' : 'default',
                                 border: 'none',
