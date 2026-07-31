@@ -1233,44 +1233,56 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               {/* Row 1: Combate # + Clocks Panel */}
               <div style={{ 
                 display: 'flex', 
-                alignItems: 'center', 
+                alignItems: 'stretch', 
                 justify: 'space-between',
                 gap: 8,
-                marginBottom: 8
+                marginBottom: 8,
+                width: '100%'
               }}>
                 {/* Combate # Badge */}
-                <div style={{ background: '#1d1d1d', borderLeft: '3.5px solid #ef4444', borderRadius: 6, padding: '4px 10px', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                  <span style={{ color: '#ef4444', fontWeight: 900, fontSize: 10, letterSpacing: 0.5 }}>COMBATE</span>
-                  <span style={{ color: '#ffffff', fontWeight: 900, fontSize: 16 }}>#{fightInfo.post_number || '1'}</span>
+                <div style={{ 
+                  background: '#1d1d1d', 
+                  borderLeft: '3.5px solid #ef4444', 
+                  borderRadius: 6, 
+                  padding: '6px 12px', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  justifyContent: 'center', 
+                  alignItems: 'center', 
+                  flexShrink: 0 
+                }}>
+                  <span style={{ color: '#ef4444', fontWeight: 900, fontSize: 8, letterSpacing: 0.5, lineHeight: 1 }}>COMBATE</span>
+                  <span style={{ color: '#ffffff', fontWeight: 900, fontSize: 18, lineHeight: 1.1, marginTop: 2 }}>#{fightInfo.post_number || '1'}</span>
                 </div>
 
                 {/* Clocks Panel */}
                 <div style={{ 
+                  flex: 1,
                   background: 'linear-gradient(180deg, #101010 0%, #050505 100%)', 
                   borderRadius: 6, 
                   border: '1px solid #333333', 
-                  padding: '4px 12px',
+                  padding: '4px 8px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 12,
-                  flexShrink: 0
+                  justifyContent: 'space-around',
+                  gap: 6
                 }}>
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ color: '#10b981', fontSize: 'clamp(14px, 3.5vw, 20px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1 }}>
+                    <div style={{ color: '#10b981', fontSize: 'clamp(15px, 4vw, 22px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1 }}>
                       {formatClockTime(clockElapsedTime)}
                     </div>
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 7, fontWeight: 900, marginTop: 1 }}>ELAPSED</div>
                   </div>
 
                   <div style={{ textAlign: 'center', borderLeft: '1px solid #2d2d2d', borderRight: '1px solid #2d2d2d', padding: '0 8px' }}>
-                    <div style={{ color: '#ef4444', fontSize: 'clamp(14px, 3.5vw, 20px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1 }}>
+                    <div style={{ color: '#ef4444', fontSize: 'clamp(15px, 4vw, 22px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1 }}>
                       {clockSubTimeLeft !== null ? clockSubTimeLeft.toString().padStart(2, '0') : '00'}
                     </div>
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 7, fontWeight: 900, marginTop: 1 }}>CAREO</div>
                   </div>
 
                   <div style={{ textAlign: 'center' }}>
-                    <div style={{ color: '#f59e0b', fontSize: 'clamp(15px, 4vw, 24px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1 }}>
+                    <div style={{ color: '#f59e0b', fontSize: 'clamp(16px, 4.5vw, 26px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1 }}>
                       {formatClockTime(clockTimeLeft)}
                     </div>
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 7, fontWeight: 900, marginTop: 1 }}>RESTANTE</div>
