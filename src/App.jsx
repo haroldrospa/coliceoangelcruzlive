@@ -101,19 +101,20 @@ function MainContent({ currentUser, setCurrentUser, currentView, setCurrentView,
       <Header className="desktop-only" style={{ 
         position: 'sticky', top: 0, zIndex: 1001, width: '100%', 
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 20px', height: 68, 
+        padding: '0 clamp(10px, 1.5vw, 20px)', height: 64, 
         background: theme === 'dark' ? 'rgba(11, 15, 23, 0.92)' : 'rgba(255, 255, 255, 0.92)',
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
-        borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid rgba(0, 0, 0, 0.06)'
+        borderBottom: theme === 'dark' ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid rgba(0, 0, 0, 0.06)',
+        overflow: 'hidden'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', flexShrink: 0 }} onClick={() => setCurrentView('live')}>
-           <img src={theme === 'dark' ? '/Logominiatura.png' : '/LogominiaturaBlanco.png'} style={{ height: 34 }} alt="Coliseo Logo" />
-           <Title level={5} style={{ color: 'var(--text-main)', margin: 0, fontWeight: 900, letterSpacing: '0.5px', fontFamily: 'Outfit, sans-serif', textTransform: 'uppercase', fontSize: 13, whiteSpace: 'nowrap' }}>COLISEO ANGEL CRUZ</Title>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', flexShrink: 0 }} onClick={() => setCurrentView('live')}>
+           <img src={theme === 'dark' ? '/Logominiatura.png' : '/LogominiaturaBlanco.png'} style={{ height: 32 }} alt="Coliseo Logo" />
+           <Title level={5} style={{ color: 'var(--text-main)', margin: 0, fontWeight: 900, letterSpacing: '0.3px', fontFamily: 'Outfit, sans-serif', textTransform: 'uppercase', fontSize: 'clamp(10px, 1vw, 13px)', whiteSpace: 'nowrap' }}>COLISEO ANGEL CRUZ</Title>
         </div>
 
-        {/* Minimalist Nav Links */}
-        <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'nowrap', overflowX: 'auto' }}>
+        {/* Minimalist Nav Links (Fits perfectly without scroll) */}
+        <div style={{ display: 'flex', gap: 'clamp(1px, 0.4vw, 4px)', alignItems: 'center', flexWrap: 'nowrap', overflow: 'hidden' }}>
           {itemsToShow.map(item => {
             const isActive = currentView === item.key;
             return (
@@ -124,10 +125,10 @@ function MainContent({ currentUser, setCurrentUser, currentView, setCurrentView,
                    cursor: 'pointer', 
                    display: 'flex', 
                    alignItems: 'center', 
-                   gap: 7, 
-                   padding: '7px 14px',
+                   gap: 5, 
+                   padding: '6px clamp(6px, 0.8vw, 12px)',
                    borderRadius: '8px',
-                   background: isActive ? (theme === 'dark' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(16, 185, 129, 0.12)') : 'transparent',
+                   background: isActive ? (theme === 'dark' ? 'rgba(16, 185, 129, 0.14)' : 'rgba(16, 185, 129, 0.12)') : 'transparent',
                    transition: 'all 0.2s ease',
                    border: 'none',
                    position: 'relative',
@@ -136,14 +137,14 @@ function MainContent({ currentUser, setCurrentUser, currentView, setCurrentView,
                 }}
                 className="nav-tab-item"
               >
-                <span style={{ color: isActive ? '#10b981' : 'var(--text-muted)', fontSize: 14, transition: 'color 0.2s', display: 'flex', alignItems: 'center' }}>
+                <span style={{ color: isActive ? '#10b981' : 'var(--text-muted)', fontSize: 13, transition: 'color 0.2s', display: 'flex', alignItems: 'center' }}>
                   {getIcon(item.key, isActive)}
                 </span>
                 <Text style={{ 
                   color: isActive ? (theme === 'dark' ? '#ffffff' : '#0f172a') : 'var(--text-muted)', 
-                  fontSize: 11, 
+                  fontSize: 'clamp(10px, 0.85vw, 11px)', 
                   fontWeight: isActive ? 900 : 700, 
-                  letterSpacing: '0.5px', 
+                  letterSpacing: '0.3px', 
                   textTransform: 'uppercase',
                   whiteSpace: 'nowrap',
                   display: 'inline-block',
