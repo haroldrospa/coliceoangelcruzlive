@@ -100,7 +100,7 @@ export const upsertSetting = async (id, value) => {
 };
 
 // REALTIME BROADCAST STATUS HELPER
-export const broadcastEventStatus = async (postNumber, status, eventId = null, winnerSide = null, winnerName = null, updatedAt = null) => {
+export const broadcastEventStatus = async (postNumber, status, eventId = null, winnerSide = null, winnerName = null, updatedAt = null, winnerWeight = null) => {
   try {
     const channel = supabase.channel('arena_realtime');
     const nowIso = updatedAt || new Date().toISOString();
@@ -113,6 +113,7 @@ export const broadcastEventStatus = async (postNumber, status, eventId = null, w
         id: eventId, 
         winner_side: winnerSide, 
         winner_name: winnerName,
+        winner_weight: winnerWeight,
         updated_at: nowIso,
         betting_started_at: Date.now()
       }
