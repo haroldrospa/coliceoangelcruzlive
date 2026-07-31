@@ -280,7 +280,7 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
   const [clockElapsedTime, setClockElapsedTime] = useState(0);
   const [clockTimeLeft, setClockTimeLeft] = useState(600);
   const [clockSubTimeLeft, setClockSubTimeLeft] = useState(null);
-  const [scoreboardStyle, setScoreboardStyle] = useState(() => localStorage.getItem('scoreboard_style') || 'modern');
+  const [scoreboardStyle, setScoreboardStyle] = useState(() => localStorage.getItem('scoreboard_style') || 'broadcast');
   const [bettingCountdown, setBettingCountdown] = useState(120);
 
   useEffect(() => {

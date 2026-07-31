@@ -147,7 +147,7 @@ export default function RelojView() {
   const [subTimerLabel, setSubTimerLabel] = useState('');
   const [pauseMainOnSub, setPauseMainOnSub] = useState(false);
   const [showOutcomeModal, setShowOutcomeModal] = useState(false);
-  const [scoreboardStyle, setScoreboardStyle] = useState(() => localStorage.getItem('scoreboard_style') || 'modern'); // 'modern', 'arena', 'broadcast'
+  const [scoreboardStyle, setScoreboardStyle] = useState(() => localStorage.getItem('scoreboard_style') || 'broadcast'); // 'modern', 'arena', 'broadcast'
   
   // Rooster Photos state
   const [fotoAzul, setFotoAzul] = useState(null);
