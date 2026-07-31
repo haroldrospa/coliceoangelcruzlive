@@ -1668,132 +1668,106 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                         {/* Live Betting Banner & Action Buttons (ONLY when fight is active & betting is OPEN) */}
                         {isBettingOpen ? (
                           <>
-                            <div style={{
-                              background: 'linear-gradient(135deg, rgba(16,185,129,0.18) 0%, rgba(5,150,105,0.1) 100%)',
-                              border: '1px solid rgba(16,185,129,0.4)',
-                              borderRadius: 10,
-                              padding: '8px 12px',
-                              textAlign: 'center',
-                              marginTop: 2
-                            }}>
-                              <div style={{ color: '#10b981', fontSize: 11, fontWeight: 900, letterSpacing: '1px', textTransform: 'uppercase' }}>
-                                🟢 APUESTAS ABIERTAS — ¡SELECCIONA TU GANADOR!
-                              </div>
+                            {/* Betting Buttons — full width, flush bottom */}
+                            <div style={{ display: 'flex', gap: 0, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                              <Button
+                                block
+                                size="large"
+                                type="primary"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openBetSelectionModal(event);
+                                }}
+                                style={{
+                                  height: 52,
+                                  borderRadius: '0 0 0 15px',
+                                  background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
+                                  borderColor: 'transparent',
+                                  boxShadow: 'none',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  lineHeight: 1.2,
+                                  padding: '4px 8px',
+                                  flex: 1
+                                }}
+                              >
+                                <span style={{ fontSize: 9, fontWeight: 700, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                  {event.gallo_a_name || 'LADO A'}
+                                </span>
+                                <span style={{ fontSize: 14, fontWeight: 900, color: '#ffffff', fontFamily: 'Outfit, sans-serif' }}>
+                                  APOSTAR x{event.gallo_a_odds?.toFixed(2) || '1.90'}
+                                </span>
+                              </Button>
+                              <div style={{ width: 1, background: 'rgba(255,255,255,0.08)', flexShrink: 0 }} />
+                              <Button
+                                block
+                                size="large"
+                                type="primary"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openBetSelectionModal(event);
+                                }}
+                                style={{
+                                  height: 52,
+                                  borderRadius: '0 0 15px 0',
+                                  background: 'linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 100%)',
+                                  borderColor: 'transparent',
+                                  boxShadow: 'none',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  lineHeight: 1.2,
+                                  padding: '4px 8px',
+                                  flex: 1
+                                }}
+                              >
+                                <span style={{ fontSize: 9, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                  {event.gallo_b_name || 'LADO B'}
+                                </span>
+                                <span style={{ fontSize: 14, fontWeight: 900, color: '#0f172a', fontFamily: 'Outfit, sans-serif' }}>
+                                  APOSTAR x{event.gallo_b_odds?.toFixed(2) || '1.90'}
+                                </span>
+                              </Button>
                             </div>
-
-                            <Row gutter={10} style={{ width: '100%', marginTop: 4 }}>
-                              <Col span={12}>
-                                <Button
-                                  block
-                                  size="large"
-                                  type="primary"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openBetSelectionModal(event);
-                                  }}
-                                  style={{
-                                    height: 48,
-                                    borderRadius: 12,
-                                    background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
-                                    borderColor: '#2563eb',
-                                    boxShadow: '0 6px 20px rgba(37, 99, 235, 0.4)',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    lineHeight: 1.2,
-                                    padding: '4px 8px'
-                                  }}
-                                >
-                                  <span style={{ fontSize: 10, fontWeight: 900, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                    AZUL ({event.gallo_a_name || 'LADO A'})
-                                  </span>
-                                  <span style={{ fontSize: 15, fontWeight: 900, color: '#ffffff', fontFamily: 'Outfit, sans-serif' }}>
-                                    APOSTAR x{event.gallo_a_odds?.toFixed(2) || '1.90'}
-                                  </span>
-                                </Button>
-                              </Col>
-                              <Col span={12}>
-                                <Button
-                                  block
-                                  size="large"
-                                  type="primary"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    openBetSelectionModal(event);
-                                  }}
-                                  style={{
-                                    height: 48,
-                                    borderRadius: 12,
-                                    background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
-                                    borderColor: '#ffffff',
-                                    boxShadow: '0 6px 20px rgba(255, 255, 255, 0.3)',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    lineHeight: 1.2,
-                                    padding: '4px 8px'
-                                  }}
-                                >
-                                  <span style={{ fontSize: 10, fontWeight: 900, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                    BLANCO ({event.gallo_b_name || 'LADO B'})
-                                  </span>
-                                  <span style={{ fontSize: 15, fontWeight: 900, color: '#0f172a', fontFamily: 'Outfit, sans-serif' }}>
-                                    APOSTAR x{event.gallo_b_odds?.toFixed(2) || '1.90'}
-                                  </span>
-                                </Button>
-                              </Col>
-                            </Row>
                           </>
                         ) : (isActive && activeStatus === 'CLOSED') ? (
-                          <div style={{
-                            background: 'rgba(239, 68, 68, 0.1)',
-                            border: '1px solid rgba(239, 68, 68, 0.25)',
-                            borderRadius: 10,
-                            padding: '8px 12px',
-                            textAlign: 'center',
-                            marginTop: 4
-                          }}>
-                            <div style={{ color: '#ef4444', fontSize: 11, fontWeight: 800, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                              ⚔️ PELEA EN COMBATE — APUESTAS CERRADAS
-                            </div>
+                          <div className="cart-live-glow-footer">
+                            <span className="live-dot" />
+                            <span>PELEA EN COMBATE — APUESTAS CERRADAS</span>
                           </div>
                         ) : null}
 
                         {/* Winner Footer */}
                         {event.status === 'FINISHED' && (
                           <div style={{
-                            marginTop: 10,
-                            borderRadius: 10,
-                            padding: '10px 14px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: 8,
-                            fontWeight: 900,
-                            fontSize: 13,
-                            letterSpacing: '1px',
+                            fontWeight: 800,
+                            fontSize: 12,
+                            letterSpacing: '0.8px',
                             textTransform: 'uppercase',
-                            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+                            padding: '10px 16px',
+                            borderTop: '1px solid rgba(255,255,255,0.05)',
                             ...( (event.winner_side === 'A' || event.winner_side === 'AZUL') ? {
-                              background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
-                              border: '1px solid #3b82f6',
-                              color: '#ffffff'
+                              background: 'rgba(29, 78, 216, 0.15)',
+                              color: '#60a5fa'
                             } : (event.winner_side === 'B' || event.winner_side === 'BLANCO') ? {
-                              background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
-                              border: '1px solid #ffffff',
-                              color: '#0f172a'
+                              background: 'rgba(241, 245, 249, 0.1)',
+                              color: '#e2e8f0'
                             } : {
-                              background: 'rgba(245, 158, 11, 0.2)',
-                              border: '1px solid rgba(245, 158, 11, 0.5)',
-                              color: '#f59e0b'
+                              background: 'rgba(245, 158, 11, 0.1)',
+                              color: '#fbbf24'
                             } )
                           }}>
-                            <TrophyOutlined style={{ fontSize: 16, color: (event.winner_side === 'B' || event.winner_side === 'BLANCO') ? '#b45309' : '#fbbf24' }} />
+                            <TrophyOutlined style={{ fontSize: 14 }} />
                             <span>
                               {(event.winner_side === 'D' || event.winner_side === 'DRAW') 
-                                ? 'NULO / TABLAS (EMPATE)' 
+                                ? 'NULO / TABLAS' 
                                 : `GANADOR: ${(event.winner_side === 'A' || event.winner_side === 'AZUL') ? (event.gallo_a_name || 'LADO AZUL') : (event.gallo_b_name || 'LADO BLANCO')}`}
                             </span>
                           </div>

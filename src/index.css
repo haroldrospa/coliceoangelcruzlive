@@ -600,90 +600,113 @@ body.light-theme .capsule-home-btn {
 
 /* CARTELERA FIGHT CARDS STYLES */
 .cart-card-premium {
-  background: linear-gradient(145deg, rgba(20, 26, 38, 0.9) 0%, rgba(12, 16, 24, 0.95) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  padding: 18px 20px;
+  background: linear-gradient(160deg, rgba(15, 21, 34, 0.97) 0%, rgba(9, 14, 24, 0.99) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 0;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+}
+
+.cart-card-premium::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #1d4ed8, #7c3aed, #1d4ed8);
+  opacity: 0.6;
 }
 
 .cart-card-premium:hover {
   transform: translateY(-2px);
-  border-color: rgba(16, 185, 129, 0.4);
-  box-shadow: 0 14px 32px rgba(16, 185, 129, 0.15);
+  border-color: rgba(96, 165, 250, 0.25);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
 }
 
 body.light-theme .cart-card-premium {
   background: #ffffff;
-  border-color: rgba(0, 0, 0, 0.06);
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  border-color: rgba(0, 0, 0, 0.07);
+  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.09);
 }
 
 @keyframes pulse-active-fight {
   0% {
-    border-color: rgba(16, 185, 129, 0.8);
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    border-color: rgba(16, 185, 129, 0.6);
+    box-shadow: 0 0 24px rgba(16, 185, 129, 0.25);
   }
   50% {
-    border-color: rgba(52, 211, 153, 1);
-    box-shadow: 0 0 35px rgba(16, 185, 129, 0.6);
+    border-color: rgba(52, 211, 153, 0.95);
+    box-shadow: 0 0 40px rgba(16, 185, 129, 0.5);
   }
   100% {
-    border-color: rgba(16, 185, 129, 0.8);
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    border-color: rgba(16, 185, 129, 0.6);
+    box-shadow: 0 0 24px rgba(16, 185, 129, 0.25);
   }
 }
 
 .cart-card-premium.active-match {
-  background: linear-gradient(145deg, rgba(13, 21, 32, 0.95) 0%, rgba(8, 12, 20, 0.98) 100%) !important;
-  border: 2px solid #10b981 !important;
+  background: linear-gradient(160deg, rgba(13, 21, 32, 0.97) 0%, rgba(8, 12, 20, 0.99) 100%) !important;
+  border: 1.5px solid #10b981 !important;
   animation: pulse-active-fight 2.5s infinite ease-in-out !important;
 }
 
+.cart-card-premium.active-match::before {
+  background: linear-gradient(90deg, #10b981, #34d399, #10b981);
+  opacity: 0.9;
+}
+
+/* ─── Header ─── */
 .cart-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  padding-bottom: 10px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 body.light-theme .cart-card-header {
-  border-bottom-color: rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.02);
+  border-bottom-color: rgba(0, 0, 0, 0.05);
 }
 
 .cart-fight-number {
-  color: var(--text-main);
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
+  color: rgba(148, 163, 184, 0.85);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   font-family: 'Outfit', sans-serif;
 }
 
+/* ─── Main content: fighters side by side ─── */
 .cart-card-content {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  align-items: stretch;
+  justify-content: stretch;
+  gap: 0;
+  padding: 0;
 }
 
 .cart-fighter-column {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  padding: 14px 16px;
 }
 
 .cart-fighter-column.left {
   align-items: flex-end;
   text-align: right;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .cart-fighter-column.right {
@@ -691,26 +714,31 @@ body.light-theme .cart-card-header {
   text-align: left;
 }
 
+body.light-theme .cart-fighter-column.left {
+  border-right-color: rgba(0, 0, 0, 0.06);
+}
+
 .fighter-title-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .fighter-name {
   color: var(--text-main);
   font-weight: 800;
-  font-size: 16px;
-  letter-spacing: 0.3px;
+  font-size: 15px;
+  letter-spacing: 0.2px;
   font-family: 'Outfit', sans-serif;
   text-transform: uppercase;
+  line-height: 1.1;
 }
 
 .fighter-meta-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 5px;
 }
 
 .cart-fighter-column.left .fighter-meta-row {
@@ -722,13 +750,12 @@ body.light-theme .cart-card-header {
 }
 
 .meta-tag {
-  background: rgba(255, 255, 255, 0.06);
-  border: none;
-  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(148, 163, 184, 0.85);
   font-size: 10px;
   font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 9999px;
+  padding: 2px 7px;
+  border-radius: 4px;
 }
 
 body.light-theme .meta-tag {
@@ -737,89 +764,101 @@ body.light-theme .meta-tag {
 }
 
 .weight-tag {
-  background: rgba(16, 185, 129, 0.12);
-  border: none;
-  color: #10b981;
+  background: rgba(96, 165, 250, 0.12);
+  color: #60a5fa;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 700;
   padding: 2px 8px;
-  border-radius: 9999px;
+  border-radius: 4px;
 }
 
 .color-badge {
   background: rgba(255, 255, 255, 0.08);
-  color: var(--text-main);
-  border-radius: 9999px;
+  color: rgba(203, 213, 225, 0.9);
+  border-radius: 4px;
 }
 
 .fighter-badge-p {
-  background: #f59e0b;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   color: #000000;
   font-size: 9px;
   font-weight: 900;
-  padding: 1px 6px;
-  border-radius: 9999px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
 }
 
+/* ─── VS Divider ─── */
 .cart-vs-column {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
+  width: 44px;
+  flex-shrink: 0;
+  position: relative;
 }
 
 .vs-circle {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 900;
-  color: #ef4444;
+  color: rgba(239, 68, 68, 0.9);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+  padding: 4px 6px;
+  line-height: 1;
 }
 
+/* ─── Status Banners ─── */
 .cart-winner-footer {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: rgba(16, 185, 129, 0.1);
-  border: 1px solid rgba(16, 185, 129, 0.25);
   padding: 10px 16px;
-  border-radius: 12px;
-  color: #10b981;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  margin-top: 2px;
+  background: rgba(16, 185, 129, 0.07);
+  color: #10b981;
 }
 
 .trophy-icon {
-  font-size: 14px;
-  color: #10b981;
+  font-size: 13px;
 }
 
 .cart-live-glow-footer {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.25);
-  padding: 6px 14px;
-  border-radius: 9999px;
-  color: #ef4444;
-  font-size: 10px;
+  gap: 8px;
+  padding: 9px 16px;
+  border-top: 1px solid rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.07);
+  color: #f87171;
+  font-size: 11px;
   font-weight: 800;
   letter-spacing: 1px;
   text-transform: uppercase;
 }
 
+@keyframes blink-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
 .live-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   background: #ef4444;
   border-radius: 50%;
+  animation: blink-dot 1.2s ease-in-out infinite;
 }
+
 
 @media (max-width: 768px) {
   .cart-card-premium {
