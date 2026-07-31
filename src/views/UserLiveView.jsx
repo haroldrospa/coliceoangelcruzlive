@@ -2419,49 +2419,6 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                     <SendOutlined style={{ fontSize: 12 }} />
                   </button>
                 </form>
-
-                {/* Glass Reaction Buttons */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <button
-                    onClick={() => triggerReaction('👍')}
-                    style={{
-                      width: 36, height: 36, borderRadius: '50%',
-                      background: 'rgba(59, 130, 246, 0.18)',
-                      border: '1px solid rgba(59, 130, 246, 0.35)',
-                      color: '#fff', fontSize: 16,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    👍
-                  </button>
-                  <button
-                    onClick={() => triggerReaction('❤️')}
-                    style={{
-                      width: 36, height: 36, borderRadius: '50%',
-                      background: 'rgba(239, 68, 68, 0.18)',
-                      border: '1px solid rgba(239, 68, 68, 0.35)',
-                      color: '#fff', fontSize: 16,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    ❤️
-                  </button>
-                  <button
-                    onClick={() => triggerReaction('🔥')}
-                    style={{
-                      width: 36, height: 36, borderRadius: '50%',
-                      background: 'rgba(245, 158, 11, 0.18)',
-                      border: '1px solid rgba(245, 158, 11, 0.35)',
-                      color: '#fff', fontSize: 16,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    🔥
-                  </button>
-                </div>
               </div>
             </>
           ) : (
