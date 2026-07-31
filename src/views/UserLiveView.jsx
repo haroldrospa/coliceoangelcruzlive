@@ -92,6 +92,15 @@ const DacastPlayer = ({ status, stream_url, streamMode, viewerCount, hideBadge =
         setPlayerError(false);
     }, [stream_url]);
 
+    // Auto-retry connection every 6s when stream drops or fails (504 timeout / CORS glitch)
+    React.useEffect(() => {
+        if (!playerError) return;
+        const timer = setTimeout(() => {
+            setPlayerError(false);
+        }, 6000);
+        return () => clearTimeout(timer);
+    }, [playerError]);
+
     if (streamMode === 'STANDBY' || playerError || (status !== 'LIVE' && !hasSignal)) {
         return (
           <div key="dacast-standby" style={{ 
