@@ -1866,11 +1866,6 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                               </Button>
                             </div>
                           </>
-                        ) : (isActive && activeStatus === 'CLOSED') ? (
-                          <div className="cart-live-glow-footer">
-                            <span className="live-dot" />
-                            <span>PELEA EN COMBATE — APUESTAS CERRADAS</span>
-                          </div>
                         ) : null}
 
                         {/* Winner Footer */}
@@ -2481,18 +2476,6 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                   </span>
                 </button>
               </div>
-            </div>
-          ) : fightInfo.id && fightInfo.status === 'CLOSED' ? (
-            <div style={{
-              padding: '8px 14px',
-              background: 'rgba(239, 68, 68, 0.15)',
-              borderBottom: '1px solid rgba(239, 68, 68, 0.3)',
-              textAlign: 'center',
-              zIndex: 90
-            }}>
-              <span style={{ color: '#ef4444', fontSize: 11, fontWeight: 900, letterSpacing: '1px', textTransform: 'uppercase' }}>
-                ⚔️ PELEA EN COMBATE — APUESTAS CERRADAS
-              </span>
             </div>
           ) : null}
 
