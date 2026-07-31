@@ -234,6 +234,18 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
 
   const [betTimerSeconds, setBetTimerSeconds] = useState(null);
 
+  const parseIsoDate = (dateStr) => {
+    if (!dateStr) return null;
+    if (typeof dateStr === 'number') return dateStr;
+    let str = String(dateStr).trim();
+    str = str.replace(' ', 'T');
+    if (!str.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(str)) {
+      str += 'Z';
+    }
+    const time = new Date(str).getTime();
+    return isNaN(time) ? null : time;
+  };
+
   // Live betting countdown calculator (3-minute window from status change)
   useEffect(() => {
     if (!fightInfo.id || fightInfo.status !== 'LIVE') {
@@ -242,12 +254,17 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
     }
 
     const updateBetTimer = () => {
+      let startedAt = parseInt(localStorage.getItem('betting_started_at') || '0', 10);
       const refTimeStr = fightInfo.updated_at || fightInfo.created_at;
-      const refTime = refTimeStr ? new Date(refTimeStr).getTime() : Date.now();
+      const dbTime = parseIsoDate(refTimeStr);
+
+      if (!startedAt || startedAt <= 0 || (dbTime && Math.abs(startedAt - dbTime) > 300000)) {
+        startedAt = dbTime || Date.now();
+      }
+
       const now = Date.now();
-      const elapsedSec = Math.max(0, Math.floor((now - refTime) / 1000));
-      const BETTING_WINDOW_SEC = 180; // 3 minutes window
-      const rem = Math.max(0, BETTING_WINDOW_SEC - elapsedSec);
+      const elapsedSec = Math.max(0, Math.floor((now - startedAt) / 1000));
+      const rem = Math.max(0, 120 - elapsedSec);
       setBetTimerSeconds(rem);
     };
 
@@ -287,8 +304,16 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
   useEffect(() => {
     const calcBettingTime = () => {
       if (fightInfo && fightInfo.status === 'LIVE') {
-        const started = fightInfo.updated_at ? new Date(fightInfo.updated_at).getTime() : Date.now();
-        const elapsed = Math.floor((Date.now() - started) / 1000);
+        let startedAt = parseInt(localStorage.getItem('betting_started_at') || '0', 10);
+        const refTimeStr = fightInfo.updated_at || fightInfo.created_at;
+        const dbTime = parseIsoDate(refTimeStr);
+
+        if (!startedAt || startedAt <= 0 || (dbTime && Math.abs(startedAt - dbTime) > 300000)) {
+          startedAt = dbTime || Date.now();
+        }
+
+        const now = Date.now();
+        const elapsed = Math.max(0, Math.floor((now - startedAt) / 1000));
         const remaining = Math.max(0, 120 - elapsed);
         setBettingCountdown(remaining);
       } else {
@@ -595,6 +620,8 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
             if (payload.sub_started_at !== undefined) localStorage.setItem('sub_started_at', payload.sub_started_at.toString());
             if (payload.sub_total_duration !== undefined) localStorage.setItem('sub_total_duration', payload.sub_total_duration.toString());
             if (payload.sub_running !== undefined) localStorage.setItem('sub_running', payload.sub_running ? 'true' : 'false');
+            if (payload.betting_started_at !== undefined) localStorage.setItem('betting_started_at', payload.betting_started_at.toString());
+            if (payload.betting_active !== undefined) localStorage.setItem('betting_active', payload.betting_active ? 'true' : 'false');
             if (payload.sub_timer_left !== undefined) {
               if (payload.sub_timer_left !== null) localStorage.setItem('sub_timer_left', payload.sub_timer_left.toString());
               else {
@@ -620,6 +647,8 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                     if (cState.sub_started_at !== undefined) localStorage.setItem('sub_started_at', cState.sub_started_at.toString());
                     if (cState.sub_total_duration !== undefined) localStorage.setItem('sub_total_duration', cState.sub_total_duration.toString());
                     if (cState.sub_running !== undefined) localStorage.setItem('sub_running', cState.sub_running ? 'true' : 'false');
+                    if (cState.betting_started_at !== undefined) localStorage.setItem('betting_started_at', cState.betting_started_at.toString());
+                    if (cState.betting_active !== undefined) localStorage.setItem('betting_active', cState.betting_active ? 'true' : 'false');
                     if (cState.sub_timer_left !== undefined) {
                       if (cState.sub_timer_left !== null) localStorage.setItem('sub_timer_left', cState.sub_timer_left.toString());
                       else {
@@ -740,14 +769,22 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
     arenaChannel
       .on('broadcast', { event: 'fight_status_change' }, ({ payload }) => {
         if (!payload) return;
-        const { post_number, status, id, winner_side, winner_name } = payload;
+        const { post_number, status, id, winner_side, winner_name, updated_at, betting_started_at } = payload;
+        const nowIso = updated_at || new Date().toISOString();
         
+        if (status === 'LIVE') {
+          const bStarted = betting_started_at || Date.now();
+          localStorage.setItem('betting_active', 'true');
+          localStorage.setItem('betting_started_at', bStarted.toString());
+        }
+
         if (status === 'CLOSED' || status === 'FINISHED') {
           setIsBetModalOpen(prev => {
             if (prev) msg.warning(`⚔️ Apuestas cerradas para Pelea #${post_number}`);
             return false;
           });
           setIsSelectionModalOpen(false);
+          localStorage.setItem('betting_active', 'false');
         }
 
         // Show winner flash animation for 3 seconds
@@ -761,14 +798,14 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
 
         setFightInfo(prev => {
           if (parseInt(prev.post_number) === parseInt(post_number) || prev.id === id) {
-            return { ...prev, status, winner_side };
+            return { ...prev, status, winner_side, updated_at: nowIso };
           }
           return prev;
         });
 
         setTodayProgram(prev => prev.map(item => {
           if (parseInt(item.post_number) === parseInt(post_number) || item.id === id) {
-            return { ...item, status, winner_side };
+            return { ...item, status, winner_side, updated_at: nowIso };
           }
           return item;
         }));
@@ -901,6 +938,8 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
               if (cState.sub_started_at !== undefined) localStorage.setItem('sub_started_at', cState.sub_started_at.toString());
               if (cState.sub_total_duration !== undefined) localStorage.setItem('sub_total_duration', cState.sub_total_duration.toString());
               if (cState.sub_running !== undefined) localStorage.setItem('sub_running', cState.sub_running ? 'true' : 'false');
+              if (cState.betting_started_at !== undefined) localStorage.setItem('betting_started_at', cState.betting_started_at.toString());
+              if (cState.betting_active !== undefined) localStorage.setItem('betting_active', cState.betting_active ? 'true' : 'false');
               if (cState.sub_timer_left !== undefined) {
                 if (cState.sub_timer_left !== null) localStorage.setItem('sub_timer_left', cState.sub_timer_left.toString());
                 else {

@@ -568,6 +568,7 @@ export default function RelojView() {
       const weightA = fight ? JSON.stringify({ weight: `${fight.peso_libras_a}-${fight.peso_onzas_a}.${fight.peso_puntos_a}`, color: fight.color_a, marca: fight.marca_a, clase: fight.clase_a, turno: fight.turno_a }) : '';
       const weightB = fight ? JSON.stringify({ weight: `${fight.peso_libras_b}-${fight.peso_onzas_b}.${fight.peso_puntos_b}`, color: fight.color_b, marca: fight.marca_b, clase: fight.clase_b, turno: fight.turno_b }) : '';
 
+      const nowIso = new Date().toISOString();
       const existing = await rawFetch(`events?select=*&post_number=eq.${fightNum}`);
       const payload = {
         post_number: fightNum.toString(),
@@ -578,7 +579,8 @@ export default function RelojView() {
         gallo_a_odds: 1.9,
         gallo_b_odds: 1.9,
         status: status,
-        winner_side: winnerSide
+        winner_side: winnerSide,
+        updated_at: nowIso
       };
 
       let eventId = null;
@@ -597,7 +599,7 @@ export default function RelojView() {
         if (created && created[0]) eventId = created[0].id;
       }
 
-      await broadcastEventStatus(fightNum, status, eventId, winnerSide, winnerNameForBroadcast);
+      await broadcastEventStatus(fightNum, status, eventId, winnerSide, winnerNameForBroadcast, nowIso);
     } catch (err) {
       console.error('Error upserting event:', err);
     }
@@ -615,6 +617,9 @@ export default function RelojView() {
     const subTotalDuration = parseInt(localStorage.getItem('sub_total_duration') || '0', 10);
     const subRunning = localStorage.getItem('sub_running') === 'true';
 
+    const bettingActive = localStorage.getItem('betting_active') === 'true';
+    const bettingStartedAt = parseInt(localStorage.getItem('betting_started_at') || '0', 10);
+
     const payload = {
       clock_running: isRun,
       clock_started_at: startedAtToUse,
@@ -624,6 +629,8 @@ export default function RelojView() {
       sub_started_at: subStartedAt,
       sub_total_duration: subTotalDuration,
       sub_running: subRunning,
+      betting_active: bettingActive,
+      betting_started_at: bettingStartedAt,
       updated_at: now
     };
 
@@ -857,6 +864,7 @@ export default function RelojView() {
     localStorage.setItem('betting_started_at', bettingStartedAt.toString());
     localStorage.setItem('betting_total', BETTING_DURATION.toString());
     localStorage.setItem('betting_fight_number', fight.numero_pelea.toString());
+    broadcastClockState(isRunning, elapsedTime, presetDuration, subTimeLeft);
     if (bettingTimerRef.current) clearInterval(bettingTimerRef.current);
     bettingTimerRef.current = setInterval(() => {
       const elapsed = Math.floor((new Date().getTime() - bettingStartedAt) / 1000);
