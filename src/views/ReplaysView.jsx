@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Typography, Space, Card, Row, Col, Modal, Button, Skeleton, Badge, Input, DatePicker, Select, message, Popconfirm, Form, Divider } from 'antd';
-import { PlayCircleOutlined, PlayCircleFilled, HistoryOutlined, ThunderboltFilled, TrophyOutlined, TrophyFilled, VideoCameraOutlined, DownloadOutlined, ShareAltOutlined, WhatsAppOutlined, CopyOutlined, DeleteOutlined, EditOutlined, InboxOutlined, CloseOutlined, CalendarOutlined, EyeOutlined } from '@ant-design/icons';
+import { PlayCircleOutlined, PlayCircleFilled, HistoryOutlined, ThunderboltFilled, TrophyOutlined, TrophyFilled, VideoCameraOutlined, DownloadOutlined, ShareAltOutlined, WhatsAppOutlined, CopyOutlined, DeleteOutlined, EditOutlined, InboxOutlined, CloseOutlined, CalendarOutlined, EyeOutlined, FilterOutlined } from '@ant-design/icons';
 import { supabase, rawFetch } from '../lib/supabase';
 
 const { Title, Text } = Typography;
@@ -24,6 +24,7 @@ const ReplaysView = ({ currentUser }) => {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [editingReplay, setEditingReplay] = useState(null);
   const [sortBy, setSortBy] = useState('newest'); // newest, oldest, number-asc, number-desc
+  const [activeDateFilter, setActiveDateFilter] = useState('ALL');
   const [form] = Form.useForm();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
@@ -31,7 +32,7 @@ const ReplaysView = ({ currentUser }) => {
   const fetchReplays = async () => {
     try {
       // Fetch finished events 
-      const data = await rawFetch(`events?select=*&status=eq.FINISHED&order=created_at.desc&limit=50`);
+      const data = await rawFetch(`events?select=*&status=eq.FINISHED&order=created_at.desc&limit=100`);
       if (data) {
         setReplays(data);
         
@@ -61,7 +62,6 @@ const ReplaysView = ({ currentUser }) => {
   const handleDeleteReplay = async (id) => {
      try {
         setIsDeleting(true);
-        // First delete bets associated with this event to avoid FK issues
         await rawFetch(`bets?event_id=eq.${id}`, { method: 'DELETE' });
         await rawFetch(`events?id=eq.${id}`, { method: 'DELETE' });
         message.success('PELEA ELIMINADA DEFINITIVAMENTE');
@@ -115,6 +115,11 @@ const ReplaysView = ({ currentUser }) => {
             galloB.includes(term) ||
             post.includes(term);
         
+        if (activeDateFilter !== 'ALL') {
+          const dStr = new Date(event.created_at || Date.now()).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+          if (dStr !== activeDateFilter) return false;
+        }
+
         if (!selectedDate) return matchesSearch;
 
         try {
@@ -133,11 +138,48 @@ const ReplaysView = ({ currentUser }) => {
         return 0;
     });
 
+  // Group filtered replays by formatted date
+  const groupedByDate = (filteredReplays || []).reduce((acc, event) => {
+    if (!event) return acc;
+    const dateObj = new Date(event.created_at || Date.now());
+    const formattedDate = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const fullDateTitle = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    
+    if (!acc[formattedDate]) {
+      acc[formattedDate] = {
+        dateStr: formattedDate,
+        fullTitle: fullDateTitle,
+        timestamp: dateObj.getTime(),
+        events: []
+      };
+    }
+    acc[formattedDate].events.push(event);
+    return acc;
+  }, {});
+
+  // All distinct dates available for quick pill buttons
+  const availableDates = Object.values(
+    (replays || []).reduce((acc, event) => {
+      if (!event) return acc;
+      const dateObj = new Date(event.created_at || Date.now());
+      const formattedDate = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      if (!acc[formattedDate]) {
+        acc[formattedDate] = { dateStr: formattedDate, count: 0, timestamp: dateObj.getTime() };
+      }
+      acc[formattedDate].count += 1;
+      return acc;
+    }, {})
+  ).sort((a, b) => b.timestamp - a.timestamp);
+
+  const dateGroupsList = Object.values(groupedByDate).sort((a, b) => {
+    if (sortBy === 'oldest') return a.timestamp - b.timestamp;
+    return b.timestamp - a.timestamp;
+  });
+
   const openReplay = (event) => {
     setSelectedReplay(event);
     setIsVideoLoading(true);
     
-    // Update URL
     const newUrl = `${window.location.origin}${window.location.pathname}?replay=${event.id}`;
     window.history.replaceState({ path: newUrl }, '', newUrl);
   };
@@ -146,7 +188,6 @@ const ReplaysView = ({ currentUser }) => {
     setSelectedReplay(null);
     setIsVideoLoading(false);
     
-    // Clear URL
     const newUrl = `${window.location.origin}${window.location.pathname}`;
     window.history.replaceState({ path: newUrl }, '', newUrl);
   };
@@ -242,13 +283,13 @@ const ReplaysView = ({ currentUser }) => {
       <div style={{ marginBottom: 32, textAlign: 'center' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 12, padding: '5px 16px', background: 'rgba(16,185,129,0.1)', borderRadius: 20, border: '1px solid rgba(16,185,129,0.25)' }}>
           <HistoryOutlined style={{ color: '#10b981', fontSize: 14 }} />
-          <Text style={{ color: '#10b981', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>Cámara de Repeticiones HD</Text>
+          <Text style={{ color: '#10b981', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '2px' }}>Cámara de Repeticiones HD Por Fecha</Text>
         </div>
         <Title level={1} style={{ color: '#fff', fontSize: 'clamp(28px, 5vw, 42px)', fontWeight: 900, margin: 0, fontFamily: 'Outfit, sans-serif', letterSpacing: '-1px' }}>
-          REPETICIONES DE <span style={{ color: '#10b981' }}>COMBATE</span>
+          REPETICIONES POR <span style={{ color: '#10b981' }}>FECHA DE COMBATE</span>
         </Title>
         <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13, fontWeight: 600, display: 'block', marginTop: 6 }}>
-          Revive todas las peleas concluidas con video y veredicto en tiempo real ({filteredReplays.length} disponibles)
+          Selecciona una fecha de la cartelera para revisar las peleas concluidas ({filteredReplays.length} peleas en total)
         </Text>
       </div>
 
@@ -256,7 +297,7 @@ const ReplaysView = ({ currentUser }) => {
       <Card 
         styles={{ body: { padding: '16px 20px' } }} 
         style={{ 
-          marginBottom: 36, 
+          marginBottom: 24, 
           background: 'rgba(15, 23, 42, 0.75)', 
           border: '1px solid rgba(255,255,255,0.08)', 
           borderRadius: 18, 
@@ -277,7 +318,7 @@ const ReplaysView = ({ currentUser }) => {
             </Col>
             <Col xs={12} md={7}>
                 <DatePicker 
-                    placeholder="Filtrar por fecha" 
+                    placeholder="Filtrar por fecha exacta" 
                     style={{ width: '100%', background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff', borderRadius: 10, height: 44 }}
                     onChange={date => setSelectedDate(date)}
                     format="DD/MM/YYYY"
@@ -286,14 +327,14 @@ const ReplaysView = ({ currentUser }) => {
             </Col>
             <Col xs={12} md={7}>
                 <Select 
-                    placeholder="Ordenar peleas..."
+                    placeholder="Ordenar..."
                     value={sortBy}
                     onChange={val => setSortBy(val)}
                     style={{ width: '100%', height: 44 }}
                     className="premium-select"
                     options={[
-                        { label: 'Más Recientes primero', value: 'newest' },
-                        { label: 'Más Antiguos primero', value: 'oldest' },
+                        { label: 'Fechas Recientes primero', value: 'newest' },
+                        { label: 'Fechas Antiguas primero', value: 'oldest' },
                         { label: 'Pelea # (Ascendente)', value: 'number-asc' },
                         { label: 'Pelea # (Descendente)', value: 'number-desc' }
                     ]}
@@ -302,265 +343,403 @@ const ReplaysView = ({ currentUser }) => {
         </Row>
       </Card>
 
-      {/* Grid of Replays */}
-      <Row gutter={[20, 20]}>
-        {loading ? (
-            Array(8).fill(0).map((_, idx) => (
-                <Col xs={24} sm={12} md={8} lg={6} key={idx}>
-                    <Skeleton.Button active style={{ width: '100%', height: 260, borderRadius: 18 }} />
-                </Col>
-            ))
-        ) : filteredReplays.length > 0 ? (
-          filteredReplays.map((event) => {
-            const nameA = (event.gallo_a_name || 'Gallo Azul').replace('[ARCHIVED] ', '');
-            const nameB = (event.gallo_b_name || 'Gallo Blanco');
-            const weightA = parseWeight(event.gallo_a_weight);
-            const weightB = parseWeight(event.gallo_b_weight);
+      {/* Quick Date Pills Selector Bar */}
+      {availableDates.length > 0 && (
+        <div style={{ marginBottom: 36 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <CalendarOutlined style={{ color: '#10b981', fontSize: 13 }} />
+            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
+              SELECCIONAR JORNADA / FECHA DE CARTELERA:
+            </Text>
+          </div>
 
-            return (
-              <Col xs={24} sm={12} md={8} lg={6} key={event.id}>
-                <div 
-                  className="premium-replay-card fade-up"
-                  onClick={() => openReplay(event)}
-                  style={{ 
-                    background: 'linear-gradient(135deg, #11161d 0%, #0b0f17 100%)', 
-                    borderRadius: 16, 
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    overflow: 'hidden',
+          <div style={{ 
+            display: 'flex', 
+            gap: 10, 
+            overflowX: 'auto', 
+            paddingBottom: 8,
+            scrollbarWidth: 'thin'
+          }}>
+            {/* "All" button */}
+            <button
+              onClick={() => setActiveDateFilter('ALL')}
+              style={{
+                background: activeDateFilter === 'ALL' 
+                  ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' 
+                  : 'rgba(255, 255, 255, 0.05)',
+                border: activeDateFilter === 'ALL' ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
+                color: '#ffffff',
+                padding: '8px 18px',
+                borderRadius: 12,
+                fontSize: 12,
+                fontWeight: 900,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: activeDateFilter === 'ALL' ? '0 4px 15px rgba(16, 185, 129, 0.4)' : 'none',
+                transition: 'all 0.25s ease'
+              }}
+            >
+              <span>⚡ TODAS LAS FECHAS</span>
+              <span style={{ background: activeDateFilter === 'ALL' ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: 10, fontSize: 10 }}>
+                {replays.length}
+              </span>
+            </button>
+
+            {/* Date Pills */}
+            {availableDates.map(item => {
+              const isSelected = activeDateFilter === item.dateStr;
+              return (
+                <button
+                  key={item.dateStr}
+                  onClick={() => setActiveDateFilter(item.dateStr)}
+                  style={{
+                    background: isSelected 
+                      ? 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)' 
+                      : 'rgba(255, 255, 255, 0.04)',
+                    border: isSelected ? 'none' : '1px solid rgba(255, 255, 255, 0.1)',
+                    color: isSelected ? '#ffffff' : 'rgba(255,255,255,0.85)',
+                    padding: '8px 18px',
+                    borderRadius: 12,
+                    fontSize: 12,
+                    fontWeight: 900,
                     cursor: 'pointer',
-                    transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                    position: 'relative'
-                  }}
-                >
-                  {/* Top Thumbnail Banner Box */}
-                  <div style={{
-                    position: 'relative',
-                    height: 135,
-                    background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                    whiteSpace: 'nowrap',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-                    overflow: 'hidden'
+                    gap: 8,
+                    boxShadow: isSelected ? '0 4px 15px rgba(56, 189, 248, 0.4)' : 'none',
+                    transition: 'all 0.25s ease'
+                  }}
+                >
+                  <span>📅 FECHA: {item.dateStr}</span>
+                  <span style={{ 
+                    background: isSelected ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.1)', 
+                    padding: '2px 8px', 
+                    borderRadius: 10, 
+                    fontSize: 10 
                   }}>
-                    {/* Background Glow */}
-                    <div style={{
-                      position: 'absolute',
-                      inset: 0,
-                      opacity: 0.2,
-                      backgroundImage: 'radial-gradient(circle at 50% 40%, #38bdf8 0%, transparent 70%)',
-                      pointerEvents: 'none'
-                    }} />
+                    {item.count} {item.count === 1 ? 'pelea' : 'peleas'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
-                    {/* Top Left: PELEA # Badge */}
-                    <div style={{
-                      position: 'absolute',
-                      top: 10,
-                      left: 10,
-                      background: 'rgba(56, 189, 248, 0.18)',
-                      border: '1px solid rgba(56, 189, 248, 0.4)',
-                      color: '#38bdf8',
-                      padding: '3px 10px',
-                      borderRadius: 6,
-                      fontSize: 11,
-                      fontWeight: 900,
-                      letterSpacing: '1px',
-                      fontFamily: 'Outfit, sans-serif'
-                    }}>
-                      PELEA #{event.post_number}
-                    </div>
+      {/* Date Groups Rows */}
+      {loading ? (
+        <Row gutter={[20, 20]}>
+          {Array(8).fill(0).map((_, idx) => (
+            <Col xs={24} sm={12} md={8} lg={6} key={idx}>
+              <Skeleton.Button active style={{ width: '100%', height: 260, borderRadius: 18 }} />
+            </Col>
+          ))}
+        </Row>
+      ) : dateGroupsList.length > 0 ? (
+        dateGroupsList.map((group) => (
+          <div key={group.dateStr} style={{ marginBottom: 44 }}>
+            {/* Section Header for Date Row */}
+            <div style={{
+              background: 'linear-gradient(90deg, rgba(16, 185, 129, 0.12) 0%, rgba(56, 189, 248, 0.08) 50%, rgba(255, 255, 255, 0.02) 100%)',
+              borderLeft: '5px solid #10b981',
+              borderTop: '1px solid rgba(255,255,255,0.06)',
+              borderRight: '1px solid rgba(255,255,255,0.06)',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 14,
+              padding: '12px 20px',
+              marginBottom: 20,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 10,
+              boxShadow: '0 8px 25px rgba(0,0,0,0.4)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <CalendarOutlined style={{ color: '#10b981', fontSize: 18 }} />
+                <div>
+                  <Title level={4} style={{ color: '#ffffff', margin: 0, fontWeight: 900, fontFamily: 'Outfit, sans-serif', textTransform: 'capitalize', fontSize: 18, lineHeight: 1.1 }}>
+                    📅 CARTELERA DE {group.fullTitle.toUpperCase()}
+                  </Title>
+                  <Text style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: 700 }}>
+                    FECHA: {group.dateStr}
+                  </Text>
+                </div>
+              </div>
 
-                    {/* Top Right: HD Badge */}
-                    <div style={{
-                      position: 'absolute',
-                      top: 10,
-                      right: 10,
-                      background: 'rgba(16, 185, 129, 0.15)',
-                      border: '1px solid rgba(16, 185, 129, 0.3)',
-                      color: '#10b981',
-                      padding: '3px 8px',
-                      borderRadius: 6,
-                      fontSize: 9,
-                      fontWeight: 900,
-                      letterSpacing: '0.5px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 4
-                    }}>
-                      <VideoCameraOutlined /> HD REPETICIÓN
-                    </div>
+              <div style={{
+                background: 'rgba(16, 185, 129, 0.18)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
+                color: '#10b981',
+                padding: '5px 14px',
+                borderRadius: 20,
+                fontSize: 11,
+                fontWeight: 900,
+                letterSpacing: '1px',
+                fontFamily: 'Outfit, sans-serif'
+              }}>
+                🎬 {group.events.length} {group.events.length === 1 ? 'REPETICIÓN DISPONIBLE' : 'REPETICIONES DISPONIBLES'}
+              </div>
+            </div>
 
-                    {/* Center Play Button Icon */}
-                    <div className="card-play-icon" style={{
-                      width: 46,
-                      height: 46,
-                      borderRadius: '50%',
-                      background: 'rgba(16, 185, 129, 0.2)',
-                      border: '2px solid #10b981',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: '0 0 20px rgba(16, 185, 129, 0.4)',
-                      transition: 'all 0.3s ease'
-                    }}>
-                      <PlayCircleFilled style={{ color: '#ffffff', fontSize: 24 }} />
-                    </div>
+            {/* Fights Row for this specific date */}
+            <Row gutter={[20, 20]}>
+              {group.events.map((event) => {
+                const nameA = (event.gallo_a_name || 'Gallo Azul').replace('[ARCHIVED] ', '');
+                const nameB = (event.gallo_b_name || 'Gallo Blanco');
+                const weightA = parseWeight(event.gallo_a_weight);
+                const weightB = parseWeight(event.gallo_b_weight);
 
-                    {/* Bottom Winner Banner */}
-                    <div style={{
-                      position: 'absolute',
-                      bottom: 8,
-                      left: 8,
-                      right: 8,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      <div style={{
-                        padding: '3px 12px',
-                        borderRadius: 20,
-                        fontSize: 10,
-                        fontWeight: 900,
-                        letterSpacing: '0.5px',
-                        textTransform: 'uppercase',
-                        backdropFilter: 'blur(8px)',
-                        textAlign: 'center',
-                        whiteSpace: 'nowrap',
+                return (
+                  <Col xs={24} sm={12} md={8} lg={6} key={event.id}>
+                    <div 
+                      className="premium-replay-card fade-up"
+                      onClick={() => openReplay(event)}
+                      style={{ 
+                        background: 'linear-gradient(135deg, #11161d 0%, #0b0f17 100%)', 
+                        borderRadius: 16, 
+                        border: '1px solid rgba(255, 255, 255, 0.08)',
                         overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        maxWidth: '95%',
-                        ...(event.winner_side === 'A' || event.winner_side === 'Azul'
-                          ? { background: 'rgba(29, 78, 216, 0.9)', color: '#ffffff', border: '1px solid #3b82f6' }
-                          : event.winner_side === 'B' || event.winner_side === 'Blanco'
-                          ? { background: 'rgba(241, 245, 249, 0.95)', color: '#0f172a', border: '1px solid #ffffff' }
-                          : { background: 'rgba(180, 83, 9, 0.9)', color: '#ffffff', border: '1px solid #f59e0b' }
-                        )
-                      }}>
-                        🏆 GANADOR: {
-                          event.winner_side === 'A' ? nameA :
-                          event.winner_side === 'B' ? nameB :
-                          '¡TABLAS / NULA!'
-                        }
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Fighter Comparison Box */}
-                  <div style={{ padding: '12px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    <div style={{
-                      background: 'rgba(0, 0, 0, 0.35)',
-                      borderRadius: 10,
-                      padding: '8px 10px',
-                      border: '1px solid rgba(255, 255, 255, 0.05)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 6
-                    }}>
-                      {/* Left: Gallo Azul */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 9, fontWeight: 900, color: '#3b82f6', letterSpacing: '0.5px' }}>LADO AZUL</div>
-                        <div style={{ fontSize: 12, fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'Outfit, sans-serif' }}>
-                          {nameA}
-                        </div>
-                        {weightA && <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>⚖️ {weightA}</div>}
-                      </div>
-
-                      {/* VS Divider Badge */}
+                        cursor: 'pointer',
+                        transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                        position: 'relative'
+                      }}
+                    >
+                      {/* Top Thumbnail Banner Box */}
                       <div style={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: '50%',
-                        background: 'rgba(255,255,255,0.06)',
-                        border: '1px solid rgba(255,255,255,0.1)',
+                        position: 'relative',
+                        height: 135,
+                        background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: 8,
-                        fontWeight: 900,
-                        color: 'rgba(255,255,255,0.4)',
-                        flexShrink: 0
-                      }}>VS</div>
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                        overflow: 'hidden'
+                      }}>
+                        {/* Background Glow */}
+                        <div style={{
+                          position: 'absolute',
+                          inset: 0,
+                          opacity: 0.2,
+                          backgroundImage: 'radial-gradient(circle at 50% 40%, #38bdf8 0%, transparent 70%)',
+                          pointerEvents: 'none'
+                        }} />
 
-                      {/* Right: Gallo Blanco */}
-                      <div style={{ flex: 1, minWidth: 0, textAlign: 'right' }}>
-                        <div style={{ fontSize: 9, fontWeight: 900, color: '#e2e8f0', letterSpacing: '0.5px' }}>LADO BLANCO</div>
-                        <div style={{ fontSize: 12, fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'Outfit, sans-serif' }}>
-                          {nameB}
+                        {/* Top Left: PELEA # Badge */}
+                        <div style={{
+                          position: 'absolute',
+                          top: 10,
+                          left: 10,
+                          background: 'rgba(56, 189, 248, 0.18)',
+                          border: '1px solid rgba(56, 189, 248, 0.4)',
+                          color: '#38bdf8',
+                          padding: '3px 10px',
+                          borderRadius: 6,
+                          fontSize: 11,
+                          fontWeight: 900,
+                          letterSpacing: '1px',
+                          fontFamily: 'Outfit, sans-serif'
+                        }}>
+                          PELEA #{event.post_number}
                         </div>
-                        {weightB && <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>⚖️ {weightB}</div>}
+
+                        {/* Top Right: HD Badge */}
+                        <div style={{
+                          position: 'absolute',
+                          top: 10,
+                          right: 10,
+                          background: 'rgba(16, 185, 129, 0.15)',
+                          border: '1px solid rgba(16, 185, 129, 0.3)',
+                          color: '#10b981',
+                          padding: '3px 8px',
+                          borderRadius: 6,
+                          fontSize: 9,
+                          fontWeight: 900,
+                          letterSpacing: '0.5px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4
+                        }}>
+                          <VideoCameraOutlined /> HD REPETICIÓN
+                        </div>
+
+                        {/* Center Play Button Icon */}
+                        <div className="card-play-icon" style={{
+                          width: 46,
+                          height: 46,
+                          borderRadius: '50%',
+                          background: 'rgba(16, 185, 129, 0.2)',
+                          border: '2px solid #10b981',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: '0 0 20px rgba(16, 185, 129, 0.4)',
+                          transition: 'all 0.3s ease'
+                        }}>
+                          <PlayCircleFilled style={{ color: '#ffffff', fontSize: 24 }} />
+                        </div>
+
+                        {/* Bottom Winner Banner */}
+                        <div style={{
+                          position: 'absolute',
+                          bottom: 8,
+                          left: 8,
+                          right: 8,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          <div style={{
+                            padding: '3px 12px',
+                            borderRadius: 20,
+                            fontSize: 10,
+                            fontWeight: 900,
+                            letterSpacing: '0.5px',
+                            textTransform: 'uppercase',
+                            backdropFilter: 'blur(8px)',
+                            textAlign: 'center',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            maxWidth: '95%',
+                            ...(event.winner_side === 'A' || event.winner_side === 'Azul'
+                              ? { background: 'rgba(29, 78, 216, 0.9)', color: '#ffffff', border: '1px solid #3b82f6' }
+                              : event.winner_side === 'B' || event.winner_side === 'Blanco'
+                              ? { background: 'rgba(241, 245, 249, 0.95)', color: '#0f172a', border: '1px solid #ffffff' }
+                              : { background: 'rgba(180, 83, 9, 0.9)', color: '#ffffff', border: '1px solid #f59e0b' }
+                            )
+                          }}>
+                            🏆 GANADOR: {
+                              event.winner_side === 'A' ? nameA :
+                              event.winner_side === 'B' ? nameB :
+                              '¡TABLAS / NULA!'
+                            }
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Fighter Comparison Box */}
+                      <div style={{ padding: '12px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                        <div style={{
+                          background: 'rgba(0, 0, 0, 0.35)',
+                          borderRadius: 10,
+                          padding: '8px 10px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 6
+                        }}>
+                          {/* Left: Gallo Azul */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 9, fontWeight: 900, color: '#3b82f6', letterSpacing: '0.5px' }}>LADO AZUL</div>
+                            <div style={{ fontSize: 12, fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'Outfit, sans-serif' }}>
+                              {nameA}
+                            </div>
+                            {weightA && <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>⚖️ {weightA}</div>}
+                          </div>
+
+                          {/* VS Divider Badge */}
+                          <div style={{
+                            width: 22,
+                            height: 22,
+                            borderRadius: '50%',
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: 8,
+                            fontWeight: 900,
+                            color: 'rgba(255,255,255,0.4)',
+                            flexShrink: 0
+                          }}>VS</div>
+
+                          {/* Right: Gallo Blanco */}
+                          <div style={{ flex: 1, minWidth: 0, textAlign: 'right' }}>
+                            <div style={{ fontSize: 9, fontWeight: 900, color: '#e2e8f0', letterSpacing: '0.5px' }}>LADO BLANCO</div>
+                            <div style={{ fontSize: 12, fontWeight: 800, color: '#ffffff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'Outfit, sans-serif' }}>
+                              {nameB}
+                            </div>
+                            {weightB && <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>⚖️ {weightB}</div>}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card Bottom Bar */}
+                      <div style={{
+                        padding: '10px 12px',
+                        borderTop: '1px solid rgba(255,255,255,0.05)',
+                        background: 'rgba(0, 0, 0, 0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <CalendarOutlined style={{ fontSize: 11, color: '#10b981' }} />
+                          {group.dateStr}
+                        </span>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Button 
+                            size="small"
+                            type="primary"
+                            icon={<PlayCircleOutlined />}
+                            onClick={(e) => { e.stopPropagation(); openReplay(event); }}
+                            style={{
+                              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                              border: 'none',
+                              borderRadius: 8,
+                              fontSize: 10,
+                              fontWeight: 900,
+                              height: 28,
+                              padding: '0 12px'
+                            }}
+                          >
+                            VER
+                          </Button>
+
+                          <Button 
+                            size="small"
+                            type="text"
+                            icon={<ShareAltOutlined style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }} />}
+                            onClick={(e) => { e.stopPropagation(); handleShare(event); }}
+                            style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 8, height: 28, width: 28, padding: 0 }}
+                          />
+
+                          {currentUser?.role === 'admin' && (
+                            <Space size={4} onClick={e => e.stopPropagation()}>
+                              <Button size="small" type="text" icon={<EditOutlined style={{ fontSize: 12, color: '#38bdf8' }} />} onClick={(e) => { e.stopPropagation(); openEditor(event); }} style={{ padding: 0, width: 24, height: 28 }} />
+                              <Popconfirm title="¿Eliminar de repeticiones?" onConfirm={() => handleDeleteReplay(event.id)} okText="Sí" cancelText="No">
+                                <Button size="small" type="text" danger icon={<DeleteOutlined style={{ fontSize: 12 }} />} onClick={e => e.stopPropagation()} style={{ padding: 0, width: 24, height: 28 }} />
+                              </Popconfirm>
+                            </Space>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-
-                  {/* Card Bottom Bar */}
-                  <div style={{
-                    padding: '10px 12px',
-                    borderTop: '1px solid rgba(255,255,255,0.05)',
-                    background: 'rgba(0, 0, 0, 0.25)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between'
-                  }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <CalendarOutlined style={{ fontSize: 11, color: '#10b981' }} />
-                      {new Date(event.created_at).toLocaleDateString('es-ES')}
-                    </span>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Button 
-                        size="small"
-                        type="primary"
-                        icon={<PlayCircleOutlined />}
-                        onClick={(e) => { e.stopPropagation(); openReplay(event); }}
-                        style={{
-                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                          border: 'none',
-                          borderRadius: 8,
-                          fontSize: 10,
-                          fontWeight: 900,
-                          height: 28,
-                          padding: '0 12px'
-                        }}
-                      >
-                        VER
-                      </Button>
-
-                      <Button 
-                        size="small"
-                        type="text"
-                        icon={<ShareAltOutlined style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12 }} />}
-                        onClick={(e) => { e.stopPropagation(); handleShare(event); }}
-                        style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 8, height: 28, width: 28, padding: 0 }}
-                      />
-
-                      {currentUser?.role === 'admin' && (
-                        <Space size={4} onClick={e => e.stopPropagation()}>
-                          <Button size="small" type="text" icon={<EditOutlined style={{ fontSize: 12, color: '#38bdf8' }} />} onClick={(e) => { e.stopPropagation(); openEditor(event); }} style={{ padding: 0, width: 24, height: 28 }} />
-                          <Popconfirm title="¿Eliminar de repeticiones?" onConfirm={() => handleDeleteReplay(event.id)} okText="Sí" cancelText="No">
-                            <Button size="small" type="text" danger icon={<DeleteOutlined style={{ fontSize: 12 }} />} onClick={e => e.stopPropagation()} style={{ padding: 0, width: 24, height: 28 }} />
-                          </Popconfirm>
-                        </Space>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </Col>
-            );
-          })
-        ) : (
-          <Col span={24}>
-              <div style={{ textAlign: 'center', padding: '100px 0', background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px dashed rgba(255,255,255,0.1)' }}>
-                 <HistoryOutlined style={{ fontSize: 56, color: 'rgba(255,255,255,0.08)', marginBottom: 20 }} />
-                 <br />
-                 <Text style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, letterSpacing: '2px', fontWeight: 800 }}>NO SE ENCONTRARON REPETICIONES DISPONIBLES</Text>
-              </div>
-          </Col>
-        )}
-      </Row>
+                  </Col>
+                );
+              })}
+            </Row>
+          </div>
+        ))
+      ) : (
+        <Col span={24}>
+            <div style={{ textAlign: 'center', padding: '100px 0', background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px dashed rgba(255,255,255,0.1)' }}>
+               <HistoryOutlined style={{ fontSize: 56, color: 'rgba(255,255,255,0.08)', marginBottom: 20 }} />
+               <br />
+               <Text style={{ color: 'rgba(255,255,255,0.3)', fontSize: 13, letterSpacing: '2px', fontWeight: 800 }}>NO SE ENCONTRARON REPETICIONES PARA ESTA SELECCIÓN</Text>
+            </div>
+        </Col>
+      )}
 
       {/* Video Modal Player */}
       <Modal
