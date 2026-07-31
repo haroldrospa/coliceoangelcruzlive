@@ -1309,7 +1309,7 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
                     <span style={{ fontSize: 9, color: '#93c5fd', fontWeight: 900, letterSpacing: 0.5 }}>LADO AZUL</span>
                     {weightA && (
-                      <span style={{ fontSize: 9, background: 'rgba(0,0,0,0.35)', color: '#bfdbfe', padding: '1px 5px', borderRadius: 4, fontWeight: 900 }}>
+                      <span style={{ fontSize: 10, color: '#bfdbfe', fontWeight: 900 }}>
                         ⚖️ {weightA}
                       </span>
                     )}
@@ -1336,7 +1336,7 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
                     <span style={{ fontSize: 9, color: '#0f3dd1', fontWeight: 900, letterSpacing: 0.5 }}>LADO BLANCO</span>
                     {weightB && (
-                      <span style={{ fontSize: 9, background: 'rgba(0,0,0,0.08)', color: '#1e40af', padding: '1px 5px', borderRadius: 4, fontWeight: 900 }}>
+                      <span style={{ fontSize: 10, color: '#1e40af', fontWeight: 900 }}>
                         ⚖️ {weightB}
                       </span>
                     )}
