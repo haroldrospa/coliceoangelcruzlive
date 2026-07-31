@@ -355,10 +355,9 @@ const ReplaysView = ({ currentUser }) => {
 
           <div style={{ 
             display: 'flex', 
+            flexWrap: 'wrap',
             gap: 10, 
-            overflowX: 'auto', 
-            paddingBottom: 8,
-            scrollbarWidth: 'thin'
+            alignItems: 'center'
           }}>
             {/* "All" button */}
             <button
