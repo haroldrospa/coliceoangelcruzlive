@@ -604,19 +604,28 @@ export default function RelojView() {
 
   const broadcastClockState = async (isRun, elapsed, total, subLeftVal) => {
     const now = Date.now();
+    let startedAtToUse = 0;
+    if (isRun) {
+      const storedStartedAt = parseInt(localStorage.getItem('clock_started_at') || '0', 10);
+      startedAtToUse = storedStartedAt > 0 ? storedStartedAt : now;
+    }
+
     const payload = {
       clock_running: isRun,
-      clock_started_at: isRun ? now : 0,
-      clock_elapsed_paused: elapsed,
+      clock_started_at: startedAtToUse,
+      clock_elapsed_paused: isRun ? parseInt(localStorage.getItem('clock_elapsed_paused') || '0', 10) : elapsed,
       clock_total_duration: total,
       sub_timer_left: subLeftVal !== undefined ? subLeftVal : subTimeLeft,
       updated_at: now
     };
 
     localStorage.setItem('clock_running', isRun ? 'true' : 'false');
-    localStorage.setItem('clock_started_at', isRun ? now.toString() : '0');
+    localStorage.setItem('clock_started_at', startedAtToUse.toString());
     localStorage.setItem('clock_total_duration', total.toString());
-    localStorage.setItem('clock_elapsed_paused', elapsed.toString());
+    if (!isRun) {
+      localStorage.setItem('clock_elapsed_paused', elapsed.toString());
+    }
+
     if (subLeftVal !== undefined) {
       if (subLeftVal !== null) localStorage.setItem('sub_timer_left', subLeftVal.toString());
       else localStorage.removeItem('sub_timer_left');
@@ -662,7 +671,9 @@ export default function RelojView() {
     setIsRunning(true);
     
     // Save to localStorage & broadcast live to all viewers
-    const now = new Date().getTime();
+    const now = Date.now();
+    localStorage.setItem('clock_started_at', now.toString());
+    localStorage.setItem('clock_elapsed_paused', elapsedTime.toString());
     broadcastClockState(true, elapsedTime, presetDuration);
 
     // Update status in Supabase

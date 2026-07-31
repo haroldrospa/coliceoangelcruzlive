@@ -504,12 +504,26 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
             const cartelera = settings.find(s => s.id === 'show_cartelera');
             const mode = settings.find(s => s.id === 'stream_logic_mode');
             const styleSetting = settings.find(s => s.id === 'scoreboard_style');
+            const clockSetting = settings.find(s => s.id === 'clock_state');
             if (stream) setGlobalStream(stream.value);
             if (cartelera) setShowCartelera(cartelera.value === 'true');
             if (mode) setStreamMode(mode.value);
             if (styleSetting && styleSetting.value) {
               setScoreboardStyle(styleSetting.value);
               localStorage.setItem('scoreboard_style', styleSetting.value);
+            }
+            if (clockSetting && clockSetting.value) {
+              try {
+                const cState = typeof clockSetting.value === 'string' ? JSON.parse(clockSetting.value) : clockSetting.value;
+                if (cState.clock_running !== undefined) localStorage.setItem('clock_running', cState.clock_running ? 'true' : 'false');
+                if (cState.clock_started_at !== undefined) localStorage.setItem('clock_started_at', cState.clock_started_at.toString());
+                if (cState.clock_elapsed_paused !== undefined) localStorage.setItem('clock_elapsed_paused', cState.clock_elapsed_paused.toString());
+                if (cState.clock_total_duration !== undefined) localStorage.setItem('clock_total_duration', cState.clock_total_duration.toString());
+                if (cState.sub_timer_left !== undefined) {
+                  if (cState.sub_timer_left !== null) localStorage.setItem('sub_timer_left', cState.sub_timer_left.toString());
+                  else localStorage.removeItem('sub_timer_left');
+                }
+              } catch(e){}
             }
         }
       } catch (err) {
