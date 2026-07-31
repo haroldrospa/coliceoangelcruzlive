@@ -100,13 +100,13 @@ export const upsertSetting = async (id, value) => {
 };
 
 // REALTIME BROADCAST STATUS HELPER
-export const broadcastEventStatus = async (postNumber, status, eventId = null) => {
+export const broadcastEventStatus = async (postNumber, status, eventId = null, winnerSide = null, winnerName = null) => {
   try {
     const channel = supabase.channel('arena_realtime');
     await channel.send({
       type: 'broadcast',
       event: 'fight_status_change',
-      payload: { post_number: postNumber, status, id: eventId }
+      payload: { post_number: postNumber, status, id: eventId, winner_side: winnerSide, winner_name: winnerName }
     });
   } catch (e) {
     console.warn('Broadcast status warning:', e);

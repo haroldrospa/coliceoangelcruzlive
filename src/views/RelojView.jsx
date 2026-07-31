@@ -177,6 +177,7 @@ export default function RelojView() {
 
   // Dynamic Celebration Overlay state
   const [celebration, setCelebration] = useState(null); // null or { type: 'Azul' | 'Blanco' | 'Tablas', title: string, subtitle: string }
+  const [winnerFlash, setWinnerFlash] = useState(null); // null or { side: 'Azul'|'Blanco'|'Tablas', name: string }
   
   // Betting phase state (2-minute countdown before fight starts)
   const [bettingPhase, setBettingPhase] = useState(false);
@@ -559,7 +560,7 @@ export default function RelojView() {
     };
   }, [subTimeLeft, subTimerLabel, message, setShowOutcomeModal]);
 
-  const upsertEvent = async (fightNum, status, winnerSide = null) => {
+  const upsertEvent = async (fightNum, status, winnerSide = null, winnerNameForBroadcast = null) => {
     try {
       const fight = carteleraFights.find(f => f.numero_pelea === fightNum);
       const nameA = fight ? fight.traba_a : (fightNum === fightNumber ? gallinoName : 'Gallo Azul');
@@ -596,7 +597,7 @@ export default function RelojView() {
         if (created && created[0]) eventId = created[0].id;
       }
 
-      await broadcastEventStatus(fightNum, status, eventId);
+      await broadcastEventStatus(fightNum, status, eventId, winnerSide, winnerNameForBroadcast);
     } catch (err) {
       console.error('Error upserting event:', err);
     }
@@ -780,10 +781,19 @@ export default function RelojView() {
       fightNum: fightNumber
     });
 
+    // Show winner flash overlay on clock for 3 seconds
+    const winnerDisplayName = resultType === 'Azul'
+      ? (gallinoName || 'LADO AZUL')
+      : resultType === 'Blanco'
+      ? (blancoName || 'LADO BLANCO')
+      : null;
+    setWinnerFlash({ side: resultType, name: winnerDisplayName });
+    setTimeout(() => setWinnerFlash(null), 3000);
+
     // Sync result to Supabase events table
     const winnerSideMap = { 'Azul': 'A', 'Blanco': 'B', 'Tablas': 'D' };
     const winSide = winnerSideMap[resultType] || 'D';
-    await upsertEvent(fightNumber, 'FINISHED', winSide);
+    await upsertEvent(fightNumber, 'FINISHED', winSide, winnerDisplayName);
 
     // Resolve pending bets and pay winners/refund draws immediately
     try {
@@ -1547,8 +1557,52 @@ export default function RelojView() {
                   display: 'flex',
                   justifyContent: 'space-around',
                   alignItems: 'center',
-                  boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.9)'
+                  boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.9)',
+                  position: 'relative',
+                  overflow: 'hidden'
                 }}>
+                  {/* Winner Flash Overlay */}
+                  {winnerFlash && (
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      zIndex: 10,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 10,
+                      animation: 'winnerFlashIn 0.3s ease-out',
+                      ...(winnerFlash.side === 'Azul'
+                        ? { background: 'linear-gradient(135deg, #1d4ed8cc, #1e3a8acc)' }
+                        : winnerFlash.side === 'Blanco'
+                        ? { background: 'linear-gradient(135deg, #f1f5f9cc, #e2e8f0cc)' }
+                        : { background: 'linear-gradient(135deg, #92400ecc, #78350fcc)' }
+                      )
+                    }}>
+                      <div style={{
+                        fontSize: isFullscreen ? 14 : 10,
+                        fontWeight: 900,
+                        letterSpacing: '2px',
+                        textTransform: 'uppercase',
+                        color: winnerFlash.side === 'Blanco' ? '#0f172a' : 'rgba(255,255,255,0.75)',
+                        marginBottom: 2
+                      }}>🏆 GANADOR</div>
+                      <div style={{
+                        fontSize: isFullscreen ? 36 : 20,
+                        fontWeight: 900,
+                        fontFamily: 'Outfit',
+                        color: winnerFlash.side === 'Blanco' ? '#0f172a' : '#ffffff',
+                        textTransform: 'uppercase',
+                        textAlign: 'center',
+                        lineHeight: 1.1,
+                        padding: '0 8px'
+                      }}>
+                        {winnerFlash.side === 'Tablas' ? '¡TABLAS!' : winnerFlash.name}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Elapsed */}
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ 

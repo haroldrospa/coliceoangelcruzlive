@@ -282,6 +282,7 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
   const [clockSubTimeLeft, setClockSubTimeLeft] = useState(null);
   const [scoreboardStyle, setScoreboardStyle] = useState(() => localStorage.getItem('scoreboard_style') || 'broadcast');
   const [bettingCountdown, setBettingCountdown] = useState(120);
+  const [winnerFlash, setWinnerFlash] = useState(null); // null or { side: 'A'|'B'|'D', name: string }
 
   useEffect(() => {
     const calcBettingTime = () => {
@@ -739,7 +740,7 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
     arenaChannel
       .on('broadcast', { event: 'fight_status_change' }, ({ payload }) => {
         if (!payload) return;
-        const { post_number, status, id } = payload;
+        const { post_number, status, id, winner_side, winner_name } = payload;
         
         if (status === 'CLOSED' || status === 'FINISHED') {
           setIsBetModalOpen(prev => {
@@ -749,16 +750,25 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
           setIsSelectionModalOpen(false);
         }
 
+        // Show winner flash animation for 3 seconds
+        if (status === 'FINISHED' && winner_side && winner_side !== 'D') {
+          setWinnerFlash({ side: winner_side, name: winner_name || (winner_side === 'A' ? 'LADO AZUL' : 'LADO BLANCO') });
+          setTimeout(() => setWinnerFlash(null), 3000);
+        } else if (status === 'FINISHED' && winner_side === 'D') {
+          setWinnerFlash({ side: 'D', name: '¡TABLAS!' });
+          setTimeout(() => setWinnerFlash(null), 3000);
+        }
+
         setFightInfo(prev => {
           if (parseInt(prev.post_number) === parseInt(post_number) || prev.id === id) {
-            return { ...prev, status };
+            return { ...prev, status, winner_side };
           }
           return prev;
         });
 
         setTodayProgram(prev => prev.map(item => {
           if (parseInt(item.post_number) === parseInt(post_number) || item.id === id) {
-            return { ...item, status };
+            return { ...item, status, winner_side };
           }
           return item;
         }));
@@ -1306,8 +1316,52 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-around',
-                  gap: 6
+                  gap: 6,
+                  position: 'relative',
+                  overflow: 'hidden'
                 }}>
+                  {/* Winner Flash Overlay */}
+                  {winnerFlash && (
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      zIndex: 10,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 8,
+                      animation: 'winnerFlashIn 0.3s ease-out',
+                      ...(winnerFlash.side === 'A'
+                        ? { background: 'linear-gradient(135deg, rgba(29,78,216,0.95), rgba(30,58,138,0.95))' }
+                        : winnerFlash.side === 'B'
+                        ? { background: 'linear-gradient(135deg, rgba(241,245,249,0.95), rgba(226,232,240,0.95))' }
+                        : { background: 'linear-gradient(135deg, rgba(146,64,14,0.95), rgba(120,53,15,0.95))' }
+                      )
+                    }}>
+                      <div style={{
+                        fontSize: 9,
+                        fontWeight: 900,
+                        letterSpacing: '2px',
+                        textTransform: 'uppercase',
+                        color: winnerFlash.side === 'B' ? '#0f172a' : 'rgba(255,255,255,0.75)',
+                        marginBottom: 1
+                      }}>🏆 GANADOR</div>
+                      <div style={{
+                        fontSize: 'clamp(16px, 4vw, 22px)',
+                        fontWeight: 900,
+                        fontFamily: 'Outfit',
+                        color: winnerFlash.side === 'B' ? '#0f172a' : '#ffffff',
+                        textTransform: 'uppercase',
+                        textAlign: 'center',
+                        lineHeight: 1.1,
+                        padding: '0 6px'
+                      }}>
+                        {winnerFlash.side === 'D' ? '¡TABLAS!' : winnerFlash.name}
+                      </div>
+                    </div>
+                  )}
+
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ color: '#10b981', fontSize: 'clamp(20px, 5.5vw, 28px)', fontWeight: 900, fontFamily: 'Outfit', lineHeight: 1 }}>
                       {formatClockTime(clockElapsedTime)}
