@@ -9,7 +9,7 @@ import 'video.js/dist/video-js.css';
 const { Title, Text } = Typography;
 
 // Specialized Video.js Player for HLS (.m3u8) streams
-const HLSVideoPlayer = ({ url }) => {
+const HLSVideoPlayer = ({ url, onError }) => {
     const videoRef = useRef(null);
     const playerRef = useRef(null);
     const containerRef = useRef(null);
@@ -44,9 +44,11 @@ const HLSVideoPlayer = ({ url }) => {
 
         player.on('error', () => {
             const error = player.error();
-            if (error && onError) {
-                console.error('VideoJS Error:', error.message);
-                onError();
+            if (error) {
+                console.error('VideoJS Error:', error?.message || error);
+                if (typeof onError === 'function') {
+                    onError(error);
+                }
             }
         });
 
