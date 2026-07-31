@@ -1997,56 +1997,56 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
         >
           {/* 1. Top Navigation Header (Sleek Glassmorphic Bar) */}
           <div style={{
-            padding: '10px 16px',
+            padding: '12px 16px',
             display: 'flex', 
             alignItems: 'center', 
-            justify: 'space-between',
+            justifyContent: 'space-between',
             background: 'rgba(10, 14, 23, 0.85)',
             backdropFilter: 'blur(16px)',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             zIndex: 100
           }}>
-            {/* Left Control Group */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <button
-                onClick={() => setIsFbFullscreen(false)}
-                title="Cerrar pantalla completa"
-                style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  borderRadius: '50%',
-                  width: 32, 
-                  height: 32,
-                  color: '#ffffff', 
-                  fontSize: 14, 
-                  fontWeight: 900,
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                ✕
-              </button>
-            </div>
+            {/* Left: Close Button */}
+            <button
+              onClick={() => setIsFbFullscreen(false)}
+              title="Cerrar pantalla completa"
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '50%',
+                width: 34, 
+                height: 34,
+                color: '#ffffff', 
+                fontSize: 14, 
+                fontWeight: 900,
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+              }}
+            >
+              ✕
+            </button>
 
-            {/* Right Control Group: Wallet Balance Badge */}
+            {/* Right: Wallet Balance Badge */}
             <div style={{
-              background: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid rgba(16, 185, 129, 0.35)',
+              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.25) 100%)',
+              border: '1px solid rgba(16, 185, 129, 0.4)',
               color: '#10b981',
               fontWeight: 900,
-              fontSize: 11,
-              padding: '5px 12px',
-              borderRadius: 16,
+              fontSize: 12,
+              padding: '6px 14px',
+              borderRadius: 20,
               display: 'flex', 
               alignItems: 'center', 
               gap: 6,
               backdropFilter: 'blur(12px)',
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.2)',
               letterSpacing: '0.5px'
             }}>
-              <span style={{ fontSize: 12 }}>💳</span>
+              <span style={{ fontSize: 13 }}>💳</span>
               <span>${(userBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           </div>
