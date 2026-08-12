@@ -310,7 +310,14 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
   const [clockSubTimeLeft, setClockSubTimeLeft] = useState(null);
   const [scoreboardStyle, setScoreboardStyle] = useState(() => localStorage.getItem('scoreboard_style') || 'broadcast');
   const [bettingCountdown, setBettingCountdown] = useState(120);
-  const [winnerFlash, setWinnerFlash] = useState(null); // null or { side: 'A'|'B'|'D', name: string }
+  const [winnerFlash, setWinnerFlash] = useState(() => {
+    try {
+      const saved = localStorage.getItem('winner_flash');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
 
   useEffect(() => {
     const calcBettingTime = () => {
@@ -495,13 +502,32 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
     const initData = async () => {
       try {
 
-        // Fetch current active fight (LIVE or CLOSED). Ignore FINISHED for the main top display.
+        // Fetch current active fight (LIVE or CLOSED).
         const activeEvents = await rawFetch(`events?select=*&status=in.(LIVE,CLOSED)&order=updated_at.desc&limit=1`);
         if (activeEvents && activeEvents[0]) {
             setFightInfo(activeEvents[0]);
+            // Fight is currently LIVE or CLOSED — clear previous fight winner banner
+            setWinnerFlash(null);
+            localStorage.removeItem('winner_flash');
         } else {
             // Default empty fight if nothing is active
             setFightInfo(prev => ({ ...prev, id: null, status: 'PENDING' }));
+            // Check if there is a recently finished fight to display winner banner until next fight loads
+            const latestFinished = await rawFetch(`events?select=*&status=eq.FINISHED&order=updated_at.desc&limit=1`);
+            if (latestFinished && latestFinished[0]) {
+              const fEv = latestFinished[0];
+              const winSide = fEv.winner_side;
+              const winWeight = fEv.winner_weight || '';
+              const winName = fEv.winner_name || (winSide === 'A' ? fEv.gallo_a_name : winSide === 'B' ? fEv.gallo_b_name : 'TABLAS');
+              const flashData = {
+                side: winSide === 'A' ? 'Azul' : winSide === 'B' ? 'Blanco' : 'Tablas',
+                name: winName,
+                fightNum: fEv.post_number,
+                weight: winWeight
+              };
+              setWinnerFlash(flashData);
+              localStorage.setItem('winner_flash', JSON.stringify(flashData));
+            }
         }
 
         // Fetch matched cartelera fights and events, then merge them
@@ -560,13 +586,27 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
             if (clockSetting && clockSetting.value) {
               try {
                 const cState = typeof clockSetting.value === 'string' ? JSON.parse(clockSetting.value) : clockSetting.value;
-                if (cState.clock_running !== undefined) localStorage.setItem('clock_running', cState.clock_running ? 'true' : 'false');
-                if (cState.clock_started_at !== undefined) localStorage.setItem('clock_started_at', cState.clock_started_at.toString());
-                if (cState.clock_elapsed_paused !== undefined) localStorage.setItem('clock_elapsed_paused', cState.clock_elapsed_paused.toString());
-                if (cState.clock_total_duration !== undefined) localStorage.setItem('clock_total_duration', cState.clock_total_duration.toString());
-                if (cState.sub_timer_left !== undefined) {
-                  if (cState.sub_timer_left !== null) localStorage.setItem('sub_timer_left', cState.sub_timer_left.toString());
-                  else localStorage.removeItem('sub_timer_left');
+                // Only trust Supabase clock state if it's newer than our last local write.
+                // This prevents stale Supabase data from overwriting a freshly-started fight
+                // before the async upsertSetting has had time to complete.
+                const localTs = parseInt(localStorage.getItem('clock_local_update_ts') || '0', 10);
+                const supabaseTs = cState.updated_at || 0;
+                const supabaseIsNewer = supabaseTs >= localTs;
+                if (supabaseIsNewer) {
+                  if (cState.clock_running !== undefined) localStorage.setItem('clock_running', cState.clock_running ? 'true' : 'false');
+                  if (cState.clock_started_at !== undefined) localStorage.setItem('clock_started_at', cState.clock_started_at.toString());
+                  if (cState.clock_elapsed_paused !== undefined) localStorage.setItem('clock_elapsed_paused', cState.clock_elapsed_paused.toString());
+                  if (cState.clock_total_duration !== undefined) localStorage.setItem('clock_total_duration', cState.clock_total_duration.toString());
+                  // If clock is running, betting MUST be inactive - never override this
+                  if (cState.clock_running === true) {
+                    localStorage.setItem('betting_active', 'false');
+                  } else if (cState.betting_active !== undefined) {
+                    localStorage.setItem('betting_active', cState.betting_active ? 'true' : 'false');
+                  }
+                  if (cState.sub_timer_left !== undefined) {
+                    if (cState.sub_timer_left !== null) localStorage.setItem('sub_timer_left', cState.sub_timer_left.toString());
+                    else localStorage.removeItem('sub_timer_left');
+                  }
                 }
               } catch(e){}
             }
@@ -632,7 +672,12 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
             if (payload.sub_total_duration !== undefined) localStorage.setItem('sub_total_duration', payload.sub_total_duration.toString());
             if (payload.sub_running !== undefined) localStorage.setItem('sub_running', payload.sub_running ? 'true' : 'false');
             if (payload.betting_started_at !== undefined) localStorage.setItem('betting_started_at', payload.betting_started_at.toString());
-            if (payload.betting_active !== undefined) localStorage.setItem('betting_active', payload.betting_active ? 'true' : 'false');
+            // If clock is running, betting MUST be inactive - never override this
+            if (payload.clock_running === true) {
+              localStorage.setItem('betting_active', 'false');
+            } else if (payload.betting_active !== undefined) {
+              localStorage.setItem('betting_active', payload.betting_active ? 'true' : 'false');
+            }
             if (payload.sub_timer_left !== undefined) {
               if (payload.sub_timer_left !== null) localStorage.setItem('sub_timer_left', payload.sub_timer_left.toString());
               else {
@@ -659,7 +704,12 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                     if (cState.sub_total_duration !== undefined) localStorage.setItem('sub_total_duration', cState.sub_total_duration.toString());
                     if (cState.sub_running !== undefined) localStorage.setItem('sub_running', cState.sub_running ? 'true' : 'false');
                     if (cState.betting_started_at !== undefined) localStorage.setItem('betting_started_at', cState.betting_started_at.toString());
-                    if (cState.betting_active !== undefined) localStorage.setItem('betting_active', cState.betting_active ? 'true' : 'false');
+                    // If clock is running, betting MUST be inactive - never override this
+                    if (cState.clock_running === true) {
+                      localStorage.setItem('betting_active', 'false');
+                    } else if (cState.betting_active !== undefined) {
+                      localStorage.setItem('betting_active', cState.betting_active ? 'true' : 'false');
+                    }
                     if (cState.sub_timer_left !== undefined) {
                       if (cState.sub_timer_left !== null) localStorage.setItem('sub_timer_left', cState.sub_timer_left.toString());
                       else {
@@ -784,9 +834,13 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
         const nowIso = updated_at || new Date().toISOString();
         
         if (status === 'LIVE') {
-          const bStarted = betting_started_at || Date.now();
-          localStorage.setItem('betting_active', 'true');
-          localStorage.setItem('betting_started_at', bStarted.toString());
+          // Only activate betting if the fight clock is NOT already running
+          const clockIsRunning = localStorage.getItem('clock_running') === 'true';
+          if (!clockIsRunning) {
+            const bStarted = betting_started_at || Date.now();
+            localStorage.setItem('betting_active', 'true');
+            localStorage.setItem('betting_started_at', bStarted.toString());
+          }
         }
 
         if (status === 'CLOSED' || status === 'FINISHED') {
@@ -798,16 +852,22 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
           localStorage.setItem('betting_active', 'false');
         }
 
-        // Show winner flash animation on full scoreboard for 10 seconds
+        if (status === 'LIVE' || status === 'CLOSED') {
+          setWinnerFlash(null);
+          localStorage.removeItem('winner_flash');
+        }
+
+        // Show winner flash animation on full scoreboard until next fight is loaded
         if (status === 'FINISHED') {
           const winWeight = payload.winner_weight || '';
-          setWinnerFlash({ 
+          const flashData = { 
             side: winner_side === 'A' ? 'Azul' : winner_side === 'B' ? 'Blanco' : 'Tablas', 
             name: winner_name || (winner_side === 'A' ? 'LADO AZUL' : winner_side === 'B' ? 'LADO BLANCO' : 'TABLAS'),
             fightNum: post_number,
             weight: winWeight
-          });
-          setTimeout(() => setWinnerFlash(null), 10000);
+          };
+          setWinnerFlash(flashData);
+          localStorage.setItem('winner_flash', JSON.stringify(flashData));
         }
 
         setFightInfo(prev => {
@@ -945,20 +1005,31 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
           if (clockSetting && clockSetting.value) {
             try {
               const cState = typeof clockSetting.value === 'string' ? JSON.parse(clockSetting.value) : clockSetting.value;
-              if (cState.clock_running !== undefined) localStorage.setItem('clock_running', cState.clock_running ? 'true' : 'false');
-              if (cState.clock_started_at !== undefined) localStorage.setItem('clock_started_at', cState.clock_started_at.toString());
-              if (cState.clock_elapsed_paused !== undefined) localStorage.setItem('clock_elapsed_paused', cState.clock_elapsed_paused.toString());
-              if (cState.clock_total_duration !== undefined) localStorage.setItem('clock_total_duration', cState.clock_total_duration.toString());
-              if (cState.sub_started_at !== undefined) localStorage.setItem('sub_started_at', cState.sub_started_at.toString());
-              if (cState.sub_total_duration !== undefined) localStorage.setItem('sub_total_duration', cState.sub_total_duration.toString());
-              if (cState.sub_running !== undefined) localStorage.setItem('sub_running', cState.sub_running ? 'true' : 'false');
-              if (cState.betting_started_at !== undefined) localStorage.setItem('betting_started_at', cState.betting_started_at.toString());
-              if (cState.betting_active !== undefined) localStorage.setItem('betting_active', cState.betting_active ? 'true' : 'false');
-              if (cState.sub_timer_left !== undefined) {
-                if (cState.sub_timer_left !== null) localStorage.setItem('sub_timer_left', cState.sub_timer_left.toString());
-                else {
-                  localStorage.removeItem('sub_timer_left');
-                  localStorage.setItem('sub_running', 'false');
+              // Only trust Supabase clock state if it's newer than our last local write.
+              const localTs = parseInt(localStorage.getItem('clock_local_update_ts') || '0', 10);
+              const supabaseTs = cState.updated_at || 0;
+              const supabaseIsNewer = supabaseTs >= localTs;
+              if (supabaseIsNewer) {
+                if (cState.clock_running !== undefined) localStorage.setItem('clock_running', cState.clock_running ? 'true' : 'false');
+                if (cState.clock_started_at !== undefined) localStorage.setItem('clock_started_at', cState.clock_started_at.toString());
+                if (cState.clock_elapsed_paused !== undefined) localStorage.setItem('clock_elapsed_paused', cState.clock_elapsed_paused.toString());
+                if (cState.clock_total_duration !== undefined) localStorage.setItem('clock_total_duration', cState.clock_total_duration.toString());
+                if (cState.sub_started_at !== undefined) localStorage.setItem('sub_started_at', cState.sub_started_at.toString());
+                if (cState.sub_total_duration !== undefined) localStorage.setItem('sub_total_duration', cState.sub_total_duration.toString());
+                if (cState.sub_running !== undefined) localStorage.setItem('sub_running', cState.sub_running ? 'true' : 'false');
+                if (cState.betting_started_at !== undefined) localStorage.setItem('betting_started_at', cState.betting_started_at.toString());
+                // If clock is running, betting MUST be inactive - never override this
+                if (cState.clock_running === true) {
+                  localStorage.setItem('betting_active', 'false');
+                } else if (cState.betting_active !== undefined) {
+                  localStorage.setItem('betting_active', cState.betting_active ? 'true' : 'false');
+                }
+                if (cState.sub_timer_left !== undefined) {
+                  if (cState.sub_timer_left !== null) localStorage.setItem('sub_timer_left', cState.sub_timer_left.toString());
+                  else {
+                    localStorage.removeItem('sub_timer_left');
+                    localStorage.setItem('sub_running', 'false');
+                  }
                 }
               }
             } catch(e){}

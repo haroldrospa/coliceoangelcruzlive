@@ -145,6 +145,7 @@ export default function RelojView() {
   // Careo / Sub-timers state
   const [subTimeLeft, setSubTimeLeft] = useState(null); // null or seconds remaining (red clock)
   const [subTimerLabel, setSubTimerLabel] = useState('');
+  const [careoFinished, setCareoFinished] = useState(false);
   const [pauseMainOnSub, setPauseMainOnSub] = useState(false);
   const [showOutcomeModal, setShowOutcomeModal] = useState(false);
   const [scoreboardStyle, setScoreboardStyle] = useState(() => localStorage.getItem('scoreboard_style') || 'broadcast'); // 'modern', 'arena', 'broadcast'
@@ -154,18 +155,36 @@ export default function RelojView() {
   const [fotoBlanco, setFotoBlanco] = useState(null);
   
   // Active fight details
-  const [fightNumber, setFightNumber] = useState(1);
-  const [gallinoName, setGallinoName] = useState('');
-  const [blancoName, setBlancoName] = useState('');
+  const [fightNumber, setFightNumber] = useState(() => parseInt(localStorage.getItem('reloj_fight_number') || '1', 10));
+
+  useEffect(() => {
+    setCareoFinished(false);
+  }, [fightNumber]);
+
+  const [gallinoName, setGallinoName] = useState(() => localStorage.getItem('reloj_gallino_name') || '');
+  const [blancoName, setBlancoName] = useState(() => localStorage.getItem('reloj_blanco_name') || '');
   
   // Weights and extra info
-  const [pesoAzul, setPesoAzul] = useState('');
-  const [colorAzul, setColorAzul] = useState('');
-  const [marcaAzul, setMarcaAzul] = useState('');
+  const [pesoAzul, setPesoAzul] = useState(() => localStorage.getItem('reloj_peso_azul') || '');
+  const [colorAzul, setColorAzul] = useState(() => localStorage.getItem('reloj_color_azul') || '');
+  const [marcaAzul, setMarcaAzul] = useState(() => localStorage.getItem('reloj_marca_azul') || '');
   
-  const [pesoBlanco, setPesoBlanco] = useState('');
-  const [colorBlanco, setColorBlanco] = useState('');
-  const [marcaBlanco, setMarcaBlanco] = useState('');
+  const [pesoBlanco, setPesoBlanco] = useState(() => localStorage.getItem('reloj_peso_blanco') || '');
+  const [colorBlanco, setColorBlanco] = useState(() => localStorage.getItem('reloj_color_blanco') || '');
+  const [marcaBlanco, setMarcaBlanco] = useState(() => localStorage.getItem('reloj_marca_blanco') || '');
+
+  // Keep local storage in sync with current fight details so tab navigation never resets active fight
+  useEffect(() => {
+    if (fightNumber) localStorage.setItem('reloj_fight_number', fightNumber.toString());
+    localStorage.setItem('reloj_gallino_name', gallinoName || '');
+    localStorage.setItem('reloj_blanco_name', blancoName || '');
+    localStorage.setItem('reloj_peso_azul', pesoAzul || '');
+    localStorage.setItem('reloj_color_azul', colorAzul || '');
+    localStorage.setItem('reloj_marca_azul', marcaAzul || '');
+    localStorage.setItem('reloj_peso_blanco', pesoBlanco || '');
+    localStorage.setItem('reloj_color_blanco', colorBlanco || '');
+    localStorage.setItem('reloj_marca_blanco', marcaBlanco || '');
+  }, [fightNumber, gallinoName, blancoName, pesoAzul, colorAzul, marcaAzul, pesoBlanco, colorBlanco, marcaBlanco]);
 
   // Cartelera & Local Results state
   const [carteleraFights, setCarteleraFights] = useState([]);
@@ -176,8 +195,15 @@ export default function RelojView() {
   });
 
   // Dynamic Celebration Overlay state
-  const [celebration, setCelebration] = useState(null); // null or { type: 'Azul' | 'Blanco' | 'Tablas', title: string, subtitle: string }
-  const [winnerFlash, setWinnerFlash] = useState(null); // null or { side: 'Azul'|'Blanco'|'Tablas', name: string }
+  const [celebration, setCelebration] = useState(null);
+  const [winnerFlash, setWinnerFlash] = useState(() => {
+    try {
+      const saved = localStorage.getItem('winner_flash');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
   
   // Betting phase state (2-minute countdown before fight starts)
   const [bettingPhase, setBettingPhase] = useState(false);
@@ -303,6 +329,21 @@ export default function RelojView() {
         setTimeLeft(totalDuration - currentElapsed);
         setIsRunning(true);
       }
+    } else if (localStorage.getItem('fight_active') === 'true') {
+      // fight_active is the definitive source of truth - if set, clock MUST be running
+      // This handles the case where clock_running was accidentally reset by stale Supabase sync
+      localStorage.setItem('clock_running', 'true');
+      localStorage.setItem('betting_active', 'false');
+      if (startedAt) {
+        const now = new Date().getTime();
+        const delta = Math.floor((now - parseInt(startedAt, 10)) / 1000);
+        const currentElapsed = elapsedPaused + delta;
+        if (currentElapsed < totalDuration) {
+          setElapsedTime(currentElapsed);
+          setTimeLeft(totalDuration - currentElapsed);
+          setIsRunning(true);
+        }
+      }
     } else {
       setElapsedTime(elapsedPaused);
       setTimeLeft(totalDuration - elapsedPaused);
@@ -333,63 +374,86 @@ export default function RelojView() {
     const restoreActiveFight = async () => {
       try {
         const clockRunning = localStorage.getItem('clock_running') === 'true';
-        // 1. Check if there's an active betting phase in localStorage first
-        const bettingActive = localStorage.getItem('betting_active') === 'true';
-        const bettingStartedAt = parseInt(localStorage.getItem('betting_started_at') || '0', 10);
-        const bettingTotal = parseInt(localStorage.getItem('betting_total') || '120', 10);
-        const bettingFightNum = parseInt(localStorage.getItem('betting_fight_number') || '0', 10);
+        // fight_active is the definitive, Supabase-sync-immune flag
+        const fightIsActive = localStorage.getItem('fight_active') === 'true';
 
-        if (bettingActive && bettingStartedAt > 0) {
-          const elapsed = Math.floor((new Date().getTime() - bettingStartedAt) / 1000);
-          const remaining = bettingTotal - elapsed;
+        if (fightIsActive || clockRunning) {
+          // Fight is LIVE — betting phase MUST be closed, no exceptions
+          setBettingPhase(false);
+          localStorage.setItem('betting_active', 'false');
+          localStorage.setItem('clock_running', 'true');
+          if (bettingTimerRef.current) clearInterval(bettingTimerRef.current);
+        } else {
+          // 1. Check if there's an active betting phase in localStorage when fight is NOT running
+          const bettingActive = localStorage.getItem('betting_active') === 'true';
+          const bettingStartedAt = parseInt(localStorage.getItem('betting_started_at') || '0', 10);
+          const bettingTotal = parseInt(localStorage.getItem('betting_total') || '120', 10);
+          const bettingFightNum = parseInt(localStorage.getItem('betting_fight_number') || '0', 10);
 
-          if (remaining > 0) {
-            // Betting phase still active — resume it
-            setBettingPhase(true);
-            setBettingTimeLeft(remaining);
-            if (bettingFightNum > 0) setFightNumber(bettingFightNum);
-            if (bettingTimerRef.current) clearInterval(bettingTimerRef.current);
-            bettingTimerRef.current = setInterval(() => {
-              const now = new Date().getTime();
-              const newElapsed = Math.floor((now - bettingStartedAt) / 1000);
-              const newRemaining = bettingTotal - newElapsed;
-              if (newRemaining <= 0) {
-                clearInterval(bettingTimerRef.current);
-                setBettingPhase(false);
-                localStorage.setItem('betting_active', 'false');
+          if (bettingActive && bettingStartedAt > 0) {
+            const elapsed = Math.floor((new Date().getTime() - bettingStartedAt) / 1000);
+            const remaining = bettingTotal - elapsed;
+
+            if (remaining > 0) {
+              // Betting phase still active — resume it
+              setBettingPhase(true);
+              setBettingTimeLeft(remaining);
+              if (bettingFightNum > 0) setFightNumber(bettingFightNum);
+              if (bettingTimerRef.current) clearInterval(bettingTimerRef.current);
+              bettingTimerRef.current = setInterval(() => {
+                const now = new Date().getTime();
+                const newElapsed = Math.floor((now - bettingStartedAt) / 1000);
+                const newRemaining = bettingTotal - newElapsed;
+                if (newRemaining <= 0) {
+                  clearInterval(bettingTimerRef.current);
+                  setBettingPhase(false);
+                  localStorage.setItem('betting_active', 'false');
+                  upsertEvent(bettingFightNum, 'CLOSED');
+                  setBettingTimeLeft(0);
+                  return;
+                }
+                setBettingTimeLeft(newRemaining);
+              }, 500);
+            } else {
+              // Betting phase expired while away — auto-close bets
+              localStorage.setItem('betting_active', 'false');
+              if (bettingFightNum > 0) {
                 upsertEvent(bettingFightNum, 'CLOSED');
-                setBettingTimeLeft(0);
-                return;
               }
-              setBettingTimeLeft(newRemaining);
-            }, 500);
-          } else {
-            // Betting phase expired while away — auto-close bets
-            localStorage.setItem('betting_active', 'false');
-            if (bettingFightNum > 0) {
-              upsertEvent(bettingFightNum, 'CLOSED');
             }
           }
         }
 
-        // 2. Restore fight display data from Supabase
-        const activeEv = await rawFetch('events?select=*&status=in.(LIVE,CLOSED)&order=updated_at.desc&limit=1');
-        if (activeEv && activeEv[0]) {
-          const ev = activeEv[0];
-          const num = parseInt(ev.post_number) || 1;
+        // 2. Restore fight display data (prefer active localStorage fight, fallback to Supabase)
+        const savedNum = localStorage.getItem('reloj_fight_number');
+        const savedA = localStorage.getItem('reloj_gallino_name');
+        const savedB = localStorage.getItem('reloj_blanco_name');
 
+        if (savedNum && (clockRunning || savedA || savedB)) {
+          const num = parseInt(savedNum, 10);
           setFightNumber(num);
-          if (ev.gallo_a_name) setGallinoName(ev.gallo_a_name);
-          if (ev.gallo_b_name) setBlancoName(ev.gallo_b_name);
-          // Restore weight/color/marca from cartelera if available
-          const savedCartelera = await rawFetch('cartelera_fights?select=*&numero_pelea=eq.' + num);
-          if (savedCartelera && savedCartelera[0]) {
-            const f = savedCartelera[0];
-            setPesoAzul(`${f.peso_libras_a}-${f.peso_onzas_a}.${f.peso_puntos_a}`);
-            setColorAzul(f.color_a || '');
-            setMarcaAzul(f.marca_a || '');
-            setPesoBlanco(`${f.peso_libras_b}-${f.peso_onzas_b}.${f.peso_puntos_b}`);
-            setColorBlanco(f.color_b || '');
+          if (savedA) setGallinoName(savedA);
+          if (savedB) setBlancoName(savedB);
+        } else {
+          const activeEv = await rawFetch('events?select=*&status=in.(LIVE,CLOSED)&order=updated_at.desc&limit=1');
+          if (activeEv && activeEv[0]) {
+            const ev = activeEv[0];
+            const num = parseInt(ev.post_number) || 1;
+
+            setFightNumber(num);
+            if (ev.gallo_a_name) setGallinoName(ev.gallo_a_name);
+            if (ev.gallo_b_name) setBlancoName(ev.gallo_b_name);
+            // Restore weight/color/marca from cartelera if available
+            const savedCartelera = await rawFetch('cartelera_fights?select=*&numero_pelea=eq.' + num);
+            if (savedCartelera && savedCartelera[0]) {
+              const f = savedCartelera[0];
+              setPesoAzul(`${f.peso_libras_a}-${f.peso_onzas_a}.${f.peso_puntos_a}`);
+              setColorAzul(f.color_a || '');
+              setMarcaAzul(f.marca_a || '');
+              setPesoBlanco(`${f.peso_libras_b}-${f.peso_onzas_b}.${f.peso_puntos_b}`);
+              setColorBlanco(f.color_b || '');
+              setMarcaBlanco(f.marca_b || '');
+            }
           }
         }
 
@@ -543,7 +607,11 @@ export default function RelojView() {
         if (remaining <= 0) {
           clearInterval(subTimerRef.current);
           setSubTimeLeft(null);
+          setCareoFinished(true);
+          setIsRunning(false);
+          localStorage.setItem('clock_running', 'false');
           localStorage.setItem('sub_running', 'false');
+          broadcastClockState(false, elapsedTime, presetDuration, null);
           playSynthesizedSound('buzzer');
           message.info(`¡Tiempo de ${subTimerLabel} concluido!`);
           setShowOutcomeModal(true);
@@ -617,7 +685,7 @@ export default function RelojView() {
     const subTotalDuration = parseInt(localStorage.getItem('sub_total_duration') || '0', 10);
     const subRunning = localStorage.getItem('sub_running') === 'true';
 
-    const bettingActive = localStorage.getItem('betting_active') === 'true';
+    const bettingActive = isRun ? false : (localStorage.getItem('betting_active') === 'true');
     const bettingStartedAt = parseInt(localStorage.getItem('betting_started_at') || '0', 10);
 
     const payload = {
@@ -634,10 +702,16 @@ export default function RelojView() {
       updated_at: now
     };
 
+    // Mark local write timestamp BEFORE writing to localStorage and Supabase.
+    // UserLiveView compares this with Supabase updated_at to avoid overwriting
+    // with stale data when the async upsertSetting hasn't completed yet.
+    localStorage.setItem('clock_local_update_ts', now.toString());
     localStorage.setItem('clock_running', isRun ? 'true' : 'false');
     localStorage.setItem('clock_started_at', startedAtToUse.toString());
     localStorage.setItem('clock_total_duration', total.toString());
-    if (!isRun) {
+    if (isRun) {
+      localStorage.setItem('betting_active', 'false');
+    } else {
       localStorage.setItem('clock_elapsed_paused', elapsed.toString());
     }
 
@@ -683,10 +757,24 @@ export default function RelojView() {
       return;
     }
     playSynthesizedSound('bell');
+    
+    // Clear previous fight winner banner when starting a new fight
+    setWinnerFlash(null);
+    localStorage.removeItem('winner_flash');
+
+    // Stop betting phase completely when fight starts
+    setBettingPhase(false);
+    setBettingTimeLeft(0);
+    localStorage.setItem('betting_active', 'false');
+    // fight_active is the definitive flag - survives ALL Supabase syncs
+    localStorage.setItem('fight_active', 'true');
+    if (bettingTimerRef.current) clearInterval(bettingTimerRef.current);
+
     setIsRunning(true);
     
     // Save to localStorage & broadcast live to all viewers
     const now = Date.now();
+    localStorage.setItem('clock_running', 'true');
     localStorage.setItem('clock_started_at', now.toString());
     localStorage.setItem('clock_elapsed_paused', elapsedTime.toString());
     broadcastClockState(true, elapsedTime, presetDuration);
@@ -704,8 +792,13 @@ export default function RelojView() {
   const handleReset = () => {
     setIsRunning(false);
     setSubTimeLeft(null);
+    setCareoFinished(false);
     setTimeLeft(presetDuration);
     setElapsedTime(0);
+    
+    // Clear fight_active - fight is over / reset
+    localStorage.removeItem('fight_active');
+    localStorage.setItem('clock_running', 'false');
     
     broadcastClockState(false, 0, presetDuration, null);
     localStorage.setItem('sub_running', 'false');
@@ -717,6 +810,7 @@ export default function RelojView() {
     playSynthesizedSound('warning');
     setSubTimerLabel(label);
     setSubTimeLeft(seconds);
+    setCareoFinished(false);
     
     const now = Date.now();
     localStorage.setItem('sub_running', 'true');
@@ -736,6 +830,7 @@ export default function RelojView() {
 
   const handleCancelSubTimer = () => {
     setSubTimeLeft(null);
+    setCareoFinished(false);
     localStorage.setItem('sub_running', 'false');
     localStorage.removeItem('sub_timer_left');
     if (subTimerRef.current) clearInterval(subTimerRef.current);
@@ -751,6 +846,7 @@ export default function RelojView() {
 
   // Log Fight Result & Trigger Premium Confetti Celebration Overlay
   const handleSaveFightResult = async (resultType) => {
+    setCareoFinished(false);
     const durationStr = formatTime(elapsedTime);
     const newResults = {
       ...fightResults,
@@ -781,22 +877,16 @@ export default function RelojView() {
       playCelebrationSound('draw');
     }
 
-    setCelebration({
-      type: resultType,
-      title,
-      subtitle,
-      fightNum: fightNumber
-    });
-
-    // Show winner flash overlay on full scoreboard for 10 seconds
+    // Show winner flash overlay on full scoreboard until a new fight is loaded
     const winWeight = resultType === 'Azul' ? (pesoAzul || '') : resultType === 'Blanco' ? (pesoBlanco || '') : '';
     const winnerDisplayName = resultType === 'Azul'
       ? (gallinoName || 'LADO AZUL')
       : resultType === 'Blanco'
       ? (blancoName || 'LADO BLANCO')
       : 'TABLAS';
-    setWinnerFlash({ side: resultType, name: winnerDisplayName, fightNum: fightNumber, weight: winWeight });
-    setTimeout(() => setWinnerFlash(null), 10000);
+    const flashData = { side: resultType, name: winnerDisplayName, fightNum: fightNumber, weight: winWeight };
+    setWinnerFlash(flashData);
+    localStorage.setItem('winner_flash', JSON.stringify(flashData));
 
     // Sync result to Supabase events table
     const winnerSideMap = { 'Azul': 'A', 'Blanco': 'B', 'Tablas': 'D' };
@@ -809,11 +899,6 @@ export default function RelojView() {
     } catch (bErr) {
       console.error('Error resolving bets in handleSaveFightResult:', bErr);
     }
-
-    // Auto close celebration after 7 seconds
-    setTimeout(() => {
-      setCelebration(null);
-    }, 7000);
     
     const nextFightNum = fightNumber + 1;
     setFightNumber(nextFightNum);
@@ -849,9 +934,9 @@ export default function RelojView() {
     setColorBlanco(fight.color_b || '');
     setMarcaBlanco(fight.marca_b || '');
     
-    // Reset photos on fight load to let user customize per fight
-    setFotoAzul(null);
-    setFotoBlanco(null);
+    // Reset winner flash when loading a new fight
+    setWinnerFlash(null);
+    localStorage.removeItem('winner_flash');
     
     handleReset();
     
@@ -889,9 +974,14 @@ export default function RelojView() {
   // Close bets manually and start the fight clock
   const handleCloseBets = () => {
     if (bettingTimerRef.current) clearInterval(bettingTimerRef.current);
+    setWinnerFlash(null);
+    localStorage.removeItem('winner_flash');
     setBettingPhase(false);
+    setBettingTimeLeft(0);
     // Clear betting phase from localStorage
     localStorage.setItem('betting_active', 'false');
+    // fight_active is the definitive flag - survives ALL Supabase syncs
+    localStorage.setItem('fight_active', 'true');
     playSynthesizedSound('bell');
     // Transition to CLOSED (fight started) and start the main clock directly
     upsertEvent(fightNumber, 'CLOSED');
@@ -902,8 +992,11 @@ export default function RelojView() {
     localStorage.setItem('clock_started_at', now.toString());
     localStorage.setItem('clock_total_duration', presetDuration.toString());
     localStorage.setItem('clock_elapsed_paused', elapsedTime.toString());
+    // Broadcast to all tabs AND update Supabase with correct clock state
+    broadcastClockState(true, elapsedTime, presetDuration);
     message.success('⚔️ ¡Apuestas cerradas! Combate iniciado');
   };
+
 
   const handleClearResult = async (fightNum) => {
     const updated = { ...fightResults };
@@ -2091,107 +2184,162 @@ export default function RelojView() {
                 }}
                 styles={{ body: { padding: '16px' } }}
               >
-                <div style={{ marginBottom: 14 }}>
-                  <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    ⏱️ CRONÓMETRO SECUNDARIO (CAREO)
-                  </Text>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <Button 
-                      size="middle" 
-                      style={{ 
-                        flex: 1, 
-                        background: 'rgba(239, 68, 68, 0.12)', 
-                        color: '#ef4444', 
-                        borderColor: 'rgba(239, 68, 68, 0.3)', 
-                        fontSize: 12, 
-                        fontWeight: 800,
-                        borderRadius: 8,
-                        height: 40
-                      }} 
-                      onClick={() => handleStartSubTimer(60, 'CAREO')}
-                    >
-                      60s CAREO
-                    </Button>
-                    {subTimeLeft !== null && (
-                      <Tooltip title="Cancelar cronómetro secundario">
-                        <Button 
-                          size="middle" 
-                          type="text" 
-                          danger 
-                          icon={<CloseCircleOutlined />} 
-                          onClick={handleCancelSubTimer} 
-                          style={{ borderRadius: 8, height: 40 }}
-                        />
-                      </Tooltip>
+                {!careoFinished ? (
+                  <div>
+                    <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      ⏱️ CRONÓMETRO SECUNDARIO (CAREO)
+                    </Text>
+                    {subTimeLeft === null ? (
+                      <Button 
+                        block
+                        size="large" 
+                        style={{ 
+                          background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)', 
+                          color: '#ffffff', 
+                          borderColor: '#f87171', 
+                          fontSize: 16, 
+                          fontWeight: 900,
+                          borderRadius: 12,
+                          height: 58,
+                          boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 8,
+                          letterSpacing: '0.5px'
+                        }} 
+                        onClick={() => handleStartSubTimer(60, 'CAREO')}
+                      >
+                        ⏱️ 60s CAREO
+                      </Button>
+                    ) : (
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <div 
+                          style={{ 
+                            flex: 1, 
+                            background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(185, 28, 28, 0.4) 100%)', 
+                            border: '1.5px solid #ef4444', 
+                            borderRadius: 12,
+                            height: 58,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 10,
+                            padding: '0 12px'
+                          }}
+                        >
+                          <span style={{ fontSize: 20 }}>⏱️</span>
+                          <div style={{ textAlign: 'left' }}>
+                            <div style={{ color: '#ef4444', fontSize: 18, fontWeight: 900, lineHeight: 1.1 }}>
+                              {subTimeLeft}s CAREO
+                            </div>
+                            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10, fontWeight: 700 }}>
+                              EN CONTEO REGRESIVO...
+                            </div>
+                          </div>
+                        </div>
+                        <Tooltip title="Cancelar cronómetro secundario">
+                          <Button 
+                            size="large" 
+                            type="primary" 
+                            danger 
+                            icon={<CloseCircleOutlined style={{ fontSize: 18 }} />} 
+                            onClick={handleCancelSubTimer} 
+                            style={{ borderRadius: 12, height: 58, width: 48 }}
+                          />
+                        </Tooltip>
+                      </div>
                     )}
+                    <div style={{ marginTop: 10, textAlign: 'center' }}>
+                      <Button 
+                        type="link" 
+                        size="small"
+                        onClick={() => setCareoFinished(true)}
+                        style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10, fontWeight: 600, padding: 0 }}
+                      >
+                        (Omitir careo y habilitar ganador)
+                      </Button>
+                    </div>
                   </div>
-                </div>
-
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12 }}>
-                  <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 700, display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    🏆 REGISTRAR GANADOR DEL COMBATE
-                  </Text>
-                  <Row gutter={6}>
-                    <Col span={8}>
+                ) : (
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                      <Text style={{ color: '#10b981', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        🏆 REGISTRAR GANADOR DEL COMBATE
+                      </Text>
                       <Button 
-                        block 
-                        size="middle" 
-                        type="primary" 
-                        onClick={() => handleSaveFightResult('Azul')} 
-                        style={{ 
-                          background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)', 
-                          borderColor: '#2563eb', 
-                          fontSize: 11, 
-                          fontWeight: 900,
-                          borderRadius: 8,
-                          boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
-                          height: 38
-                        }}
+                        type="link" 
+                        size="small"
+                        onClick={() => setCareoFinished(false)}
+                        style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, padding: 0 }}
                       >
-                        AZUL
+                        Reiniciar Careo ↺
                       </Button>
-                    </Col>
-                    <Col span={8}>
-                      <Button 
-                        block 
-                        size="middle" 
-                        type="primary" 
-                        onClick={() => handleSaveFightResult('Blanco')} 
-                        style={{ 
-                          background: 'linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%)', 
-                          borderColor: '#ffffff', 
-                          color: '#0f172a', 
-                          fontSize: 11, 
-                          fontWeight: 900,
-                          borderRadius: 8,
-                          boxShadow: '0 4px 12px rgba(255, 255, 255, 0.2)',
-                          height: 38
-                        }}
-                      >
-                        BLANCO
-                      </Button>
-                    </Col>
-                    <Col span={8}>
-                      <Button 
-                        block 
-                        size="middle" 
-                        type="primary" 
-                        onClick={() => handleSaveFightResult('Tablas')} 
-                        style={{ 
-                          background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)', 
-                          borderColor: '#f59e0b', 
-                          fontSize: 11, 
-                          fontWeight: 900,
-                          borderRadius: 8,
-                          boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
-                          height: 38
-                        }}
-                      >
-                        TABLAS
-                      </Button>
-                    </Col>
-                  </Row>
-                </div>
+                    </div>
+                    <Row gutter={6}>
+                      <Col span={8}>
+                        <button 
+                          onClick={() => handleSaveFightResult('Azul')} 
+                          style={{ 
+                            width: '100%',
+                            background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)', 
+                            border: '1px solid #2563eb', 
+                            color: '#ffffff',
+                            fontSize: 12, 
+                            fontWeight: 900,
+                            borderRadius: 10,
+                            boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
+                            height: 48,
+                            cursor: 'pointer',
+                            outline: 'none'
+                          }}
+                        >
+                          AZUL
+                        </button>
+                      </Col>
+                      <Col span={8}>
+                        <button 
+                          onClick={() => handleSaveFightResult('Blanco')} 
+                          style={{ 
+                            width: '100%',
+                            background: 'linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%)', 
+                            border: '1px solid #ffffff', 
+                            color: '#0f172a', 
+                            fontSize: 12, 
+                            fontWeight: 900,
+                            borderRadius: 10,
+                            boxShadow: '0 4px 14px rgba(255, 255, 255, 0.3)',
+                            height: 48,
+                            cursor: 'pointer',
+                            outline: 'none'
+                          }}
+                        >
+                          BLANCO
+                        </button>
+                      </Col>
+                      <Col span={8}>
+                        <button 
+                          onClick={() => handleSaveFightResult('Tablas')} 
+                          style={{ 
+                            width: '100%',
+                            background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)', 
+                            border: '1px solid #f59e0b', 
+                            color: '#ffffff',
+                            fontSize: 12, 
+                            fontWeight: 900,
+                            borderRadius: 10,
+                            boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)',
+                            height: 48,
+                            cursor: 'pointer',
+                            outline: 'none'
+                          }}
+                        >
+                          TABLAS
+                        </button>
+                      </Col>
+                    </Row>
+                  </div>
+                )}
               </Card>
             </Col>
           </Row>
@@ -2273,220 +2421,165 @@ export default function RelojView() {
 
       {/* Modal de decisión rápida al terminar Careo/Tierra */}
       <Modal
-        title={<span style={{ color: '#fff', fontSize: 16, fontWeight: 800, fontFamily: 'Outfit' }}>¡TIEMPO CONCLUIDO! REGISTRAR RESULTADO</span>}
         open={showOutcomeModal}
         footer={null}
         closable={false}
         centered
-        styles={{ body: { background: '#161616', padding: 24 } }}
-        style={{ borderRadius: 12, overflow: 'hidden' }}
+        width={480}
+        styles={{ body: { background: 'linear-gradient(145deg, #111827 0%, #0b0f19 100%)', padding: '24px 28px', borderRadius: 20 } }}
+        style={{ borderRadius: 20, overflow: 'hidden', padding: 0 }}
       >
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, display: 'block', marginBottom: 4, fontFamily: 'Outfit' }}>
-            El tiempo de <strong>{subTimerLabel}</strong> de la Pelea #{fightNumber} ha concluido.
-          </Text>
-          <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, display: 'block', fontFamily: 'Outfit' }}>
-            ¿Deseas registrar un ganador o declarar tablas ahora mismo?
+        <div style={{ textAlign: 'center', marginBottom: 22 }}>
+          <div 
+            style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: 8, 
+              background: 'rgba(239, 68, 68, 0.15)', 
+              border: '1px solid rgba(239, 68, 68, 0.3)', 
+              borderRadius: 20, 
+              padding: '4px 14px', 
+              marginBottom: 12 
+            }}
+          >
+            <span style={{ fontSize: 14 }}>⏱️</span>
+            <span style={{ color: '#ef4444', fontSize: 11, fontWeight: 900, letterSpacing: '0.8px', textTransform: 'uppercase' }}>
+              ¡TIEMPO DE CAREO CONCLUIDO!
+            </span>
+          </div>
+
+          <Title level={4} style={{ color: '#ffffff', margin: '0 0 6px 0', fontFamily: 'Outfit', fontWeight: 900, fontSize: 20 }}>
+            Pelea #{fightNumber} Finalizada
+          </Title>
+          <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13, fontFamily: 'Outfit' }}>
+            Selecciona el ganador oficial para cerrar el combate:
           </Text>
         </div>
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <Button 
-            type="primary" 
-            size="large"
+          {/* Ganó Azul */}
+          <button 
             onClick={() => {
               handleSaveFightResult('Azul');
               setShowOutcomeModal(false);
             }} 
-            style={{ background: '#0f3dd1', borderColor: '#0f3dd1', fontWeight: 800, height: 48, fontSize: 13, textTransform: 'uppercase', fontFamily: 'Outfit' }}
+            style={{ 
+              width: '100%',
+              background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)', 
+              border: '1px solid #3b82f6', 
+              borderRadius: 14, 
+              height: 60, 
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 20px',
+              boxShadow: '0 4px 16px rgba(29, 78, 216, 0.4)',
+              cursor: 'pointer',
+              outline: 'none'
+            }}
           >
-            GANÓ AZUL (PLACA): {gallinoName || 'LADO AZUL'}
-          </Button>
-          <Button 
-            type="primary" 
-            size="large"
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left' }}>
+              <div style={{ background: 'rgba(255,255,255,0.2)', width: 34, height: 34, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+                🐓
+              </div>
+              <div>
+                <div style={{ color: '#93c5fd', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  LADO AZUL (PLACA)
+                </div>
+                <div style={{ color: '#ffffff', fontSize: 15, fontWeight: 900, lineHeight: 1.1 }}>
+                  {gallinoName || 'LADO AZUL'}
+                </div>
+              </div>
+            </div>
+            <span style={{ color: '#ffffff', fontSize: 12, fontWeight: 900, background: 'rgba(255,255,255,0.2)', padding: '5px 12px', borderRadius: 8 }}>
+              GANADOR 🏆
+            </span>
+          </button>
+
+          {/* Ganó Blanco */}
+          <button 
             onClick={() => {
               handleSaveFightResult('Blanco');
               setShowOutcomeModal(false);
             }} 
-            style={{ background: '#ffffff', borderColor: '#ffffff', color: '#111', fontWeight: 800, height: 48, fontSize: 13, textTransform: 'uppercase', fontFamily: 'Outfit' }}
+            style={{ 
+              width: '100%',
+              background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)', 
+              border: '1px solid #ffffff', 
+              borderRadius: 14, 
+              height: 60, 
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 20px',
+              boxShadow: '0 4px 16px rgba(255, 255, 255, 0.2)',
+              cursor: 'pointer',
+              outline: 'none'
+            }}
           >
-            GANÓ BLANCO: {blancoName || 'LADO BLANCO'}
-          </Button>
-          <Button 
-            type="primary" 
-            size="large"
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, textAlign: 'left' }}>
+              <div style={{ background: 'rgba(15, 23, 42, 0.1)', width: 34, height: 34, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+                🐓
+              </div>
+              <div>
+                <div style={{ color: '#475569', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  LADO BLANCO
+                </div>
+                <div style={{ color: '#0f172a', fontSize: 15, fontWeight: 900, lineHeight: 1.1 }}>
+                  {blancoName || 'LADO BLANCO'}
+                </div>
+              </div>
+            </div>
+            <span style={{ color: '#0f172a', fontSize: 12, fontWeight: 900, background: 'rgba(15, 23, 42, 0.1)', padding: '5px 12px', borderRadius: 8 }}>
+              GANADOR 🏆
+            </span>
+          </button>
+
+          {/* PELEA EN TABLAS */}
+          <button 
             onClick={() => {
               handleSaveFightResult('Tablas');
               setShowOutcomeModal(false);
             }} 
-            style={{ background: '#d97706', borderColor: '#d97706', fontWeight: 800, height: 48, fontSize: 13, textTransform: 'uppercase', fontFamily: 'Outfit' }}
+            style={{ 
+              width: '100%',
+              background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)', 
+              border: '1px solid #f59e0b', 
+              borderRadius: 14, 
+              height: 52, 
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              boxShadow: '0 4px 16px rgba(217, 119, 6, 0.3)',
+              cursor: 'pointer',
+              outline: 'none'
+            }}
           >
-            PELEA EN TABLAS
-          </Button>
+            <span style={{ fontSize: 16 }}>🤝</span>
+            <span style={{ color: '#ffffff', fontSize: 14, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              DECLARAR TABLAS (EMPATE)
+            </span>
+          </button>
+
+          {/* Descartar / Seguir combate */}
           <Button 
             type="text" 
-            danger
             onClick={() => setShowOutcomeModal(false)} 
-            style={{ fontWeight: 700, marginTop: 8, fontFamily: 'Outfit' }}
+            style={{ 
+              color: 'rgba(255,255,255,0.45)', 
+              fontWeight: 700, 
+              marginTop: 4, 
+              fontFamily: 'Outfit',
+              fontSize: 12
+            }}
           >
-            DES CARTAR (SEGUIR COMBATE)
+            Continuar combate sin registrar
           </Button>
         </div>
       </Modal>
 
-      {/* ======================================================== */}
-      {/* FULL-SCREEN CELEBRATION OVERLAY (DYNAMIC SHOCKWAVE ANIM) */}
-      {/* ======================================================== */}
-      {celebration && (
-        <div 
-          onClick={() => setCelebration(null)}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            background: celebration.type === 'Tablas' 
-              ? 'rgba(10, 8, 4, 0.98)' 
-              : celebration.type === 'Azul' 
-                ? 'rgba(4, 9, 24, 0.98)' 
-                : 'rgba(2, 4, 10, 0.98)',
-            zIndex: 99999,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            animation: 'fadeInOverlay 0.3s ease-out',
-            textAlign: 'center',
-            padding: 20
-          }}
-        >
-          {/* Neon Confetti Shower Effects */}
-          <div className="confetti-container">
-            {[...Array(50)].map((_, i) => {
-              const randomLeft = Math.random() * 100;
-              const randomDelay = Math.random() * 4;
-              const randomDuration = Math.random() * 3 + 2;
-              const color = celebration.type === 'Tablas' 
-                ? '#f59e0b' 
-                : celebration.type === 'Azul' 
-                  ? '#3b82f6' 
-                  : '#ffffff';
-              return (
-                <div 
-                  key={i} 
-                  className="confetti-particle" 
-                  style={{
-                    left: `${randomLeft}%`,
-                    animationDelay: `${randomDelay}s`,
-                    animationDuration: `${randomDuration}s`,
-                    backgroundColor: color,
-                    boxShadow: `0 0 10px ${color}`
-                  }}
-                />
-              );
-            })}
-          </div>
 
-          {/* Golden/Neon Shockwave ring */}
-          <div className="shockwave-ring" style={{
-            borderColor: celebration.type === 'Tablas' ? '#f59e0b' : celebration.type === 'Azul' ? '#2563eb' : '#fff',
-            boxShadow: celebration.type === 'Tablas' ? '0 0 50px #f59e0b' : celebration.type === 'Azul' ? '0 0 50px #2563eb' : '0 0 50px #fff'
-          }} />
-
-          {/* Main animated banner wrapper */}
-          <div style={{ animation: 'bounceScale 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) both', zIndex: 10 }}>
-            
-            <div style={{ marginBottom: 15, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 15 }}>
-              <img 
-                src="/official_logo.png" 
-                style={{ 
-                  width: 120, 
-                  height: 120, 
-                  borderRadius: '50%', 
-                  border: '3px solid #d4af37', 
-                  boxShadow: '0 0 25px rgba(212,175,55,0.6)', 
-                  animation: 'pulse-gallo 2s infinite ease-in-out'
-                }} 
-                alt="Gallo Logo"
-              />
-            </div>
-
-            <Text style={{ 
-              color: 'rgba(255,255,255,0.6)', 
-              fontSize: 18, 
-              fontWeight: 800, 
-              letterSpacing: '5px', 
-              textTransform: 'uppercase',
-              display: 'block',
-              marginBottom: 10
-            }}>
-              PELEA #{celebration.fightNum} CONCLUIDA
-            </Text>
-
-            <Title level={1} className="pulse-text" style={{ 
-              color: celebration.type === 'Tablas' ? '#f59e0b' : celebration.type === 'Azul' ? '#60a5fa' : '#ffffff', 
-              fontSize: 'clamp(32px, 6vw, 64px)', 
-              fontWeight: 900, 
-              margin: 0,
-              textTransform: 'uppercase',
-              fontFamily: 'Outfit',
-              letterSpacing: '2px',
-              textShadow: celebration.type === 'Tablas' 
-                ? '0 0 20px rgba(245,158,11,0.6), 0 0 40px rgba(245,158,11,0.3)' 
-                : celebration.type === 'Azul' 
-                  ? '0 0 20px rgba(96,165,250,0.6), 0 0 40px rgba(96,165,250,0.3)' 
-                  : '0 0 20px rgba(255,255,255,0.6), 0 0 40px rgba(255,255,255,0.3)'
-            }}>
-              {celebration.title}
-            </Title>
-
-            <div style={{ 
-              width: 120, 
-              height: 4, 
-              background: celebration.type === 'Tablas' ? '#f59e0b' : celebration.type === 'Azul' ? '#2563eb' : '#fff', 
-              margin: '25px auto', 
-              borderRadius: 2,
-              boxShadow: '0 0 10px currentColor'
-            }} />
-
-            <Text style={{ 
-              color: '#ffffff', 
-              fontSize: 'clamp(14px, 3vw, 22px)', 
-              fontWeight: 600, 
-              opacity: 0.9,
-              display: 'block',
-              maxWidth: 700,
-              margin: '0 auto 40px auto'
-            }}>
-              {celebration.subtitle}
-            </Text>
-
-            <Button 
-              size="large" 
-              type="primary"
-              onClick={() => setCelebration(null)}
-              style={{
-                background: celebration.type === 'Tablas' ? '#f59e0b' : celebration.type === 'Azul' ? '#2563eb' : '#ffffff',
-                borderColor: celebration.type === 'Tablas' ? '#f59e0b' : celebration.type === 'Azul' ? '#2563eb' : '#ffffff',
-                color: celebration.type === 'Blanco' ? '#000' : '#fff',
-                fontWeight: 900,
-                borderRadius: 25,
-                height: 50,
-                padding: '0 40px',
-                fontSize: 14,
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                boxShadow: '0 10px 20px rgba(0,0,0,0.3)'
-              }}
-            >
-              Confirmar & Continuar
-            </Button>
-
-          </div>
-        </div>
-      )}
 
       <style dangerouslySetInnerHTML={{__html: `
         @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
