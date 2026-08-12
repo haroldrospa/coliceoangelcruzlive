@@ -502,32 +502,32 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
     const initData = async () => {
       try {
 
-        // Fetch current active fight (LIVE or CLOSED).
-        const activeEvents = await rawFetch(`events?select=*&status=in.(LIVE,CLOSED)&order=updated_at.desc&limit=1`);
-        if (activeEvents && activeEvents[0]) {
-            setFightInfo(activeEvents[0]);
-            // Fight is currently LIVE or CLOSED — clear previous fight winner banner
-            setWinnerFlash(null);
-            localStorage.removeItem('winner_flash');
-        } else {
-            // Default empty fight if nothing is active
-            setFightInfo(prev => ({ ...prev, id: null, status: 'PENDING' }));
-            // Check if there is a recently finished fight to display winner banner until next fight loads
-            const latestFinished = await rawFetch(`events?select=*&status=eq.FINISHED&order=updated_at.desc&limit=1`);
-            if (latestFinished && latestFinished[0]) {
-              const fEv = latestFinished[0];
-              const winSide = fEv.winner_side;
-              const winWeight = fEv.winner_weight || '';
-              const winName = fEv.winner_name || (winSide === 'A' ? fEv.gallo_a_name : winSide === 'B' ? fEv.gallo_b_name : 'TABLAS');
+        // Fetch latest event to check if a fight is LIVE/CLOSED or recently FINISHED
+        const latestEvents = await rawFetch(`events?select=*&order=updated_at.desc&limit=1`);
+        if (latestEvents && latestEvents[0]) {
+            const latest = latestEvents[0];
+            if (latest.status === 'LIVE' || latest.status === 'CLOSED') {
+              setFightInfo(latest);
+              setWinnerFlash(null);
+              localStorage.removeItem('winner_flash');
+            } else if (latest.status === 'FINISHED') {
+              setFightInfo(prev => ({ ...prev, id: null, status: 'PENDING' }));
+              const winSide = latest.winner_side;
+              const winWeight = latest.winner_weight || '';
+              const winName = latest.winner_name || (winSide === 'A' ? latest.gallo_a_name : winSide === 'B' ? latest.gallo_b_name : 'TABLAS');
               const flashData = {
                 side: winSide === 'A' ? 'Azul' : winSide === 'B' ? 'Blanco' : 'Tablas',
                 name: winName,
-                fightNum: fEv.post_number,
+                fightNum: latest.post_number,
                 weight: winWeight
               };
               setWinnerFlash(flashData);
               localStorage.setItem('winner_flash', JSON.stringify(flashData));
+            } else {
+              setFightInfo(prev => ({ ...prev, id: null, status: 'PENDING' }));
             }
+        } else {
+            setFightInfo(prev => ({ ...prev, id: null, status: 'PENDING' }));
         }
 
         // Fetch matched cartelera fights and events, then merge them
@@ -938,19 +938,41 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
   useEffect(() => {
     const syncAll = async () => {
       try {
-        // 1. Sync active fight
-        const active = await rawFetch(`events?select=*&status=in.(LIVE,CLOSED)&order=updated_at.desc&limit=1`);
-        if (active && active[0]) {
-          const fresh = active[0];
-          setFightInfo(prev => {
-            if (prev.id === fresh.id && prev.status !== fresh.status) {
-              if (fresh.status === 'CLOSED' || fresh.status === 'FINISHED') {
-                setIsBetModalOpen(false);
-                setIsSelectionModalOpen(false);
+        // 1. Sync active or latest finished fight
+        const latestEvents = await rawFetch(`events?select=*&order=updated_at.desc&limit=1`);
+        if (latestEvents && latestEvents[0]) {
+          const fresh = latestEvents[0];
+          if (fresh.status === 'LIVE' || fresh.status === 'CLOSED') {
+            setFightInfo(prev => {
+              if (prev.id === fresh.id && prev.status !== fresh.status) {
+                if (fresh.status === 'CLOSED') {
+                  setIsBetModalOpen(false);
+                  setIsSelectionModalOpen(false);
+                }
               }
-            }
-            return fresh;
-          });
+              return fresh;
+            });
+            setWinnerFlash(null);
+            localStorage.removeItem('winner_flash');
+          } else if (fresh.status === 'FINISHED') {
+            setFightInfo(prev => {
+              if (prev.status === 'LIVE' || prev.status === 'CLOSED') {
+                return { id: null, status: 'PENDING', gallo_a_name: 'Gallo Azul', gallo_b_name: 'Gallo Blanco' };
+              }
+              return prev;
+            });
+            const winSide = fresh.winner_side;
+            const winWeight = fresh.winner_weight || '';
+            const winName = fresh.winner_name || (winSide === 'A' ? fresh.gallo_a_name : winSide === 'B' ? fresh.gallo_b_name : 'TABLAS');
+            const flashData = {
+              side: winSide === 'A' ? 'Azul' : winSide === 'B' ? 'Blanco' : 'Tablas',
+              name: winName,
+              fightNum: fresh.post_number,
+              weight: winWeight
+            };
+            setWinnerFlash(flashData);
+            localStorage.setItem('winner_flash', JSON.stringify(flashData));
+          }
         } else {
           setFightInfo(prev => {
             if (prev.status === 'LIVE' || prev.status === 'CLOSED') {
