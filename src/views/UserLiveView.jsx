@@ -1391,26 +1391,65 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
             {fightInfo.status === 'LIVE' && (
               <div style={{
                 width: '100%',
-                marginTop: 14,
+                marginTop: 12,
                 background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.22) 0%, rgba(5, 150, 105, 0.15) 100%)',
                 border: '1.5px solid #10b981',
                 borderRadius: 12,
-                padding: '10px 16px',
+                padding: '10px 14px',
                 display: 'flex',
                 alignItems: 'center',
-                justify: 'space-between',
+                justifyContent: 'space-between',
                 flexWrap: 'wrap',
-                gap: 8,
+                gap: 10,
                 boxShadow: '0 0 25px rgba(16,185,129,0.35)',
                 animation: 'pulse-active-fight 2.5s infinite ease-in-out',
                 fontFamily: 'Outfit, sans-serif'
               }}>
-                <div style={{ color: '#10b981', fontWeight: 900, fontSize: 13, letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="live-dot" style={{ background: '#10b981', boxShadow: '0 0 10px #10b981' }} />
-                  🟢 APUESTAS ABIERTAS — ¡HAZ TU JUGADA AHORA!
+                <div style={{
+                  color: '#10b981',
+                  fontWeight: 900,
+                  fontSize: 'clamp(11px, 3.2vw, 14px)',
+                  letterSpacing: '0.5px',
+                  textTransform: 'uppercase',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  flex: 1,
+                  minWidth: 200
+                }}>
+                  <span style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    background: '#10b981',
+                    boxShadow: '0 0 10px #10b981',
+                    display: 'inline-block',
+                    flexShrink: 0
+                  }} />
+                  <span>APUESTAS ABIERTAS — ¡HAZ TU JUGADA!</span>
                 </div>
-                <div style={{ background: '#10b981', color: '#090d14', padding: '6px 14px', borderRadius: 8, fontWeight: 900, fontSize: 14, fontFamily: 'Outfit, sans-serif', letterSpacing: '0.5px' }}>
-                  ⏱️ CIERRE EN: {formatClockTime(bettingCountdown)}
+
+                <div style={{
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  color: '#090d14',
+                  padding: '6px 14px',
+                  borderRadius: 8,
+                  fontWeight: 900,
+                  fontSize: 'clamp(12px, 3.5vw, 14px)',
+                  fontFamily: 'Outfit, sans-serif',
+                  letterSpacing: '0.5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  whiteSpace: 'nowrap',
+                  boxShadow: '0 4px 12px rgba(16,185,129,0.4)',
+                  marginLeft: 'auto'
+                }}>
+                  <span>⏱️ CIERRE EN:</span>
+                  <strong style={{ fontSize: '1.15em', color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+                    {formatClockTime(bettingCountdown)}
+                  </strong>
                 </div>
               </div>
             )}
