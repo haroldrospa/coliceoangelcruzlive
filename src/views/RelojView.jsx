@@ -559,7 +559,7 @@ export default function RelojView() {
   const renderRoosterAvatar = (side, photo) => {
     const isAzul = side === 'azul';
     const borderCol = isAzul ? '#0f3dd1' : '#ffffff';
-    const avatarDim = isFullscreen ? 130 : 96;
+    const avatarDim = isFullscreen ? 130 : 54;
     if (photo) {
       return (
         <img 
@@ -569,8 +569,9 @@ export default function RelojView() {
             height: avatarDim, 
             borderRadius: '50%', 
             objectFit: 'cover', 
-            border: `3px solid ${borderCol}`,
-            boxShadow: '0 6px 18px rgba(0,0,0,0.7)'
+            border: `2.5px solid ${borderCol}`,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+            flexShrink: 0
           }} 
           alt={`Gallo ${side}`} 
         />
@@ -582,12 +583,13 @@ export default function RelojView() {
         height: avatarDim,
         borderRadius: '50%',
         background: isAzul ? 'linear-gradient(135deg, #0f2d8a 0%, #1e40af 100%)' : 'linear-gradient(135deg, #1f2937 0%, #4b5563 100%)',
-        border: `3px solid ${borderCol}`,
+        border: `2.5px solid ${borderCol}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        boxShadow: '0 6px 18px rgba(0,0,0,0.6)',
-        fontSize: isFullscreen ? 60 : 46
+        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+        fontSize: isFullscreen ? 60 : 28,
+        flexShrink: 0
       }}>
         🐓
       </div>
@@ -1167,62 +1169,72 @@ export default function RelojView() {
         
         {/* Top bar */}
         {!isFullscreen && (
-          <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-            <Col>
-              <Space size="middle">
-                <div style={{ background: 'rgba(16,185,129,0.1)', padding: '6px 14px', borderRadius: 8, border: '1px solid rgba(16,185,129,0.25)', boxShadow: '0 0 15px rgba(16,185,129,0.15)' }}>
-                  <Text style={{ color: '#10b981', fontWeight: 900, fontSize: 11, letterSpacing: '3px', textTransform: 'uppercase' }}>TABLERO OFICIAL DE JUECES</Text>
-                </div>
+          <div style={{ 
+            display: 'flex', 
+            flexWrap: 'wrap', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            gap: 10, 
+            marginBottom: 14 
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ 
+                background: 'rgba(16,185,129,0.12)', 
+                padding: '6px 12px', 
+                borderRadius: 8, 
+                border: '1px solid rgba(16,185,129,0.25)', 
+                boxShadow: '0 0 15px rgba(16,185,129,0.15)',
+                whiteSpace: 'nowrap'
+              }}>
+                <Text style={{ color: '#10b981', fontWeight: 900, fontSize: 11, letterSpacing: '1px', textTransform: 'uppercase' }}>
+                  TABLERO OFICIAL DE JUECES
+                </Text>
+              </div>
+              <Button 
+                size="small"
+                type="text" 
+                icon={<SyncOutlined spin={loadingCartelera} />} 
+                onClick={fetchCartelera}
+                style={{ color: '#10b981', fontWeight: 600, fontSize: 11 }}
+              >
+                Sincronizar Cartelera
+              </Button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto' }}>
+              <Tooltip title="Prueba de sonido">
                 <Button 
                   size="small"
-                  type="text" 
-                  icon={<SyncOutlined spin={loadingCartelera} />} 
-                  onClick={fetchCartelera}
-                  style={{ color: '#10b981', fontWeight: 600 }}
-                >
-                  Sincronizar Cartelera
-                </Button>
-              </Space>
-            </Col>
-            <Col>
-              <Space>
-                <Tooltip title="Prueba de sonido">
-                  <Button 
-                    icon={<SoundOutlined />} 
-                    onClick={() => playSynthesizedSound('bell')}
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }} 
-                  />
-                </Tooltip>
-                <Button 
-                  icon={isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />} 
-                  onClick={toggleFullscreen}
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontWeight: 600 }}
-                >
-                  {isFullscreen ? 'Salir' : 'Pantalla Completa'}
-                </Button>
-              </Space>
-            </Col>
-          </Row>
+                  icon={<SoundOutlined />} 
+                  onClick={() => playSynthesizedSound('bell')}
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }} 
+                />
+              </Tooltip>
+              <Button 
+                size="small"
+                icon={isFullscreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />} 
+                onClick={toggleFullscreen}
+                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', fontWeight: 600, fontSize: 11 }}
+              >
+                {isFullscreen ? 'Salir' : 'Pantalla Completa'}
+              </Button>
+            </div>
+          </div>
         )}
 
-        {/* ======================================================== */}
-        {/* PREMIUM SCOREBOARD TABLERO (Modern Flat Slate Style) */}
-        {/* ======================================================== */}
-
-
-        {/* Style Selector Bar (visible in both normal and fullscreen modes) */}
+        {/* Style Selector Bar */}
         <div style={{ 
           display: 'flex', 
-          justifyContent: 'center', 
+          flexDirection: 'column',
           alignItems: 'center', 
-          gap: 12, 
+          gap: 8, 
           marginBottom: 16,
           background: '#1a1a1a',
-          padding: '8px 16px',
-          borderRadius: 8,
-          border: '1px solid #2d2d2d'
+          padding: '10px 12px',
+          borderRadius: 10,
+          border: '1px solid #2d2d2d',
+          width: '100%'
         }}>
-          <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>
+          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 800, letterSpacing: '0.8px', textTransform: 'uppercase', textAlign: 'center' }}>
             Diseño de Pantalla (Transmisión):
           </span>
           <Radio.Group 
@@ -1230,10 +1242,11 @@ export default function RelojView() {
             onChange={(e) => handleScoreboardStyleChange(e.target.value)}
             size="small"
             buttonStyle="solid"
+            style={{ width: '100%', display: 'flex' }}
           >
-            <Radio.Button value="modern" style={{ fontWeight: 700 }}>CLÁSICO</Radio.Button>
-            <Radio.Button value="arena" style={{ fontWeight: 700 }}>VS ARENA (LADOS)</Radio.Button>
-            <Radio.Button value="broadcast" style={{ fontWeight: 700 }}>OSD COMPACTO (TIRA)</Radio.Button>
+            <Radio.Button value="modern" style={{ flex: 1, textAlign: 'center', fontWeight: 700, fontSize: 10, padding: '0 2px' }}>CLÁSICO</Radio.Button>
+            <Radio.Button value="arena" style={{ flex: 1, textAlign: 'center', fontWeight: 700, fontSize: 10, padding: '0 2px' }}>VS ARENA</Radio.Button>
+            <Radio.Button value="broadcast" style={{ flex: 1, textAlign: 'center', fontWeight: 700, fontSize: 10, padding: '0 2px' }}>OSD COMPACTO</Radio.Button>
           </Radio.Group>
         </div>
         {/* ======================================================== */}
@@ -1594,11 +1607,11 @@ export default function RelojView() {
         {scoreboardStyle === 'broadcast' && (
           <div style={{ 
             background: 'linear-gradient(135deg, #111111 0%, #060606 100%)', 
-            border: '2px solid rgba(255,255,255,0.18)', 
-            borderRadius: 18, 
-            padding: isFullscreen ? 18 : 16, 
+            border: '1.5px solid rgba(255,255,255,0.18)', 
+            borderRadius: 14, 
+            padding: isFullscreen ? 18 : 12, 
             boxShadow: '0 25px 60px rgba(0,0,0,0.95), 0 0 35px rgba(16, 185, 129, 0.12)',
-            marginBottom: 24,
+            marginBottom: 20,
             overflow: 'hidden',
             position: 'relative'
           }}>
@@ -1612,8 +1625,8 @@ export default function RelojView() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: 18,
-                padding: '16px 24px',
+                borderRadius: 14,
+                padding: '10px 14px',
                 boxShadow: '0 0 50px rgba(0,0,0,0.8)',
                 animation: 'winnerFlashIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                 backdropFilter: 'blur(8px)',
@@ -1625,17 +1638,17 @@ export default function RelojView() {
                 )
               }}>
                 <div style={{
-                  fontSize: isFullscreen ? 16 : 13,
+                  fontSize: 'clamp(10px, 2.8vw, 15px)',
                   fontWeight: 900,
-                  letterSpacing: '2px',
+                  letterSpacing: '1px',
                   textTransform: 'uppercase',
-                  color: (winnerFlash.side === 'Blanco' || winnerFlash.side === 'B') ? '#475569' : 'rgba(255,255,255,0.8)',
+                  color: (winnerFlash.side === 'Blanco' || winnerFlash.side === 'B') ? '#475569' : 'rgba(255,255,255,0.85)',
                   marginBottom: 2
                 }}>
                   PELEA #{winnerFlash.fightNum} — {winnerFlash.side === 'Tablas' || winnerFlash.side === 'D' ? 'RESULTADO' : `LADO ${winnerFlash.side.toUpperCase()}`}
                 </div>
                 <div style={{
-                  fontSize: isFullscreen ? 40 : 28,
+                  fontSize: 'clamp(18px, 4.8vw, 36px)',
                   fontWeight: 900,
                   fontFamily: 'Outfit, sans-serif',
                   color: (winnerFlash.side === 'Blanco' || winnerFlash.side === 'B') ? '#0f172a' : '#ffffff',
@@ -1647,12 +1660,12 @@ export default function RelojView() {
                 </div>
                 {winnerFlash.weight && (
                   <div style={{
-                    marginTop: 8,
+                    marginTop: 6,
                     background: (winnerFlash.side === 'Blanco' || winnerFlash.side === 'B') ? 'rgba(15,23,42,0.1)' : 'rgba(255,255,255,0.15)',
                     border: (winnerFlash.side === 'Blanco' || winnerFlash.side === 'B') ? '1px solid rgba(15,23,42,0.2)' : '1px solid rgba(255,255,255,0.3)',
                     borderRadius: 8,
-                    padding: '6px 16px',
-                    fontSize: isFullscreen ? 18 : 15,
+                    padding: '4px 12px',
+                    fontSize: 'clamp(11px, 3vw, 16px)',
                     fontWeight: 900,
                     color: (winnerFlash.side === 'Blanco' || winnerFlash.side === 'B') ? '#0f172a' : '#ffffff',
                     display: 'flex',
@@ -1665,62 +1678,30 @@ export default function RelojView() {
                 )}
               </div>
             )}
-            {/* Horizontal Cyberpunk row */}
-            <Row align="middle" gutter={10}>
-              {/* Pelea indicator (Hexagon styled block) */}
-              <Col span={2}>
+            {/* Responsive Cyberpunk row */}
+            <Row align="middle" gutter={[8, 8]}>
+              {/* Pelea indicator */}
+              <Col xs={6} md={2}>
                 <div style={{ 
                   background: '#1d1d1d', 
-                  borderLeft: '5px solid #ef4444', 
+                  borderLeft: '4px solid #ef4444', 
                   borderRadius: 8, 
-                  padding: isFullscreen ? '16px 6px' : '12px 4px', 
+                  padding: '8px 4px', 
                   textAlign: 'center',
                   boxShadow: 'inset 0 1px 3px rgba(255,255,255,0.1)'
                 }}>
                   <div style={{ color: '#ef4444', fontWeight: 900, fontSize: isFullscreen ? 12 : 9, letterSpacing: 0.5, lineHeight: 1 }}>COMBATE</div>
-                  <div style={{ color: '#ffffff', fontWeight: 900, fontSize: isFullscreen ? 34 : 24, lineHeight: 1.1 }}>#{fightNumber}</div>
+                  <div style={{ color: '#ffffff', fontWeight: 900, fontSize: isFullscreen ? 34 : 20, lineHeight: 1.1 }}>#{fightNumber}</div>
                 </div>
               </Col>
 
-              {/* Gallo Azul (Skewed Glass Parallelogram) */}
-              <Col span={7}>
-                <div style={{ 
-                  background: '#ffffff', 
-                  color: '#111111', 
-                  borderRadius: 10, 
-                  padding: isFullscreen ? '12px 18px' : '10px 14px',
-                  borderLeft: '7px solid #0f3dd1',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  transform: 'skewX(-10deg)',
-                  marginLeft: 5
-                }}>
-                  <div style={{ transform: 'skewX(10deg)', display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
-                    {renderRoosterAvatar('azul', fotoAzul)}
-                    <div style={{ overflow: 'hidden', flex: 1 }}>
-                      <div style={{ fontSize: isFullscreen ? 12 : 10, color: '#0f3dd1', fontWeight: 900, letterSpacing: 0.5 }}>LADO AZUL</div>
-                      <div style={{ fontWeight: 900, fontSize: isFullscreen ? 36 : 26, textTransform: 'uppercase', color: '#111111', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {gallinoName ? gallinoName : ''}
-                      </div>
-                      <div style={{ display: 'flex', gap: 10, marginTop: 4, fontSize: isFullscreen ? 14 : 12, fontWeight: 900, color: '#333' }}>
-                        <span>P: <strong style={{ color: '#000' }}>{pesoAzul || '-'}</strong></span>
-                        <span>M: <strong style={{ color: '#000' }}>{marcaAzul || '-'}</strong></span>
-                        <span>C: <strong style={{ color: '#000' }}>{colorAzul || '-'}</strong></span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Col>
-
-              {/* Clocks Bar (Compact futuristic panel) */}
-              <Col span={8}>
+              {/* Clocks Bar */}
+              <Col xs={18} md={8}>
                 <div style={{ 
                   background: 'linear-gradient(180deg, #101010 0%, #050505 100%)', 
-                  borderRadius: 12, 
+                  borderRadius: 10, 
                   border: '1.5px solid #333', 
-                  padding: isFullscreen ? '14px 20px' : '10px 14px',
+                  padding: '8px 10px',
                   display: 'flex',
                   justifyContent: 'space-around',
                   alignItems: 'center',
@@ -1733,69 +1714,99 @@ export default function RelojView() {
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ 
                       color: '#10b981', 
-                      fontSize: isFullscreen ? 56 : 38, 
+                      fontSize: 'clamp(20px, 5.5vw, 38px)', 
                       fontWeight: 900, 
                       fontFamily: 'Outfit', 
                       lineHeight: 1
                     }}>
                       {formatTime(elapsedTime)}
                     </div>
-                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: isFullscreen ? 12 : 10, fontWeight: 900, marginTop: 4, letterSpacing: 1 }}>ELAPSED</div>
+                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 9, fontWeight: 900, marginTop: 2, letterSpacing: 0.5 }}>ELAPSED</div>
                   </div>
                   
                   {/* Careo */}
-                  <div style={{ textAlign: 'center', borderLeft: '1px solid #2d2d2d', borderRight: '1px solid #2d2d2d', padding: '0 22px' }}>
+                  <div style={{ textAlign: 'center', borderLeft: '1px solid #2d2d2d', borderRight: '1px solid #2d2d2d', padding: '0 12px' }}>
                     <div style={{ 
                       color: '#ef4444', 
-                      fontSize: isFullscreen ? 56 : 38, 
+                      fontSize: 'clamp(20px, 5.5vw, 38px)', 
                       fontWeight: 900, 
                       fontFamily: 'Outfit', 
                       lineHeight: 1
                     }}>
                       {subTimeLeft !== null ? subTimeLeft.toString().padStart(2, '0') : '00'}
                     </div>
-                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: isFullscreen ? 12 : 10, fontWeight: 900, marginTop: 4, letterSpacing: 1 }}>{subTimerLabel || 'CAREO'}</div>
+                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 9, fontWeight: 900, marginTop: 2, letterSpacing: 0.5 }}>{subTimerLabel || 'CAREO'}</div>
                   </div>
 
                   {/* Remaining */}
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ 
                       color: '#f59e0b', 
-                      fontSize: isFullscreen ? 76 : 52, 
+                      fontSize: 'clamp(24px, 6.5vw, 50px)', 
                       fontWeight: 900, 
                       fontFamily: 'Outfit', 
                       lineHeight: 1
                     }}>
                       {formatTime(timeLeft)}
                     </div>
-                    <div style={{ color: '#f59e0b', fontSize: isFullscreen ? 12 : 10, fontWeight: 900, marginTop: 4, letterSpacing: 1 }}>RESTANTE</div>
+                    <div style={{ color: '#f59e0b', fontSize: 9, fontWeight: 900, marginTop: 2, letterSpacing: 0.5 }}>RESTANTE</div>
                   </div>
                 </div>
               </Col>
 
-              {/* Gallo Blanco (Skewed Glass Parallelogram) */}
-              <Col span={7}>
+              {/* Gallo Azul */}
+              <Col xs={12} md={7}>
+                <div style={{ 
+                  background: '#ffffff', 
+                  color: '#111111', 
+                  borderRadius: 10, 
+                  padding: '8px 10px',
+                  borderLeft: '5px solid #0f3dd1',
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  overflow: 'hidden'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
+                    {renderRoosterAvatar('azul', fotoAzul)}
+                    <div style={{ overflow: 'hidden', flex: 1 }}>
+                      <div style={{ fontSize: 9, color: '#0f3dd1', fontWeight: 900, letterSpacing: 0.5 }}>LADO AZUL</div>
+                      <div style={{ fontWeight: 900, fontSize: 'clamp(14px, 3.5vw, 24px)', textTransform: 'uppercase', color: '#111111', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {gallinoName ? gallinoName : ''}
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, marginTop: 2, fontSize: 11, fontWeight: 900, color: '#333' }}>
+                        <span>P: <strong style={{ color: '#000' }}>{pesoAzul || '-'}</strong></span>
+                        <span>M: <strong style={{ color: '#000' }}>{marcaAzul || '-'}</strong></span>
+                        <span>C: <strong style={{ color: '#000' }}>{colorAzul || '-'}</strong></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Col>
+
+              {/* Gallo Blanco */}
+              <Col xs={12} md={7}>
                 <div style={{ 
                   background: '#0f3dd1', 
                   color: '#ffffff', 
                   borderRadius: 10, 
-                  padding: isFullscreen ? '12px 18px' : '10px 14px',
-                  borderRight: '7px solid #ffffff',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+                  padding: '8px 10px',
+                  borderRight: '5px solid #ffffff',
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.5)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 12,
-                  transform: 'skewX(-10deg)',
-                  marginRight: 5
+                  gap: 8,
+                  overflow: 'hidden'
                 }}>
-                  <div style={{ transform: 'skewX(10deg)', display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%' }}>
                     {renderRoosterAvatar('blanco', fotoBlanco)}
                     <div style={{ overflow: 'hidden', flex: 1 }}>
-                      <div style={{ fontSize: isFullscreen ? 12 : 10, color: 'rgba(255,255,255,0.7)', fontWeight: 900, letterSpacing: 0.5 }}>LADO BLANCO</div>
-                      <div style={{ fontWeight: 900, fontSize: isFullscreen ? 36 : 26, textTransform: 'uppercase', color: '#ffffff', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', fontWeight: 900, letterSpacing: 0.5 }}>LADO BLANCO</div>
+                      <div style={{ fontWeight: 900, fontSize: 'clamp(14px, 3.5vw, 24px)', textTransform: 'uppercase', color: '#ffffff', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {blancoName ? blancoName : ''}
                       </div>
-                      <div style={{ display: 'flex', gap: 10, marginTop: 4, fontSize: isFullscreen ? 14 : 12, fontWeight: 900, color: 'rgba(255,255,255,0.9)' }}>
+                      <div style={{ display: 'flex', gap: 6, marginTop: 2, fontSize: 11, fontWeight: 900, color: 'rgba(255,255,255,0.9)' }}>
                         <span>P: <strong>{pesoBlanco || '-'}</strong></span>
                         <span>M: <strong>{marcaBlanco || '-'}</strong></span>
                         <span>C: <strong>{colorBlanco || '-'}</strong></span>
