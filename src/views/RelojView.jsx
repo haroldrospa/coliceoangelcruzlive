@@ -559,17 +559,18 @@ export default function RelojView() {
   const renderRoosterAvatar = (side, photo) => {
     const isAzul = side === 'azul';
     const borderCol = isAzul ? '#0f3dd1' : '#ffffff';
+    const avatarDim = isFullscreen ? 130 : 96;
     if (photo) {
       return (
         <img 
           src={photo} 
           style={{ 
-            width: isFullscreen ? 120 : 80, 
-            height: isFullscreen ? 120 : 80, 
+            width: avatarDim, 
+            height: avatarDim, 
             borderRadius: '50%', 
             objectFit: 'cover', 
             border: `3px solid ${borderCol}`,
-            boxShadow: '0 6px 15px rgba(0,0,0,0.6)'
+            boxShadow: '0 6px 18px rgba(0,0,0,0.7)'
           }} 
           alt={`Gallo ${side}`} 
         />
@@ -577,16 +578,16 @@ export default function RelojView() {
     }
     return (
       <div style={{
-        width: isFullscreen ? 120 : 80,
-        height: isFullscreen ? 120 : 80,
+        width: avatarDim,
+        height: avatarDim,
         borderRadius: '50%',
         background: isAzul ? 'linear-gradient(135deg, #0f2d8a 0%, #1e40af 100%)' : 'linear-gradient(135deg, #1f2937 0%, #4b5563 100%)',
         border: `3px solid ${borderCol}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        boxShadow: '0 6px 15px rgba(0,0,0,0.5)',
-        fontSize: isFullscreen ? 56 : 38
+        boxShadow: '0 6px 18px rgba(0,0,0,0.6)',
+        fontSize: isFullscreen ? 60 : 46
       }}>
         🐓
       </div>
@@ -1592,16 +1593,16 @@ export default function RelojView() {
         {/* ======================================================== */}
         {scoreboardStyle === 'broadcast' && (
           <div style={{ 
-            background: 'linear-gradient(135deg, #111 0%, #070707 100%)', 
-            border: '2px solid #222', 
-            borderRadius: 16, 
-            padding: 12, 
-            boxShadow: '0 25px 50px rgba(0,0,0,0.9)',
-            marginBottom: 20,
+            background: 'linear-gradient(135deg, #111111 0%, #060606 100%)', 
+            border: '2px solid rgba(255,255,255,0.18)', 
+            borderRadius: 18, 
+            padding: isFullscreen ? 18 : 16, 
+            boxShadow: '0 25px 60px rgba(0,0,0,0.95), 0 0 35px rgba(16, 185, 129, 0.12)',
+            marginBottom: 24,
             overflow: 'hidden',
             position: 'relative'
           }}>
-            {/* Full Scoreboard Winner Flash Overlay (10s duration) */}
+            {/* Full Scoreboard Winner Flash Overlay */}
             {winnerFlash && (
               <div style={{
                 position: 'absolute',
@@ -1611,8 +1612,8 @@ export default function RelojView() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderRadius: 16,
-                padding: '12px 20px',
+                borderRadius: 18,
+                padding: '16px 24px',
                 boxShadow: '0 0 50px rgba(0,0,0,0.8)',
                 animation: 'winnerFlashIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
                 backdropFilter: 'blur(8px)',
@@ -1624,7 +1625,7 @@ export default function RelojView() {
                 )
               }}>
                 <div style={{
-                  fontSize: isFullscreen ? 14 : 11,
+                  fontSize: isFullscreen ? 16 : 13,
                   fontWeight: 900,
                   letterSpacing: '2px',
                   textTransform: 'uppercase',
@@ -1634,7 +1635,7 @@ export default function RelojView() {
                   PELEA #{winnerFlash.fightNum} — {winnerFlash.side === 'Tablas' || winnerFlash.side === 'D' ? 'RESULTADO' : `LADO ${winnerFlash.side.toUpperCase()}`}
                 </div>
                 <div style={{
-                  fontSize: isFullscreen ? 36 : 24,
+                  fontSize: isFullscreen ? 40 : 28,
                   fontWeight: 900,
                   fontFamily: 'Outfit, sans-serif',
                   color: (winnerFlash.side === 'Blanco' || winnerFlash.side === 'B') ? '#0f172a' : '#ffffff',
@@ -1650,8 +1651,8 @@ export default function RelojView() {
                     background: (winnerFlash.side === 'Blanco' || winnerFlash.side === 'B') ? 'rgba(15,23,42,0.1)' : 'rgba(255,255,255,0.15)',
                     border: (winnerFlash.side === 'Blanco' || winnerFlash.side === 'B') ? '1px solid rgba(15,23,42,0.2)' : '1px solid rgba(255,255,255,0.3)',
                     borderRadius: 8,
-                    padding: '4px 14px',
-                    fontSize: isFullscreen ? 16 : 13,
+                    padding: '6px 16px',
+                    fontSize: isFullscreen ? 18 : 15,
                     fontWeight: 900,
                     color: (winnerFlash.side === 'Blanco' || winnerFlash.side === 'B') ? '#0f172a' : '#ffffff',
                     display: 'flex',
@@ -1665,19 +1666,19 @@ export default function RelojView() {
               </div>
             )}
             {/* Horizontal Cyberpunk row */}
-            <Row align="middle" gutter={8}>
+            <Row align="middle" gutter={10}>
               {/* Pelea indicator (Hexagon styled block) */}
               <Col span={2}>
                 <div style={{ 
                   background: '#1d1d1d', 
-                  borderLeft: '4px solid #ef4444', 
-                  borderRadius: 6, 
-                  padding: isFullscreen ? '14px 4px' : '10px 2px', 
+                  borderLeft: '5px solid #ef4444', 
+                  borderRadius: 8, 
+                  padding: isFullscreen ? '16px 6px' : '12px 4px', 
                   textAlign: 'center',
                   boxShadow: 'inset 0 1px 3px rgba(255,255,255,0.1)'
                 }}>
-                  <div style={{ color: '#ef4444', fontWeight: 900, fontSize: isFullscreen ? 11 : 8, letterSpacing: 0.5, lineHeight: 1 }}>COMBATE</div>
-                  <div style={{ color: '#ffffff', fontWeight: 900, fontSize: isFullscreen ? 28 : 18, lineHeight: 1.1 }}>#{fightNumber}</div>
+                  <div style={{ color: '#ef4444', fontWeight: 900, fontSize: isFullscreen ? 12 : 9, letterSpacing: 0.5, lineHeight: 1 }}>COMBATE</div>
+                  <div style={{ color: '#ffffff', fontWeight: 900, fontSize: isFullscreen ? 34 : 24, lineHeight: 1.1 }}>#{fightNumber}</div>
                 </div>
               </Col>
 
@@ -1686,24 +1687,24 @@ export default function RelojView() {
                 <div style={{ 
                   background: '#ffffff', 
                   color: '#111111', 
-                  borderRadius: 8, 
-                  padding: isFullscreen ? '10px 14px' : '6px 8px',
-                  borderLeft: '6px solid #0f3dd1',
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.4)',
+                  borderRadius: 10, 
+                  padding: isFullscreen ? '12px 18px' : '10px 14px',
+                  borderLeft: '7px solid #0f3dd1',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 10,
+                  gap: 12,
                   transform: 'skewX(-10deg)',
                   marginLeft: 5
                 }}>
-                  <div style={{ transform: 'skewX(10deg)', display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
+                  <div style={{ transform: 'skewX(10deg)', display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
                     {renderRoosterAvatar('azul', fotoAzul)}
                     <div style={{ overflow: 'hidden', flex: 1 }}>
-                      <div style={{ fontSize: isFullscreen ? 11 : 9, color: '#0f3dd1', fontWeight: 900, letterSpacing: 0.5 }}>LADO AZUL</div>
-                      <div style={{ fontWeight: 900, fontSize: isFullscreen ? 32 : 21, textTransform: 'uppercase', color: '#111111', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: isFullscreen ? 12 : 10, color: '#0f3dd1', fontWeight: 900, letterSpacing: 0.5 }}>LADO AZUL</div>
+                      <div style={{ fontWeight: 900, fontSize: isFullscreen ? 36 : 26, textTransform: 'uppercase', color: '#111111', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {gallinoName ? gallinoName : ''}
                       </div>
-                      <div style={{ display: 'flex', gap: 8, marginTop: 2, fontSize: isFullscreen ? 13 : 10, fontWeight: 900, color: '#444' }}>
+                      <div style={{ display: 'flex', gap: 10, marginTop: 4, fontSize: isFullscreen ? 14 : 12, fontWeight: 900, color: '#333' }}>
                         <span>P: <strong style={{ color: '#000' }}>{pesoAzul || '-'}</strong></span>
                         <span>M: <strong style={{ color: '#000' }}>{marcaAzul || '-'}</strong></span>
                         <span>C: <strong style={{ color: '#000' }}>{colorAzul || '-'}</strong></span>
@@ -1717,9 +1718,9 @@ export default function RelojView() {
               <Col span={8}>
                 <div style={{ 
                   background: 'linear-gradient(180deg, #101010 0%, #050505 100%)', 
-                  borderRadius: 10, 
-                  border: '1px solid #333', 
-                  padding: isFullscreen ? '10px 12px' : '6px 8px',
+                  borderRadius: 12, 
+                  border: '1.5px solid #333', 
+                  padding: isFullscreen ? '14px 20px' : '10px 14px',
                   display: 'flex',
                   justifyContent: 'space-around',
                   alignItems: 'center',
@@ -1732,42 +1733,42 @@ export default function RelojView() {
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ 
                       color: '#10b981', 
-                      fontSize: isFullscreen ? 48 : 28, 
+                      fontSize: isFullscreen ? 56 : 38, 
                       fontWeight: 900, 
                       fontFamily: 'Outfit', 
                       lineHeight: 1
                     }}>
                       {formatTime(elapsedTime)}
                     </div>
-                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: isFullscreen ? 10 : 8, fontWeight: 900, marginTop: 4 }}>ELAPSED</div>
+                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: isFullscreen ? 12 : 10, fontWeight: 900, marginTop: 4, letterSpacing: 1 }}>ELAPSED</div>
                   </div>
                   
                   {/* Careo */}
-                  <div style={{ textAlign: 'center', borderLeft: '1px solid #2d2d2d', borderRight: '1px solid #2d2d2d', padding: '0 20px' }}>
+                  <div style={{ textAlign: 'center', borderLeft: '1px solid #2d2d2d', borderRight: '1px solid #2d2d2d', padding: '0 22px' }}>
                     <div style={{ 
                       color: '#ef4444', 
-                      fontSize: isFullscreen ? 48 : 28, 
+                      fontSize: isFullscreen ? 56 : 38, 
                       fontWeight: 900, 
                       fontFamily: 'Outfit', 
                       lineHeight: 1
                     }}>
                       {subTimeLeft !== null ? subTimeLeft.toString().padStart(2, '0') : '00'}
                     </div>
-                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: isFullscreen ? 10 : 8, fontWeight: 900, marginTop: 4 }}>{subTimerLabel || 'CAREO'}</div>
+                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: isFullscreen ? 12 : 10, fontWeight: 900, marginTop: 4, letterSpacing: 1 }}>{subTimerLabel || 'CAREO'}</div>
                   </div>
 
                   {/* Remaining */}
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ 
                       color: '#f59e0b', 
-                      fontSize: isFullscreen ? 68 : 38, 
+                      fontSize: isFullscreen ? 76 : 52, 
                       fontWeight: 900, 
                       fontFamily: 'Outfit', 
                       lineHeight: 1
                     }}>
                       {formatTime(timeLeft)}
                     </div>
-                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: isFullscreen ? 10 : 8, fontWeight: 900, marginTop: 4 }}>RESTANTE</div>
+                    <div style={{ color: '#f59e0b', fontSize: isFullscreen ? 12 : 10, fontWeight: 900, marginTop: 4, letterSpacing: 1 }}>RESTANTE</div>
                   </div>
                 </div>
               </Col>
@@ -1777,24 +1778,24 @@ export default function RelojView() {
                 <div style={{ 
                   background: '#0f3dd1', 
                   color: '#ffffff', 
-                  borderRadius: 8, 
-                  padding: isFullscreen ? '10px 14px' : '6px 8px',
-                  borderRight: '6px solid #ffffff',
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.4)',
+                  borderRadius: 10, 
+                  padding: isFullscreen ? '12px 18px' : '10px 14px',
+                  borderRight: '7px solid #ffffff',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 10,
+                  gap: 12,
                   transform: 'skewX(-10deg)',
                   marginRight: 5
                 }}>
                   <div style={{ transform: 'skewX(10deg)', display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
                     {renderRoosterAvatar('blanco', fotoBlanco)}
                     <div style={{ overflow: 'hidden', flex: 1 }}>
-                      <div style={{ fontSize: isFullscreen ? 11 : 9, color: 'rgba(255,255,255,0.7)', fontWeight: 900, letterSpacing: 0.5 }}>LADO BLANCO</div>
-                      <div style={{ fontWeight: 900, fontSize: isFullscreen ? 32 : 21, textTransform: 'uppercase', color: '#ffffff', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ fontSize: isFullscreen ? 12 : 10, color: 'rgba(255,255,255,0.7)', fontWeight: 900, letterSpacing: 0.5 }}>LADO BLANCO</div>
+                      <div style={{ fontWeight: 900, fontSize: isFullscreen ? 36 : 26, textTransform: 'uppercase', color: '#ffffff', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {blancoName ? blancoName : ''}
                       </div>
-                      <div style={{ display: 'flex', gap: 8, marginTop: 2, fontSize: isFullscreen ? 13 : 10, fontWeight: 900, color: 'rgba(255,255,255,0.85)' }}>
+                      <div style={{ display: 'flex', gap: 10, marginTop: 4, fontSize: isFullscreen ? 14 : 12, fontWeight: 900, color: 'rgba(255,255,255,0.9)' }}>
                         <span>P: <strong>{pesoBlanco || '-'}</strong></span>
                         <span>M: <strong>{marcaBlanco || '-'}</strong></span>
                         <span>C: <strong>{colorBlanco || '-'}</strong></span>
@@ -1817,21 +1818,21 @@ export default function RelojView() {
             <Col xs={24} lg={8}>
               <Card 
                 title={
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <ControlOutlined style={{ color: '#10b981', fontSize: 16 }} />
-                    <span style={{ color: '#fff', fontSize: 13, fontWeight: 800, letterSpacing: '0.5px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <ControlOutlined style={{ color: '#10b981', fontSize: 20 }} />
+                    <span style={{ color: '#fff', fontSize: 15, fontWeight: 900, letterSpacing: '0.8px' }}>
                       PARÁMETROS DEL COMBATE
                     </span>
                   </div>
                 }
                 style={{ 
-                  background: 'linear-gradient(145deg, rgba(18, 24, 38, 0.85) 0%, rgba(12, 16, 26, 0.95) 100%)',
-                  borderColor: 'rgba(255, 255, 255, 0.08)',
-                  borderRadius: 16,
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                  background: 'linear-gradient(145deg, rgba(20, 28, 44, 0.95) 0%, rgba(10, 14, 24, 0.98) 100%)',
+                  borderColor: 'rgba(255, 255, 255, 0.12)',
+                  borderRadius: 18,
+                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.5)',
                   backdropFilter: 'blur(12px)'
                 }}
-                styles={{ body: { padding: '16px' } }}
+                styles={{ body: { padding: '20px' } }}
               >
                 {carteleraFights.length > 0 && (
                   <div style={{ marginBottom: 14 }}>
@@ -1918,36 +1919,36 @@ export default function RelojView() {
                   </div>
                 )}
 
-                <div style={{ marginTop: 8 }}>
+                <div style={{ marginTop: 12 }}>
                   {bettingPhase ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                       <div style={{ 
-                        background: 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(5,150,105,0.08) 100%)', 
-                        border: '1px solid rgba(16,185,129,0.3)', 
-                        borderRadius: 12, 
-                        padding: '12px 14px',
+                        background: 'linear-gradient(135deg, rgba(16,185,129,0.18) 0%, rgba(5,150,105,0.12) 100%)', 
+                        border: '1.5px solid rgba(16,185,129,0.4)', 
+                        borderRadius: 14, 
+                        padding: '14px 16px',
                         textAlign: 'center'
                       }}>
-                        <div style={{ color: '#10b981', fontSize: 11, fontWeight: 800, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 2 }}>
+                        <div style={{ color: '#10b981', fontSize: 12, fontWeight: 900, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 2 }}>
                           🟢 APUESTAS ABIERTAS
                         </div>
-                        <div style={{ color: '#fff', fontWeight: 900, fontSize: 32, fontFamily: 'Outfit, sans-serif', lineHeight: 1 }}>
+                        <div style={{ color: '#fff', fontWeight: 900, fontSize: 38, fontFamily: 'Outfit, sans-serif', lineHeight: 1 }}>
                           {`${Math.floor(bettingTimeLeft / 60).toString().padStart(2,'0')}:${(bettingTimeLeft % 60).toString().padStart(2,'0')}`}
                         </div>
-                        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 4 }}>Contador automático de apuestas</div>
+                        <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, fontWeight: 700, marginTop: 4 }}>Contador automático de apuestas</div>
                       </div>
                       <Button 
                         block 
                         type="primary" 
                         danger 
                         style={{ 
-                          fontWeight: 800, 
-                          fontSize: 12, 
-                          height: 42,
-                          borderRadius: 10,
-                          boxShadow: '0 4px 14px rgba(239, 68, 68, 0.3)',
+                          fontWeight: 900, 
+                          fontSize: 15, 
+                          height: 56,
+                          borderRadius: 12,
+                          boxShadow: '0 6px 20px rgba(239, 68, 68, 0.4)',
                           textTransform: 'uppercase',
-                          letterSpacing: '0.5px'
+                          letterSpacing: '0.8px'
                         }} 
                         onClick={handleCloseBets}
                       >
@@ -1955,15 +1956,15 @@ export default function RelojView() {
                       </Button>
                     </div>
                   ) : (
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ display: 'flex', gap: 10 }}>
                       {isRunning ? (
                         <Button 
                           block 
                           type="primary" 
                           danger 
-                          icon={<PauseCircleOutlined />} 
+                          icon={<PauseCircleOutlined style={{ fontSize: 20 }} />} 
                           onClick={handlePause}
-                          style={{ height: 42, borderRadius: 10, fontWeight: 800, fontSize: 13 }}
+                          style={{ height: 56, borderRadius: 12, fontWeight: 900, fontSize: 16, letterSpacing: '0.8px' }}
                         >
                           PAUSAR
                         </Button>
@@ -1973,15 +1974,16 @@ export default function RelojView() {
                           type="primary" 
                           disabled={!gallinoName && !blancoName}
                           style={{ 
-                            height: 42, 
-                            borderRadius: 10, 
-                            fontWeight: 800, 
-                            fontSize: 13,
+                            height: 56, 
+                            borderRadius: 12, 
+                            fontWeight: 900, 
+                            fontSize: 16,
+                            letterSpacing: '0.8px',
                             background: (gallinoName || blancoName) ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : undefined, 
                             borderColor: (gallinoName || blancoName) ? '#10b981' : undefined,
-                            boxShadow: (gallinoName || blancoName) ? '0 4px 14px rgba(16, 185, 129, 0.3)' : undefined
+                            boxShadow: (gallinoName || blancoName) ? '0 6px 20px rgba(16, 185, 129, 0.4)' : undefined
                           }} 
-                          icon={<PlayCircleOutlined />} 
+                          icon={<PlayCircleOutlined style={{ fontSize: 20 }} />} 
                           onClick={handleStart}
                         >
                           INICIAR COMBATE
@@ -1989,15 +1991,15 @@ export default function RelojView() {
                       )}
                       <Tooltip title="Restablecer reloj">
                         <Button 
-                          icon={<RedoOutlined />} 
+                          icon={<RedoOutlined style={{ fontSize: 22 }} />} 
                           onClick={handleReset} 
                           style={{ 
-                            height: 42,
-                            width: 42,
-                            borderRadius: 10,
-                            background: 'rgba(255,255,255,0.05)', 
+                            height: 56,
+                            width: 56,
+                            borderRadius: 12,
+                            background: 'rgba(255,255,255,0.06)', 
                             color: '#fff', 
-                            border: '1px solid rgba(255,255,255,0.12)' 
+                            border: '1px solid rgba(255,255,255,0.15)' 
                           }} 
                         />
                       </Tooltip>
@@ -2011,21 +2013,21 @@ export default function RelojView() {
             <Col xs={24} lg={8}>
               <Card 
                 title={
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <EditOutlined style={{ color: '#3b82f6', fontSize: 16 }} />
-                    <span style={{ color: '#fff', fontSize: 13, fontWeight: 800, letterSpacing: '0.5px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <EditOutlined style={{ color: '#3b82f6', fontSize: 20 }} />
+                    <span style={{ color: '#fff', fontSize: 15, fontWeight: 900, letterSpacing: '0.8px' }}>
                       EDITAR GALLOS EN COMBATE
                     </span>
                   </div>
                 }
                 style={{ 
-                  background: 'linear-gradient(145deg, rgba(18, 24, 38, 0.85) 0%, rgba(12, 16, 26, 0.95) 100%)',
-                  borderColor: 'rgba(255, 255, 255, 0.08)',
-                  borderRadius: 16,
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                  background: 'linear-gradient(145deg, rgba(20, 28, 44, 0.95) 0%, rgba(10, 14, 24, 0.98) 100%)',
+                  borderColor: 'rgba(255, 255, 255, 0.12)',
+                  borderRadius: 18,
+                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.5)',
                   backdropFilter: 'blur(12px)'
                 }}
-                styles={{ body: { padding: '16px' } }}
+                styles={{ body: { padding: '20px' } }}
               >
                 {/* LADO AZUL */}
                 <div style={{ 
@@ -2168,25 +2170,25 @@ export default function RelojView() {
             <Col xs={24} lg={8}>
               <Card 
                 title={
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <TrophyOutlined style={{ color: '#f59e0b', fontSize: 16 }} />
-                    <span style={{ color: '#fff', fontSize: 13, fontWeight: 800, letterSpacing: '0.5px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <TrophyOutlined style={{ color: '#f59e0b', fontSize: 20 }} />
+                    <span style={{ color: '#fff', fontSize: 15, fontWeight: 900, letterSpacing: '0.8px' }}>
                       CAREOS & RESOLUCIÓN
                     </span>
                   </div>
                 }
                 style={{ 
-                  background: 'linear-gradient(145deg, rgba(18, 24, 38, 0.85) 0%, rgba(12, 16, 26, 0.95) 100%)',
-                  borderColor: 'rgba(255, 255, 255, 0.08)',
-                  borderRadius: 16,
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                  background: 'linear-gradient(145deg, rgba(20, 28, 44, 0.95) 0%, rgba(10, 14, 24, 0.98) 100%)',
+                  borderColor: 'rgba(255, 255, 255, 0.12)',
+                  borderRadius: 18,
+                  boxShadow: '0 12px 40px rgba(0, 0, 0, 0.5)',
                   backdropFilter: 'blur(12px)'
                 }}
-                styles={{ body: { padding: '16px' } }}
+                styles={{ body: { padding: '20px' } }}
               >
                 {!careoFinished ? (
                   <div>
-                    <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 900, display: 'block', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                       ⏱️ CRONÓMETRO SECUNDARIO (CAREO)
                     </Text>
                     {subTimeLeft === null ? (
@@ -2197,43 +2199,43 @@ export default function RelojView() {
                           background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)', 
                           color: '#ffffff', 
                           borderColor: '#f87171', 
-                          fontSize: 16, 
+                          fontSize: 20, 
                           fontWeight: 900,
-                          borderRadius: 12,
-                          height: 58,
-                          boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4)',
+                          borderRadius: 14,
+                          height: 64,
+                          boxShadow: '0 6px 24px rgba(239, 68, 68, 0.5)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          gap: 8,
-                          letterSpacing: '0.5px'
+                          gap: 10,
+                          letterSpacing: '0.8px'
                         }} 
                         onClick={() => handleStartSubTimer(60, 'CAREO')}
                       >
                         ⏱️ 60s CAREO
                       </Button>
                     ) : (
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                         <div 
                           style={{ 
                             flex: 1, 
-                            background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(185, 28, 28, 0.4) 100%)', 
-                            border: '1.5px solid #ef4444', 
-                            borderRadius: 12,
-                            height: 58,
+                            background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(185, 28, 28, 0.5) 100%)', 
+                            border: '2px solid #ef4444', 
+                            borderRadius: 14,
+                            height: 64,
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            gap: 10,
-                            padding: '0 12px'
+                            gap: 12,
+                            padding: '0 14px'
                           }}
                         >
-                          <span style={{ fontSize: 20 }}>⏱️</span>
+                          <span style={{ fontSize: 24 }}>⏱️</span>
                           <div style={{ textAlign: 'left' }}>
-                            <div style={{ color: '#ef4444', fontSize: 18, fontWeight: 900, lineHeight: 1.1 }}>
+                            <div style={{ color: '#ef4444', fontSize: 22, fontWeight: 900, lineHeight: 1.1 }}>
                               {subTimeLeft}s CAREO
                             </div>
-                            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10, fontWeight: 700 }}>
+                            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 800 }}>
                               EN CONTEO REGRESIVO...
                             </div>
                           </div>
@@ -2243,9 +2245,9 @@ export default function RelojView() {
                             size="large" 
                             type="primary" 
                             danger 
-                            icon={<CloseCircleOutlined style={{ fontSize: 18 }} />} 
+                            icon={<CloseCircleOutlined style={{ fontSize: 22 }} />} 
                             onClick={handleCancelSubTimer} 
-                            style={{ borderRadius: 12, height: 58, width: 48 }}
+                            style={{ borderRadius: 14, height: 64, width: 54 }}
                           />
                         </Tooltip>
                       </div>
@@ -2276,22 +2278,23 @@ export default function RelojView() {
                         Reiniciar Careo ↺
                       </Button>
                     </div>
-                    <Row gutter={6}>
+                    <Row gutter={8}>
                       <Col span={8}>
                         <button 
                           onClick={() => handleSaveFightResult('Azul')} 
                           style={{ 
                             width: '100%',
                             background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)', 
-                            border: '1px solid #2563eb', 
+                            border: '1.5px solid #3b82f6', 
                             color: '#ffffff',
-                            fontSize: 12, 
+                            fontSize: 15, 
                             fontWeight: 900,
-                            borderRadius: 10,
-                            boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
-                            height: 48,
+                            borderRadius: 12,
+                            boxShadow: '0 6px 18px rgba(37, 99, 235, 0.45)',
+                            height: 56,
                             cursor: 'pointer',
-                            outline: 'none'
+                            outline: 'none',
+                            letterSpacing: '0.8px'
                           }}
                         >
                           AZUL
@@ -2303,15 +2306,16 @@ export default function RelojView() {
                           style={{ 
                             width: '100%',
                             background: 'linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%)', 
-                            border: '1px solid #ffffff', 
+                            border: '1.5px solid #ffffff', 
                             color: '#0f172a', 
-                            fontSize: 12, 
+                            fontSize: 15, 
                             fontWeight: 900,
-                            borderRadius: 10,
-                            boxShadow: '0 4px 14px rgba(255, 255, 255, 0.3)',
-                            height: 48,
+                            borderRadius: 12,
+                            boxShadow: '0 6px 18px rgba(255, 255, 255, 0.35)',
+                            height: 56,
                             cursor: 'pointer',
-                            outline: 'none'
+                            outline: 'none',
+                            letterSpacing: '0.8px'
                           }}
                         >
                           BLANCO
@@ -2323,15 +2327,16 @@ export default function RelojView() {
                           style={{ 
                             width: '100%',
                             background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)', 
-                            border: '1px solid #f59e0b', 
+                            border: '1.5px solid #f59e0b', 
                             color: '#ffffff',
-                            fontSize: 12, 
+                            fontSize: 15, 
                             fontWeight: 900,
-                            borderRadius: 10,
-                            boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)',
-                            height: 48,
+                            borderRadius: 12,
+                            boxShadow: '0 6px 18px rgba(245, 158, 11, 0.45)',
+                            height: 56,
                             cursor: 'pointer',
-                            outline: 'none'
+                            outline: 'none',
+                            letterSpacing: '0.8px'
                           }}
                         >
                           TABLAS
