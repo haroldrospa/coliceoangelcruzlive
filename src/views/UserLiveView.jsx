@@ -1865,7 +1865,7 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                       >
                         {/* Card Header */}
                         <div className="cart-card-header">
-                          <span className="cart-fight-number">PELEA {event.post_number}</span>
+                          <span className="cart-fight-number">PELEA #{event.post_number}</span>
                           {tagLabel && (
                             <Tag 
                               color={tagColor} 
@@ -1875,19 +1875,9 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                                   openBetSelectionModal(event);
                                 }
                               }}
+                              className="cart-status-tag"
                               style={{ 
-                                position: 'absolute',
-                                right: 12,
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                                fontSize: 10, 
-                                borderRadius: 6, 
-                                margin: 0, 
-                                padding: '3px 9px', 
-                                fontWeight: 900,
-                                cursor: isBettingOpen ? 'pointer' : 'default',
-                                border: 'none',
-                                letterSpacing: '0.5px'
+                                cursor: isBettingOpen ? 'pointer' : 'default'
                               }}
                             >
                               {tagLabel}
@@ -1901,7 +1891,7 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                           <div className="cart-fighter-column left">
                             <div className="fighter-title-row">
                               {aData.clase === 'P' && <span className="fighter-badge-p">P</span>}
-                              <span className="fighter-name" style={{ color: '#60a5fa' }}>{event.gallo_a_name}</span>
+                              <span className="fighter-name fighter-name-azul">{event.gallo_a_name}</span>
                             </div>
                             <div className="fighter-meta-row">
                               {aData.turno && <span className="meta-tag">T: {aData.turno}</span>}
@@ -1918,7 +1908,7 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
                           {/* Right Fighter (B - Blanco) */}
                           <div className="cart-fighter-column right">
                             <div className="fighter-title-row">
-                              <span className="fighter-name" style={{ color: '#ffffff' }}>{event.gallo_b_name}</span>
+                              <span className="fighter-name fighter-name-blanco">{event.gallo_b_name}</span>
                               {bData.clase === 'P' && <span className="fighter-badge-p">P</span>}
                             </div>
                             <div className="fighter-meta-row">
@@ -1932,72 +1922,43 @@ const UserLiveView = ({ userBalance, setUserBalance, currentUser, setCurrentView
 
                         {/* Live Betting Banner & Action Buttons (ONLY when fight is active & betting is OPEN) */}
                         {isBettingOpen ? (
-                          <>
-                            {/* Betting Buttons — full width, flush bottom */}
-                            <div style={{ display: 'flex', gap: 0, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                              <Button
-                                block
-                                size="large"
-                                type="primary"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openBetSelectionModal(event);
-                                }}
-                                style={{
-                                  height: 52,
-                                  borderRadius: '0 0 0 15px',
-                                  background: 'linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%)',
-                                  borderColor: 'transparent',
-                                  boxShadow: 'none',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  lineHeight: 1.2,
-                                  padding: '4px 8px',
-                                  flex: 1
-                                }}
-                              >
-                                <span style={{ fontSize: 9, fontWeight: 700, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                                  {event.gallo_a_name || 'LADO A'}
-                                </span>
-                                <span style={{ fontSize: 14, fontWeight: 900, color: '#ffffff', fontFamily: 'Outfit, sans-serif' }}>
-                                  APOSTAR x{event.gallo_a_odds?.toFixed(2) || '1.90'}
-                                </span>
-                              </Button>
-                              <div style={{ width: 1, background: 'rgba(255,255,255,0.08)', flexShrink: 0 }} />
-                              <Button
-                                block
-                                size="large"
-                                type="primary"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  openBetSelectionModal(event);
-                                }}
-                                style={{
-                                  height: 52,
-                                  borderRadius: '0 0 15px 0',
-                                  background: 'linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 100%)',
-                                  borderColor: 'transparent',
-                                  boxShadow: 'none',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  lineHeight: 1.2,
-                                  padding: '4px 8px',
-                                  flex: 1
-                                }}
-                              >
-                                <span style={{ fontSize: 9, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                                  {event.gallo_b_name || 'LADO B'}
-                                </span>
-                                <span style={{ fontSize: 14, fontWeight: 900, color: '#0f172a', fontFamily: 'Outfit, sans-serif' }}>
-                                  APOSTAR x{event.gallo_b_odds?.toFixed(2) || '1.90'}
-                                </span>
-                              </Button>
-                            </div>
-                          </>
+                          <div className="cart-betting-buttons-row">
+                            <Button
+                              block
+                              size="large"
+                              type="primary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openBetSelectionModal(event);
+                              }}
+                              className="bet-btn bet-btn-azul"
+                            >
+                              <span className="bet-btn-side">
+                                AZUL • {event.gallo_a_name || 'LADO A'}
+                              </span>
+                              <span className="bet-btn-odds">
+                                APOSTAR x{event.gallo_a_odds?.toFixed(2) || '1.90'}
+                              </span>
+                            </Button>
+                            <div style={{ width: 1, background: 'rgba(255,255,255,0.08)', flexShrink: 0 }} />
+                            <Button
+                              block
+                              size="large"
+                              type="primary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openBetSelectionModal(event);
+                              }}
+                              className="bet-btn bet-btn-blanco"
+                            >
+                              <span className="bet-btn-side">
+                                BLANCO • {event.gallo_b_name || 'LADO B'}
+                              </span>
+                              <span className="bet-btn-odds">
+                                APOSTAR x{event.gallo_b_odds?.toFixed(2) || '1.90'}
+                              </span>
+                            </Button>
+                          </div>
                         ) : null}
 
                         {/* Winner Footer */}

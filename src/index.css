@@ -608,19 +608,19 @@ body.light-theme .capsule-home-btn {
   overflow: hidden !important;
 }
 
-/* CARTELERA FIGHT CARDS STYLES */
+/* CARTELERA FIGHT CARDS STYLES - ULTRA MODERN & MOBILE OPTIMIZED */
 .cart-card-premium {
-  background: linear-gradient(160deg, rgba(15, 21, 34, 0.97) 0%, rgba(9, 14, 24, 0.99) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: linear-gradient(160deg, rgba(15, 23, 42, 0.95) 0%, rgba(9, 14, 26, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
-  padding: 0;
+  padding: 0 !important;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 0 !important;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .cart-card-premium::before {
@@ -630,79 +630,92 @@ body.light-theme .capsule-home-btn {
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, #1d4ed8, #7c3aed, #1d4ed8);
-  opacity: 0.6;
+  background: linear-gradient(90deg, #2563eb, #10b981, #2563eb);
+  opacity: 0.7;
 }
 
 .cart-card-premium:hover {
   transform: translateY(-2px);
-  border-color: rgba(96, 165, 250, 0.25);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
 }
 
 body.light-theme .cart-card-premium {
   background: #ffffff;
-  border-color: rgba(0, 0, 0, 0.07);
-  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.09);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
 }
 
 @keyframes pulse-active-fight {
   0% {
-    border-color: rgba(16, 185, 129, 0.6);
-    box-shadow: 0 0 24px rgba(16, 185, 129, 0.25);
+    border-color: rgba(16, 185, 129, 0.7);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
   }
   50% {
-    border-color: rgba(52, 211, 153, 0.95);
-    box-shadow: 0 0 40px rgba(16, 185, 129, 0.5);
+    border-color: rgba(52, 211, 153, 1);
+    box-shadow: 0 0 35px rgba(16, 185, 129, 0.55);
   }
   100% {
-    border-color: rgba(16, 185, 129, 0.6);
-    box-shadow: 0 0 24px rgba(16, 185, 129, 0.25);
+    border-color: rgba(16, 185, 129, 0.7);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
   }
 }
 
 .cart-card-premium.active-match {
-  background: linear-gradient(160deg, rgba(13, 21, 32, 0.97) 0%, rgba(8, 12, 20, 0.99) 100%) !important;
+  background: linear-gradient(160deg, rgba(13, 23, 36, 0.98) 0%, rgba(7, 12, 22, 0.99) 100%) !important;
   border: 1.5px solid #10b981 !important;
   animation: pulse-active-fight 2.5s infinite ease-in-out !important;
 }
 
 .cart-card-premium.active-match::before {
   background: linear-gradient(90deg, #10b981, #34d399, #10b981);
-  opacity: 0.9;
+  opacity: 1;
 }
 
-/* ─── Header ─── */
+/* ─── Header: Flex container with NO absolute overlap ─── */
 .cart-card-header {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   position: relative;
-  padding: 10px 16px;
-  background: linear-gradient(90deg, rgba(56, 189, 248, 0.05) 0%, rgba(56, 189, 248, 0.12) 50%, rgba(56, 189, 248, 0.05) 100%);
-  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+  padding: 10px 14px;
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.06) 0%, rgba(56, 189, 248, 0.12) 50%, rgba(56, 189, 248, 0.06) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  gap: 8px;
 }
 
 body.light-theme .cart-card-header {
   background: rgba(2, 132, 199, 0.08);
-  border-bottom-color: rgba(2, 132, 199, 0.15);
+  border-bottom-color: rgba(2, 132, 199, 0.12);
 }
 
 .cart-fight-number {
   color: #38bdf8;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 900;
-  letter-spacing: 2.5px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   font-family: 'Outfit', sans-serif;
-  text-align: center;
-  width: 100%;
-  text-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 body.light-theme .cart-fight-number {
   color: #0284c7;
   text-shadow: none;
+}
+
+.cart-status-tag {
+  font-size: 10px !important;
+  border-radius: 6px !important;
+  margin: 0 !important;
+  padding: 3px 8px !important;
+  font-weight: 900 !important;
+  border: none !important;
+  letter-spacing: 0.5px !important;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* ─── Main content: fighters side by side ─── */
@@ -711,7 +724,8 @@ body.light-theme .cart-fight-number {
   align-items: stretch;
   justify-content: stretch;
   gap: 0;
-  padding: 0;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.015);
 }
 
 .cart-fighter-column {
@@ -719,18 +733,20 @@ body.light-theme .cart-fight-number {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 14px 16px;
+  min-width: 0; /* Prevents overflow in flexbox */
 }
 
 .cart-fighter-column.left {
   align-items: flex-end;
   text-align: right;
+  padding-right: 10px;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .cart-fighter-column.right {
   align-items: flex-start;
   text-align: left;
+  padding-left: 10px;
 }
 
 body.light-theme .cart-fighter-column.left {
@@ -741,23 +757,50 @@ body.light-theme .cart-fighter-column.left {
   display: flex;
   align-items: center;
   gap: 6px;
+  max-width: 100%;
+}
+
+.cart-fighter-column.left .fighter-title-row {
+  justify-content: flex-end;
+}
+
+.cart-fighter-column.right .fighter-title-row {
+  justify-content: flex-start;
 }
 
 .fighter-name {
-  color: var(--text-main);
-  font-weight: 800;
-  font-size: 15px;
-  letter-spacing: 0.2px;
+  font-weight: 900;
+  font-size: clamp(13px, 3.2vw, 15px);
+  letter-spacing: 0.3px;
   font-family: 'Outfit', sans-serif;
   text-transform: uppercase;
-  line-height: 1.1;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.fighter-name-azul {
+  color: #60a5fa;
+  text-shadow: 0 0 10px rgba(96, 165, 250, 0.25);
+}
+
+.fighter-name-blanco {
+  color: #f8fafc;
+  text-shadow: 0 0 10px rgba(248, 250, 252, 0.2);
+}
+
+body.light-theme .fighter-name-blanco {
+  color: #1e293b;
+  text-shadow: none;
 }
 
 .fighter-meta-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 4px;
 }
 
 .cart-fighter-column.left .fighter-meta-row {
@@ -770,11 +813,12 @@ body.light-theme .cart-fighter-column.left {
 
 .meta-tag {
   background: rgba(255, 255, 255, 0.07);
-  color: rgba(148, 163, 184, 0.85);
+  color: rgba(148, 163, 184, 0.9);
   font-size: 10px;
-  font-weight: 600;
-  padding: 2px 7px;
+  font-weight: 700;
+  padding: 2px 6px;
   border-radius: 4px;
+  white-space: nowrap;
 }
 
 body.light-theme .meta-tag {
@@ -783,18 +827,20 @@ body.light-theme .meta-tag {
 }
 
 .weight-tag {
-  background: rgba(96, 165, 250, 0.12);
-  color: #60a5fa;
+  background: rgba(56, 189, 248, 0.14);
+  color: #38bdf8;
   font-size: 10px;
-  font-weight: 700;
-  padding: 2px 8px;
+  font-weight: 800;
+  padding: 2px 7px;
   border-radius: 4px;
+  white-space: nowrap;
 }
 
 .color-badge {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(203, 213, 225, 0.9);
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
   border-radius: 4px;
+  white-space: nowrap;
 }
 
 .fighter-badge-p {
@@ -805,6 +851,7 @@ body.light-theme .meta-tag {
   padding: 1px 5px;
   border-radius: 4px;
   letter-spacing: 0.5px;
+  flex-shrink: 0;
 }
 
 /* ─── VS Divider ─── */
@@ -812,7 +859,7 @@ body.light-theme .meta-tag {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
+  width: 36px;
   flex-shrink: 0;
   position: relative;
 }
@@ -820,14 +867,15 @@ body.light-theme .meta-tag {
 .vs-circle {
   font-size: 10px;
   font-weight: 900;
-  color: rgba(239, 68, 68, 0.9);
+  color: #ef4444;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 6px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
   padding: 4px 6px;
   line-height: 1;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
 }
 
 /* ─── Status Banners ─── */
@@ -892,15 +940,131 @@ body.light-theme .meta-tag {
   }
 }
 
+/* ─── Betting Buttons Row ─── */
+.cart-betting-buttons-row {
+  display: flex;
+  gap: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.2);
+}
 
-@media (max-width: 768px) {
+.cart-betting-buttons-row .bet-btn {
+  height: 52px !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1.2 !important;
+  padding: 4px 8px !important;
+  flex: 1 !important;
+  transition: transform 0.15s ease, filter 0.15s ease !important;
+}
+
+.cart-betting-buttons-row .bet-btn:active {
+  transform: scale(0.98);
+}
+
+.bet-btn-azul {
+  border-radius: 0 0 0 15px !important;
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+}
+
+.bet-btn-azul .bet-btn-side {
+  font-size: 9px;
+  font-weight: 800;
+  color: #bfdbfe;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.bet-btn-azul .bet-btn-odds {
+  font-size: 14px;
+  font-weight: 900;
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+.bet-btn-blanco {
+  border-radius: 0 0 15px 0 !important;
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%) !important;
+}
+
+.bet-btn-blanco .bet-btn-side {
+  font-size: 9px;
+  font-weight: 800;
+  color: #a7f3d0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.bet-btn-blanco .bet-btn-odds {
+  font-size: 14px;
+  font-weight: 900;
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+@media (max-width: 576px) {
   .cart-card-premium {
-    padding: 14px 14px;
-    gap: 10px;
-    border-radius: 16px;
+    padding: 0 !important;
+    gap: 0 !important;
+    border-radius: 14px;
   }
-  .fighter-name {
-    font-size: 14px;
+
+  .cart-card-header {
+    padding: 8px 12px;
+  }
+
+  .cart-fight-number {
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+
+  .cart-card-content {
+    padding: 10px 10px;
+  }
+
+  .cart-fighter-column {
+    gap: 4px;
+  }
+
+  .cart-fighter-column.left {
+    padding-right: 6px;
+  }
+
+  .cart-fighter-column.right {
+    padding-left: 6px;
+  }
+
+  .cart-vs-column {
+    width: 28px;
+  }
+
+  .vs-circle {
+    font-size: 9px;
+    padding: 3px 4px;
+    border-radius: 6px;
+  }
+
+  .cart-betting-buttons-row .bet-btn {
+    height: 48px !important;
+  }
+
+  .bet-btn-azul .bet-btn-odds,
+  .bet-btn-blanco .bet-btn-odds {
+    font-size: 13px;
   }
 }
 
